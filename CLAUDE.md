@@ -39,6 +39,8 @@ world beyond redstone, and the mechanics, have not been started.**
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
 **597 tests passing**.
 
+Remaining work is inventoried in `TODO.md`.
+
 Run `./gradlew build` to compile, test, and produce
 `paper/build/libs/CraftBookUltimate-<version>.jar`. That jar carries the core module's classes;
 Adventure and JSpecify come from the server.

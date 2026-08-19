@@ -4,6 +4,7 @@ import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
+import java.util.Optional;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Material;
 import org.bukkit.Registry;
@@ -89,6 +90,11 @@ public record BukkitChipWorld(World world) implements ChipWorld {
     @Override
     public void setWorldTicks(long worldTicks) {
         world.setFullTime(worldTicks);
+    }
+
+    @Override
+    public Optional<Key> resolveBlock(String written) {
+        return LegacyBlocks.resolve(written);
     }
 
     @Override

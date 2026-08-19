@@ -119,7 +119,7 @@ public final class BlockPlacers {
 
         @Override
         public void trigger(ChipState state) {
-            Optional<Key> block = Blocks.parse(state.sign().trimmedText(BLOCK_LINE));
+            Optional<Key> block = state.world().resolveBlock(state.sign().trimmedText(BLOCK_LINE));
             Optional<Dimensions> dimensions = readDimensions(state);
             if (block.isEmpty() || dimensions.isEmpty()) {
                 return;
@@ -328,7 +328,7 @@ public final class BlockPlacers {
                 return;
             }
 
-            Optional<Key> block = Blocks.parse(state.sign().trimmedText(BLOCK_LINE));
+            Optional<Key> block = state.world().resolveBlock(state.sign().trimmedText(BLOCK_LINE));
             if (block.isEmpty()) {
                 return;
             }
@@ -353,6 +353,20 @@ public final class BlockPlacers {
         /** How many parts line 2 has: three offsets and a block name. */
         private static final int CONFIG_PARTS = 4;
 
+        /**
+         * The block part of the line, which is everything after the three offsets.
+         *
+         * <p>Rejoined rather than taken as one field, because a block written the old way carries
+         * its own colon, as in {@code 0:1:0:35:14}.
+         */
+        private static String legacyAwareBlockPart(String[] parts) {
+            StringBuilder block = new StringBuilder(parts[3].trim());
+            for (int i = CONFIG_PARTS; i < parts.length; i++) {
+                block.append(':').append(parts[i].trim());
+            }
+            return block.toString();
+        }
+
         @Override
         public void trigger(ChipState state) {
             String[] parts = state.sign().trimmedText(BLOCK_LINE).split(":");
@@ -360,7 +374,7 @@ public final class BlockPlacers {
                 return;
             }
 
-            Optional<Key> block = Blocks.parse(parts[3]);
+            Optional<Key> block = state.world().resolveBlock(legacyAwareBlockPart(parts));
             if (block.isEmpty()) {
                 return;
             }

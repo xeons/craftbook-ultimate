@@ -300,12 +300,17 @@ restricted nor pre-authorised.
 and `ICDefinition.requiresAuthorisation()` says which chips are created with it, independently of
 `restricted()`.
 
-### 23. Legacy numeric block ids on signs no longer resolve
+### 23. Legacy numeric block ids and damage values
 
 Line 2 of a block-placing sign was parsed as `id[:damage]`, where the id could be numeric and the
-damage value selected a variant, so red wool was `35:14`. Both went away when block states were
-flattened in 1.13.
+damage value selected a variant, so red wool was `35:14`. Both concepts went away when block
+states were flattened in 1.13.
 
-**Rewrite:** line 2 names the block, so `red_wool` or `minecraft:red_wool`. Signs still carrying
-numeric ids will not resolve to a block and the chip does nothing until the line is rewritten.
-There is no general mapping back from the old pairs, so this cannot be handled automatically.
+This matters more here than it would elsewhere: the fork this is being ported from ran on 1.12,
+so essentially every block-placing sign already in a world uses the old spelling.
+
+**Rewrite:** both spellings are read. `BlockReference` decides which one a sign is using, telling
+a damage value apart from a namespace by whether what follows the colon is a number, and the
+platform layer resolves legacy pairs through the server's own flattening tables rather than
+through a guessed mapping. `35:14`, `wool:14`, `red_wool` and `minecraft:red_wool` all name the
+same block.

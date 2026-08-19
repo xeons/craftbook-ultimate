@@ -37,7 +37,7 @@ world beyond redstone, and the mechanics, have not been started.**
 | Mechanics | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**574 tests passing**.
+**597 tests passing**.
 
 Run `./gradlew build` to compile, test, and produce
 `paper/build/libs/CraftBookUltimate-<version>.jar`. That jar carries the core module's classes;
@@ -74,7 +74,8 @@ Between them: 58 ICs in both, 73 upstream only, **64 only in this fork**, for a 
 
 1. **The sign text format is frozen.** Existing worlds are full of signs. `ICLine` is the
    contract; changing what it accepts breaks live builds. Mechanic behaviour is likewise
-   expected to match.
+   expected to match. That includes pre-flattening block spellings: the fork being ported from
+   ran on 1.12, so signs naming blocks as `35:14` are the common case, not an edge case.
 2. **Everything else may change.** No backwards compatibility is owed to the old APIs, config
    format, or storage.
 3. **No MinecraftOnline references** anywhere in the new code.

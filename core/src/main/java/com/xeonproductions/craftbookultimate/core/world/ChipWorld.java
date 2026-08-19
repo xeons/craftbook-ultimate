@@ -1,6 +1,7 @@
 package com.xeonproductions.craftbookultimate.core.world;
 
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
+import java.util.Optional;
 import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
 
@@ -86,6 +87,20 @@ public interface ChipWorld {
 
     /** The length of a Minecraft day in ticks. */
     long TICKS_PER_DAY = 24_000L;
+
+    /**
+     * Works out which block a sign means.
+     *
+     * <p>Signs written before the 1.13 flattening name blocks by a numeric id and damage value,
+     * and only the server holds the tables that map those onto modern blocks. A world backed by
+     * a real server resolves them; this default understands modern names only.
+     *
+     * @param written the text as it appears on the sign
+     * @return the block, or empty if the text names nothing that exists
+     */
+    default Optional<Key> resolveBlock(String written) {
+        return BlockReference.parse(written).flatMap(BlockReference::asKey);
+    }
 
     /** The lowest y coordinate that can hold a block. */
     int minHeight();

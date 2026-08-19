@@ -38,6 +38,7 @@ public final class SimpleChipState implements ChipState {
     private final ICMode mode;
     private final ManualScheduler scheduler;
     private final SimpleChipWorld world;
+    private final ChipServices services;
     private Stockpile stockpile;
     private final Vec3i signPosition;
     private final BlockFace facing;
@@ -55,6 +56,7 @@ public final class SimpleChipState implements ChipState {
         this.mode = builder.mode;
         this.scheduler = builder.scheduler;
         this.world = builder.world;
+        this.services = builder.services;
         this.stockpile = builder.stockpile;
         this.signPosition = builder.signPosition;
         this.facing = builder.facing;
@@ -160,6 +162,11 @@ public final class SimpleChipState implements ChipState {
     @Override
     public ChipWorld world() {
         return world;
+    }
+
+    @Override
+    public ChipServices services() {
+        return services;
     }
 
     @Override
@@ -332,6 +339,7 @@ public final class SimpleChipState implements ChipState {
         private ICMode mode = ICMode.NONE;
         private final ManualScheduler scheduler = new ManualScheduler();
         private SimpleChipWorld world = new SimpleChipWorld();
+        private ChipServices services = ChipServices.create();
         private Stockpile stockpile = SimpleStockpile.empty();
         private Vec3i signPosition = Vec3i.ZERO;
         private BlockFace facing = BlockFace.SOUTH;
@@ -383,6 +391,17 @@ public final class SimpleChipState implements ChipState {
         /** Sets the world this chip sees. */
         public Builder world(SimpleChipWorld world) {
             this.world = world;
+            return this;
+        }
+
+        /**
+         * Sets the registries this chip shares with others.
+         *
+         * <p>Two chips meant to reach each other, such as a transmitter and its receiver, have to
+         * be given the same set.
+         */
+        public Builder services(ChipServices services) {
+            this.services = services;
             return this;
         }
 

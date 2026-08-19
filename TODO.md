@@ -5,7 +5,7 @@ are in `CLAUDE.md`; bugs found in the legacy code are in `FINDINGS.md`.
 
 ## Integrated circuits
 
-**53 model numbers are registered.** 67 of the extra fork's remain, plus 4 dropped by decision.
+**58 model numbers are registered.** 61 of the extra fork's remain, plus 4 dropped by decision.
 
 The legacy class named in each row is the one to read for behaviour, under
 `src/main/java/com/minecraftonline/` or `src/main/java/com/sk89q/craftbook/sponge/mechanics/ics/chips/`.
@@ -74,21 +74,6 @@ components and asserted in tests without a server.
 | `MCX517` | S-LOG NEARBY+ | Server Log Nearby+ | `ServerLogNearbyPlus` | 3ISO |
 | `MC2999` | MARQUEE | Marquee | `Marquee` | SI3O |
 | `MC3456` | MARQUEETRANSMIT | Marquee Transmitter | `MarqueeTransmitter` | 3ISO |
-
-### Wireless and transport
-
-These act on somewhere arbitrarily far away, so every one of them must go
-through `RegionSchedulers.executeAt` rather than touching the far end directly. See the Folia
-section of `CLAUDE.md`.
-
-| Model | Shorthand | Name | Legacy class | Layout |
-| --- | --- | --- | --- | --- |
-| `MC1110` | TRANSMITTER | Wireless Transmitter | `WirelessTransmitter` | AIZO |
-| `MC1111` | RECEIVER | Wireless Receiver | `WirelessReceiver` | 3ISO |
-| `MC0111` | RECEIVER | Wireless Receiver | `WirelessReceiver` | 3ISO |
-| `MC6543` | REDCODER | Analog Transmitter | `Redcoder` | AISO |
-| `MCX112` | TRANSPORTER | Transporter | `Transporter` | 3ISO |
-| `MCU113` | DESTINATION | Destination | `Destination` | 3ISO |
 
 ### Blocks and farming
 
@@ -186,8 +171,8 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 
 | Piece | Why it is needed |
 | --- | --- |
-| Entity seam | Spawning, finding, damaging entities and launching projectiles. Blocks ~24 ICs. |
-| Audience seam | Sending Adventure components to players near a chip. Blocks ~9 ICs. |
+| Entity seam | Spawning, damaging entities and launching projectiles. Blocks ~24 ICs. Finding and moving people exists already, as `Traveller` and `ChipWorld.travellersIn`. |
+| Audience seam | Sending Adventure components to players near a chip. Blocks ~9 ICs, and the warning a destination should give when its name is already in use. |
 | Persistence | Chips that keep state across a restart currently keep it only on the sign. |
 | Configuration | Nothing is configurable. The legacy code had per-mechanic config with an enable flag. |
 | Commands | No commands at all. The legacy code had `/cb`, plus per-mechanic commands. |
@@ -204,4 +189,5 @@ at all. Worth checking early, in roughly this order:
 2. Writing `[MC1000]` on a wall sign creates a chip that follows redstone.
 3. A pre-flattening block name such as `35:14` resolves to red wool.
 4. A bridge builds and retracts, paying into and out of a nearby chest.
-5. Region behaviour on an actual Folia server.
+5. A transmitter drives a receiver in another world, and a transporter delivers to a destination.
+6. Region behaviour on an actual Folia server.

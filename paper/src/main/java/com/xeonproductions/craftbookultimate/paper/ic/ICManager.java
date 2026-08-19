@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.paper.ic;
 
+import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
 import com.xeonproductions.craftbookultimate.core.ic.ICLine;
 import com.xeonproductions.craftbookultimate.core.ic.ICMode;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
@@ -36,13 +37,20 @@ public final class ICManager {
 
     private final ICRegistry registry;
     private final RegionSchedulers schedulers;
+    private final ChipServices services;
 
     private final Map<BlockKey, ICInstance> bySign = new ConcurrentHashMap<>();
     private final Map<BlockKey, Set<ICInstance>> byPin = new ConcurrentHashMap<>();
 
-    public ICManager(ICRegistry registry, RegionSchedulers schedulers) {
+    public ICManager(ICRegistry registry, RegionSchedulers schedulers, ChipServices services) {
         this.registry = registry;
         this.schedulers = schedulers;
+        this.services = services;
+    }
+
+    /** The registries the chips here use to reach one another. */
+    public ChipServices services() {
+        return services;
     }
 
     /** The chip catalogue this manager builds from. */
@@ -106,7 +114,8 @@ public final class ICManager {
                         facing.get(),
                         resolution.definition(),
                         modeOf(identifier),
-                        resolution.selfTriggering()));
+                        resolution.selfTriggering(),
+                        services));
     }
 
     /** Resolves an identifier line to a chip. */

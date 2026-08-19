@@ -1,10 +1,14 @@
 package com.xeonproductions.craftbookultimate.core.world;
 
+import com.xeonproductions.craftbookultimate.core.entity.Traveller;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
 
@@ -24,9 +28,13 @@ public final class SimpleChipWorld implements ChipWorld {
     private static final int DEFAULT_MAX_HEIGHT = 320;
     private static final int DEFAULT_LIGHT = 15;
 
+    private final UUID id = UUID.randomUUID();
     private final Map<Vec3i, Key> blocks = new HashMap<>();
     private final Map<Vec3i, Integer> light = new HashMap<>();
     private final Set<Vec3i> unloaded = new HashSet<>();
+    private final Map<Vec3i, List<Traveller>> travellers = new HashMap<>();
+    private final Set<Vec3i> pressedPlates = new HashSet<>();
+    private final Set<Vec3i> passable = new HashSet<>();
 
     private int minHeight = DEFAULT_MIN_HEIGHT;
     private int maxHeight = DEFAULT_MAX_HEIGHT;
@@ -36,6 +44,11 @@ public final class SimpleChipWorld implements ChipWorld {
     private int rainDuration;
     private int thunderDuration;
     private long worldTicks;
+
+    @Override
+    public UUID id() {
+        return id;
+    }
 
     @Override
     public Key blockAt(Vec3i position) {
@@ -57,6 +70,23 @@ public final class SimpleChipWorld implements ChipWorld {
     @Override
     public boolean isLoaded(Vec3i position) {
         return !unloaded.contains(position);
+    }
+
+    @Override
+    public boolean isPassable(Vec3i position) {
+        // Nothing here knows which blocks a player can stand in, so only the placed ones are
+        // solid. A test that needs a passable block placed says so with withPassable.
+        return isAir(position) || passable.contains(position);
+    }
+
+    @Override
+    public List<Traveller> travellersIn(Vec3i position) {
+        return List.copyOf(travellers.getOrDefault(position, List.of()));
+    }
+
+    @Override
+    public boolean releasePressurePlate(Vec3i position) {
+        return pressedPlates.remove(position);
     }
 
     @Override
@@ -137,6 +167,29 @@ public final class SimpleChipWorld implements ChipWorld {
     public SimpleChipWorld withAmbientLight(int level) {
         this.ambientLight = level;
         return this;
+    }
+
+    /** Puts someone in a block, where a chip that moves people will find them. */
+    public SimpleChipWorld withTraveller(Vec3i position, Traveller traveller) {
+        travellers.computeIfAbsent(position, ignored -> new ArrayList<>()).add(traveller);
+        return this;
+    }
+
+    /** Marks a position as somewhere a player could stand despite a block being placed there. */
+    public SimpleChipWorld withPassable(Vec3i position) {
+        passable.add(position);
+        return this;
+    }
+
+    /** Puts a pressed pressure plate at a position. */
+    public SimpleChipWorld withPressedPlate(Vec3i position) {
+        pressedPlates.add(position);
+        return this;
+    }
+
+    /** Whether a pressure plate at a position is still pressed. */
+    public boolean isPlatePressed(Vec3i position) {
+        return pressedPlates.contains(position);
     }
 
     /** Marks a position as being in an unloaded chunk. */

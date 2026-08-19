@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.paper;
 
+import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.listener.ICChunkListener;
@@ -43,7 +44,7 @@ public final class CraftBookPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         RegionSchedulers regionSchedulers = new RegionSchedulers(this);
-        ICManager manager = new ICManager(icRegistry, regionSchedulers);
+        ICManager manager = new ICManager(icRegistry, regionSchedulers, ChipServices.create());
 
         this.schedulers = regionSchedulers;
         this.icManager = manager;

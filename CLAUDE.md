@@ -6,8 +6,9 @@ A ground-up rewrite of CraftBook for **Paper 26.x** on **Java 25**, in the names
 ## Project status
 
 **Phase: chips run in game. Writing a recognised model reference on a wall sign creates a
-working chip that responds to redstone and to the passage of time. The chips that act on the
-world beyond redstone, and the mechanics, have not been started.**
+working chip that responds to redstone and to the passage of time, places blocks, drives wireless
+bands and moves people between named pads. The chips that spawn or harm entities, the ones that
+talk to players, and the mechanics have not been started.**
 
 | Area | State |
 | --- | --- |
@@ -22,7 +23,7 @@ world beyond redstone, and the mechanics, have not been started.**
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (51 chips) | Done |
+| IC catalogue wiring (58 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
@@ -32,12 +33,16 @@ world beyond redstone, and the mechanics, have not been started.**
 | World sensors (liquid, light, weather, block detector) | Done |
 | Weather and time control chips | Done |
 | Stockpiles, formerly BlockBags | Done |
+| Shared chip registries (`ChipServices`, `Radio`, `Destinations`) | Done |
+| Entity seam: finding and moving people (`Traveller`) | Done |
 | Block placing chips (bridge, door, flex set, set above/below) | Done |
-| World-changing ICs (entities, messaging, wireless) | Not started |
+| Wireless bands (transmitter, receiver, analog transmitter) | Done |
+| Transporters and destinations | Done |
+| World-changing ICs (entities, messaging) | Not started |
 | Mechanics | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**597 tests passing**.
+**691 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -136,9 +141,21 @@ make one big build faster; it stops that build from holding up the rest of the s
 **Action at a distance is the real cross-region case.** Wireless transmitters and receivers,
 transporters and destinations, marquee and analog transmitters, teleporters and cart warps all
 act on somewhere arbitrarily far away, which is very likely another region. None of them may
-touch the far end directly. They must go through
-`RegionSchedulers.executeAt(world, position, task)`, which runs the work immediately when the
-caller already owns that place and otherwise hands it to the region that does.
+touch the far end directly.
+
+Two ways of not touching it are in use, and the first is preferred where it fits.
+
+*Publish and read.* Each end works out whatever the other needs from its own blocks, on its own
+thread, and puts the answer somewhere shared as an immutable value. The far end reads that value
+and nothing else. `Radio` and `Destinations` in `ChipServices` are both this: a transmitter
+writes its band's state, a destination publishes a `Landing`, and neither ever looks at the
+other's blocks. Where the work itself must happen elsewhere, the server's own region-crossing
+API does the carrying — a transporter calls `Entity#teleportAsync` rather than moving anybody
+itself.
+
+*Hand the work over.* Where a value cannot stand in for the work,
+`RegionSchedulers.executeAt(world, position, task)` runs it immediately when the caller already
+owns that place and otherwise hands it to the region that does.
 
 `ICManager.triggerAt` already routes through `executeAt`, so a chip only ever runs on the thread
 owning its sign even if the invariant above is ever violated, or if a region splits mid-update.

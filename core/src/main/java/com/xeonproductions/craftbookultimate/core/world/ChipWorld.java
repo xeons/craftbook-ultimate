@@ -1,7 +1,10 @@
 package com.xeonproductions.craftbookultimate.core.world;
 
+import com.xeonproductions.craftbookultimate.core.entity.Traveller;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
 
@@ -18,6 +21,14 @@ import org.jspecify.annotations.NullMarked;
  */
 @NullMarked
 public interface ChipWorld {
+
+    /**
+     * What identifies this world to the rest of the server.
+     *
+     * <p>Needed by the chips that act across worlds, which have to name a world without holding
+     * on to one.
+     */
+    UUID id();
 
     /** The key of the block at a position. Unloaded or out-of-bounds positions read as air. */
     Key blockAt(Vec3i position);
@@ -36,6 +47,32 @@ public interface ChipWorld {
 
     /** Whether the chunk holding a position is loaded and safe to read. */
     boolean isLoaded(Vec3i position);
+
+    /**
+     * Whether something could stand in the block at a position without being inside it.
+     *
+     * <p>Broader than being air: a torch, a carpet or an open door all leave room, and a chip
+     * looking for somewhere to put a player wants any of them.
+     */
+    boolean isPassable(Vec3i position);
+
+    /**
+     * The people standing in the block at a position.
+     *
+     * <p>Ordinary mobs are not included; see {@link Traveller}.
+     */
+    List<Traveller> travellersIn(Vec3i position);
+
+    /**
+     * Releases a pressed pressure plate.
+     *
+     * <p>A plate normally stays pressed until whatever is standing on it moves off, which never
+     * happens when a chip takes that person somewhere else instead. Releasing it by hand is what
+     * lets a teleport pad built from a plate fire again straight away.
+     *
+     * @return true if there was a pressed plate there and it is now released
+     */
+    boolean releasePressurePlate(Vec3i position);
 
     /**
      * The light level at a position, from 0 to 15.
@@ -111,6 +148,24 @@ public interface ChipWorld {
     /** Whether a position is within the world's vertical bounds. */
     default boolean isInBounds(Vec3i position) {
         return position.y() >= minHeight() && position.y() < maxHeight();
+    }
+
+    /**
+     * The first block at or above a position that something could stand in.
+     *
+     * <p>Chips that put a player somewhere measure from a solid block and rise out of it, so that
+     * a pad built into a floor delivers people onto the floor rather than inside it.
+     *
+     * @return the position, or empty if everything up to the top of the world is solid
+     */
+    default Optional<Vec3i> firstPassableAtOrAbove(Vec3i start) {
+        for (int y = start.y(); y < maxHeight(); y++) {
+            Vec3i candidate = new Vec3i(start.x(), y, start.z());
+            if (isPassable(candidate)) {
+                return Optional.of(candidate);
+            }
+        }
+        return Optional.empty();
     }
 
     /** Whether the block at a position is air. */

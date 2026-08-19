@@ -1,8 +1,10 @@
 package com.xeonproductions.craftbookultimate.core.ic;
 
+import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -21,6 +23,10 @@ import org.jspecify.annotations.NullMarked;
  * @param description one line explaining what the chip does
  * @param defaultLayout the pin layout used when the sign does not name one
  * @param restricted whether creating one needs elevated permission
+ * @param requiresAuthorisation whether one is created unarmed and refuses to act until its area
+ *     is clear
+ * @param playerIdentityLine the sign line, if any, on which writing {@code uuid} is replaced by
+ *     the creating player's own unique id
  * @param aliases other model numbers that resolve to this same chip
  * @param selfTriggeringModel a separate model number meaning the self-triggering variant
  * @param logicFactory builds a fresh logic instance for one chip
@@ -34,6 +40,7 @@ public record ICDefinition(
         PinLayout defaultLayout,
         boolean restricted,
         boolean requiresAuthorisation,
+        OptionalInt playerIdentityLine,
         Set<String> aliases,
         Optional<String> selfTriggeringModel,
         Supplier<ICLogic> logicFactory) {
@@ -55,6 +62,14 @@ public record ICDefinition(
         }
         if (name.isBlank()) {
             throw new IllegalArgumentException("IC " + model + " must have a name");
+        }
+
+        if (playerIdentityLine.isPresent()) {
+            int line = playerIdentityLine.getAsInt();
+            if (line < 0 || line >= SignLines.LINE_COUNT) {
+                throw new IllegalArgumentException(
+                        "IC " + model + " names sign line " + line + ", which does not exist");
+            }
         }
 
         Set<String> normalisedAliases = new LinkedHashSet<>();
@@ -150,6 +165,7 @@ public record ICDefinition(
         private PinLayout defaultLayout = PinLayout.defaultLayout();
         private boolean restricted;
         private boolean requiresAuthorisation;
+        private OptionalInt playerIdentityLine = OptionalInt.empty();
         private final Set<String> aliases = new LinkedHashSet<>();
         private Optional<String> selfTriggeringModel = Optional.empty();
         private Supplier<ICLogic> logicFactory =
@@ -199,6 +215,20 @@ public record ICDefinition(
         }
 
         /**
+         * Names the line on which a player may write {@code uuid} to mean themselves.
+         *
+         * <p>Used by the chips whose channel name has a namespace around it. A builder who writes
+         * {@code uuid} there gets their own unique id written in its place as the sign is made,
+         * which gives them a set of channel names nobody else can transmit into by accident.
+         *
+         * @param index the line number, from zero to three
+         */
+        public Builder playerIdentityLine(int index) {
+            this.playerIdentityLine = OptionalInt.of(index);
+            return this;
+        }
+
+        /**
          * Adds model numbers that should resolve to this chip.
          *
          * <p>Used when two chips are merged into one implementation, so signs carrying the
@@ -236,6 +266,7 @@ public record ICDefinition(
                     defaultLayout,
                     restricted,
                     requiresAuthorisation,
+                    playerIdentityLine,
                     aliases,
                     selfTriggeringModel,
                     logicFactory);

@@ -36,6 +36,7 @@ class ICCatalogueTest {
         "[MC1260]", "[MC1261]", "[MC1262]", "[MCX230]", "[MCX231]", "[MCX205]",
         "[MCX207]", "[MCX208]", "[MCX209]", "[MCX210]", "[MCX206]",
         "[MC1205]", "[MC1206]", "[MC1207]",
+        "[MC1110]", "[MC1111]", "[MC0111]", "[MC6543]", "[MCX112]", "[MCU113]",
     })
     void resolvesEveryRegisteredModelNumber(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -55,6 +56,7 @@ class ICCatalogueTest {
         "=DETECT BLOCK",
         "=BRIDGE", "=DOOR", "=BRIDGE+", "=DOOR+", "=FLEX SET", "=FLEX SET ADMIN",
         "=SET ABOVE", "=SET BELOW",
+        "=TRANSMITTER", "=RECEIVER", "=REDCODER", "=TRANSPORTER", "=DESTINATION",
     })
     void resolvesEveryRegisteredShorthand(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -68,6 +70,8 @@ class ICCatalogueTest {
         "MC4040, 3I5O",
         "MC2020, SI3O",
         "MC6020, SI5O",
+        "MC1110, AIZO",
+        "MC6543, AISO",
     })
     void wiresEachChipForItsDocumentedLayout(String model, String layoutCode) {
         ICDefinition definition = REGISTRY.byModel(model).orElseThrow();
@@ -88,6 +92,8 @@ class ICCatalogueTest {
         // A few chips were catalogued twice, once ticking and once not.
         assertThat(REGISTRY.resolve("[MC0420]").orElseThrow().selfTriggering()).isTrue();
         assertThat(REGISTRY.resolve("[MC0230]").orElseThrow().selfTriggering()).isTrue();
+        assertThat(REGISTRY.resolve("[MC0111]").orElseThrow().selfTriggering()).isTrue();
+        assertThat(REGISTRY.resolve("[MC1111]").orElseThrow().selfTriggering()).isFalse();
         assertThat(REGISTRY.resolve("[MC1420]").orElseThrow().definition().model())
                 .isEqualTo("MC1420");
     }
@@ -126,6 +132,19 @@ class ICCatalogueTest {
         // standing between it and someone else's blocks.
         assertThat(REGISTRY.byModel(model).orElseThrow().restricted()).isTrue();
         assertThat(REGISTRY.byModel(model).orElseThrow().requiresAuthorisation()).isFalse();
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"MCX112", "MCU113"})
+    void restrictsTheChipsThatMovePeopleAround(String model) {
+        // A transporter can drop somebody anywhere its far end happens to be.
+        assertThat(REGISTRY.byModel(model).orElseThrow().restricted()).isTrue();
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"MC1110", "MC1111", "MC6543"})
+    void letsTheBandChipsNameTheirOwnerAsTheirNamespace(String model) {
+        assertThat(REGISTRY.byModel(model).orElseThrow().playerIdentityLine()).hasValue(3);
     }
 
     @Test

@@ -4,7 +4,9 @@ import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
+import com.xeonproductions.craftbookultimate.core.radio.Radio;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import com.xeonproductions.craftbookultimate.core.transport.Destinations;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
 import org.jspecify.annotations.NullMarked;
@@ -128,6 +130,23 @@ public interface ChipState {
 
     /** The world this chip is in. */
     ChipWorld world();
+
+    /**
+     * The registries this chip shares with every other chip on the server.
+     *
+     * <p>Only the chips that act at a distance need these; see {@link ChipServices}.
+     */
+    ChipServices services();
+
+    /** What every wireless band is currently carrying. */
+    default Radio radio() {
+        return services().radio();
+    }
+
+    /** Which destination answers to each name. */
+    default Destinations destinations() {
+        return services().destinations();
+    }
 
     /**
      * Where this chip takes materials from and gives them back to.

@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.paper.ic;
 
+import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
 import com.xeonproductions.craftbookultimate.core.ic.ICMode;
@@ -48,6 +49,7 @@ public final class ICInstance {
     private final PinLayout layout;
     private final ICMode mode;
     private final boolean selfTriggering;
+    private final ChipServices services;
     private final ICLogic logic;
 
     private Scheduler.@Nullable Task tickTask;
@@ -61,13 +63,15 @@ public final class ICInstance {
             BlockFace front,
             ICDefinition definition,
             ICMode mode,
-            boolean selfTriggering) {
+            boolean selfTriggering,
+            ChipServices services) {
         this.world = world;
         this.signPosition = signPosition;
         this.front = front;
         this.definition = definition;
         this.layout = definition.defaultLayout();
         this.mode = mode;
+        this.services = services;
         this.logic = definition.newLogic();
         this.selfTriggering = selfTriggering && logic instanceof SelfTriggeringICLogic;
     }
@@ -198,6 +202,7 @@ public final class ICInstance {
     private BlockChipState newState(int triggeredInput) {
         BlockChipState.Builder builder = BlockChipState.at(world, signPosition, front, layout)
                 .mode(mode)
+                .services(services)
                 .triggeredInput(triggeredInput);
 
         if (scheduler != null) {

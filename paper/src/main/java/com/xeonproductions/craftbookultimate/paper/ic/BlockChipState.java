@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.paper.ic;
 
+import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
 import com.xeonproductions.craftbookultimate.core.ic.ChipState;
 import com.xeonproductions.craftbookultimate.core.ic.ICMode;
 import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
@@ -44,6 +45,7 @@ public final class BlockChipState implements ChipState {
     private final Scheduler scheduler;
     private final TimeSource time;
     private final ChipWorld chipWorld;
+    private final ChipServices services;
     private @org.jspecify.annotations.Nullable Stockpile stockpile;
 
     private BlockChipState(Builder builder) {
@@ -56,6 +58,7 @@ public final class BlockChipState implements ChipState {
         this.scheduler = builder.scheduler;
         this.time = builder.time == null ? new WorldTime(builder.world) : builder.time;
         this.chipWorld = new BukkitChipWorld(builder.world);
+        this.services = builder.services;
     }
 
     /** Reads the clocks a chip in a world cares about. */
@@ -203,6 +206,11 @@ public final class BlockChipState implements ChipState {
     }
 
     @Override
+    public ChipServices services() {
+        return services;
+    }
+
+    @Override
     public Stockpile stockpile() {
         // Scanning for containers walks a cube of blocks, so it is put off until a chip actually
         // asks, and then kept for the rest of this run.
@@ -245,6 +253,7 @@ public final class BlockChipState implements ChipState {
         private ICMode mode = ICMode.NONE;
         private int triggeredInput = -1;
         private Scheduler scheduler = RejectingScheduler.INSTANCE;
+        private ChipServices services = ChipServices.create();
         private @org.jspecify.annotations.Nullable TimeSource time;
 
         private Builder(World world, Vec3i signPosition, BlockFace front, PinLayout layout) {
@@ -263,6 +272,12 @@ public final class BlockChipState implements ChipState {
         /** Sets the scheduler a chip uses to act after a delay. */
         public Builder scheduler(Scheduler scheduler) {
             this.scheduler = scheduler;
+            return this;
+        }
+
+        /** Sets the registries this chip shares with every other chip on the server. */
+        public Builder services(ChipServices services) {
+            this.services = services;
             return this;
         }
 

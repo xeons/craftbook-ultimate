@@ -6,6 +6,7 @@ import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
+import java.util.Locale;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -36,6 +37,9 @@ public final class ICSignListener implements Listener {
 
     /** The line the chip's shorthand is written to. */
     private static final int TITLE_LINE = 0;
+
+    /** What a player writes to mean their own unique id. */
+    private static final String OWN_IDENTITY = "uuid";
 
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
 
@@ -115,5 +119,24 @@ public final class ICSignListener implements Listener {
 
         event.line(TITLE_LINE, Component.text(definition.shorthand()));
         event.line(IDENTIFIER_LINE, Component.text(canonical.render()));
+
+        writePlayerIdentity(event, definition);
+    }
+
+    /**
+     * Replaces the word {@code uuid} with the player's own unique id, on the one line a chip says
+     * may carry it.
+     *
+     * <p>The substitution happens once, as the sign is made, because that is the only moment the
+     * player who wrote it is known. Afterwards the sign reads as an ordinary namespace and nothing
+     * else has to know where it came from.
+     */
+    private void writePlayerIdentity(SignChangeEvent event, ICDefinition definition) {
+        definition.playerIdentityLine().ifPresent(line -> {
+            String written = PLAIN.serialize(event.line(line)).trim();
+            if (written.toLowerCase(Locale.ROOT).equals(OWN_IDENTITY)) {
+                event.line(line, Component.text(event.getPlayer().getUniqueId().toString()));
+            }
+        });
     }
 }

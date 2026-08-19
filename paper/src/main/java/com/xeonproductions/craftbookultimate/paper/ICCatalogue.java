@@ -10,6 +10,8 @@ import com.xeonproductions.craftbookultimate.core.ic.gate.Latches;
 import com.xeonproductions.craftbookultimate.core.ic.gate.LogicGates;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensors;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Transport;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Wireless;
 import com.xeonproductions.craftbookultimate.core.ic.gate.WeatherChips;
 import com.xeonproductions.craftbookultimate.core.ic.gate.TimeChips;
 import java.util.concurrent.ThreadLocalRandom;
@@ -44,6 +46,8 @@ public final class ICCatalogue {
         registerSensors(registry);
         registerWeather(registry);
         registerBlockPlacers(registry);
+        registerWireless(registry);
+        registerTransport(registry);
 
         return registry;
     }
@@ -399,6 +403,48 @@ public final class ICCatalogue {
                 .name("Signal Extender")
                 .description("Holds the output high for a while after the input ends.")
                 .logic(TimeChips::signalExtender)
+                .build());
+    }
+
+    private static void registerWireless(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MC1110", "TRANSMITTER")
+                .name("Wireless Transmitter")
+                .description("Transmits a wireless redstone signal.")
+                .layout(PinLayout.AIZO)
+                .playerIdentityLine(Wireless.WIDE_BAND_LINE)
+                .logic(Wireless::transmitter)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1111", "RECEIVER")
+                .name("Wireless Receiver")
+                .description("Receives a wireless redstone signal.")
+                .selfTriggeringModel("MC0111")
+                .playerIdentityLine(Wireless.WIDE_BAND_LINE)
+                .logic(Wireless::receiver)
+                .build());
+
+        registry.register(ICDefinition.builder("MC6543", "REDCODER")
+                .name("Analog Transmitter")
+                .description("Transmits a band per redstone power level.")
+                .layout(PinLayout.AISO)
+                .playerIdentityLine(Wireless.WIDE_BAND_LINE)
+                .logic(Wireless::analogTransmitter)
+                .build());
+    }
+
+    private static void registerTransport(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MCX112", "TRANSPORTER")
+                .name("Transporter")
+                .description("Sends whoever is standing on it to a named destination.")
+                .restricted()
+                .logic(Transport::transporter)
+                .build());
+
+        registry.register(ICDefinition.builder("MCU113", "DESTINATION")
+                .name("Destination")
+                .description("Receives whoever a transporter sends to its name.")
+                .restricted()
+                .logic(Transport::destination)
                 .build());
     }
 

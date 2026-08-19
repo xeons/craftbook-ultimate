@@ -51,6 +51,21 @@ public final class Directions {
         return Optional.ofNullable(TO_DOMAIN.get(face));
     }
 
+    /**
+     * The yaw an entity looking along a direction has.
+     *
+     * <p>Minecraft measures yaw from south and turns towards west, so south is zero, west is
+     * ninety, and so on. Anything without a horizontal component leaves an entity looking south,
+     * since yaw alone cannot express looking straight up or down.
+     */
+    public static float yawOf(BlockFace face) {
+        double angle = Math.atan2(-face.deltaX(), face.deltaZ());
+        if (face.deltaX() == 0 && face.deltaZ() == 0) {
+            return 0f;
+        }
+        return (float) Math.toDegrees((angle + 2 * Math.PI) % (2 * Math.PI));
+    }
+
     /** Converts a domain direction, which always has a server equivalent. */
     public static org.bukkit.block.BlockFace toServer(BlockFace face) {
         org.bukkit.block.BlockFace server = TO_SERVER.get(face);

@@ -314,3 +314,73 @@ a damage value apart from a namespace by whether what follows the colon is a num
 platform layer resolves legacy pairs through the server's own flattening tables rather than
 through a guessed mapping. `35:14`, `wool:14`, `red_wool` and `minecraft:red_wool` all name the
 same block.
+
+## Wireless
+
+### 24. Band updates ran on a thread pool and touched blocks from it
+
+`Bands.setActivatedBand` handed every change to a single-threaded `ThreadPoolExecutor`, which
+then called `BandInfo.updateReceivers`. That method read each receiver's world, its loaded state
+and its output lever, all from the pool thread rather than from the server thread. Reading block
+state off the server thread is unsafe on any Minecraft server, and on a regionised one it is
+unsafe even from another region's thread.
+
+It also meant a transmitter's effect on its receivers was ordered by the pool rather than by the
+redstone update that caused it, so two transmitters changing in the same tick could land in
+either order.
+
+**Rewrite:** nothing is pushed. A transmitter writes its band's state into `Radio` and a
+receiver reads it on its own tick, on the thread that owns its own blocks. The two ends share
+one concurrent map and nothing else, so no work and no block access crosses a region boundary.
+
+### 25. A sign with no channel name joined a shared blank band
+
+The channel name was parsed with the pattern check disabled, so a blank line 3 produced a band
+of `("", "")` rather than being rejected. Every transmitter and receiver in the world whose
+channel line was empty was therefore on one band together, and any of them switched all of them.
+
+**Rewrite:** `Band` cannot be built without a channel name, and `Wireless.bandOn` returns nothing
+for a sign that has none. A chip with a blank channel line is inert.
+
+### 26. The analog transmitter parsed its bounds while loading a chunk
+
+`Redcoder.load` called `Integer.parseInt` on the settings line with nothing catching the failure.
+A sign reading `lift:x:9` — a typo, or a line a player edited afterwards — threw
+`NumberFormatException` out of chunk load rather than producing a chip that did nothing.
+
+**Rewrite:** `Wireless.AnalogSettings.parse` returns nothing for a line it cannot use, and the
+chip stays quiet.
+
+## Transporters and destinations
+
+### 27. A destination that lost the race still evicted the winner
+
+`Destination.registerIfNotRegistered` refused to register when the name was already taken, but
+`onTrigger` had already set `isActive` before calling it. `unload` then removed the name from the
+map on the strength of that flag, without checking whose entry it was. A second destination built
+on a name already in use therefore did nothing while it was loaded and broke the working one the
+moment its chunk unloaded.
+
+**Rewrite:** `Destinations` records who holds each name and only that holder can release or move
+it, so a destination that never took a name cannot take one away.
+
+### 28. The forced pressure plate mode released the plate at the wrong end
+
+`Transporter.onTrigger` teleported the traveller and then read `humanoid.getLocation()` to find
+the pressure plate to release. By that point the traveller was standing at the destination, so it
+was the plate at the arrival point that was released, not the pad they had just left. The pad
+stayed pressed, which is the exact thing the mode exists to prevent.
+
+**Rewrite:** where a traveller was standing is read before they are moved, and that is the plate
+that is released.
+
+### 29. Finding the arrival spot read the far end's blocks from the near end
+
+`Destination.teleportTo` ran `findEmptySpot` against its own blocks, but it was called by the
+transporter, so the scan happened on whichever thread the transporter was running on. On a single
+threaded server that is merely surprising; on a regionised one the transporter would be reading
+blocks belonging to a region it does not own, arbitrarily far away.
+
+**Rewrite:** a destination works out its own arrival point on its own thread and publishes it as
+a `Landing`. A transporter reads those three values and hands the traveller to the server to
+move, so it never reads a block that is not its own.

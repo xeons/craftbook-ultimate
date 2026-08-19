@@ -6,6 +6,8 @@ import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Arithmetic;
 import com.xeonproductions.craftbookultimate.core.ic.gate.BlockPlacers;
+import com.xeonproductions.craftbookultimate.core.ic.gate.BlockSwappers;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Farming;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Latches;
 import com.xeonproductions.craftbookultimate.core.ic.gate.LogicGates;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
@@ -46,6 +48,7 @@ public final class ICCatalogue {
         registerSensors(registry);
         registerWeather(registry);
         registerBlockPlacers(registry);
+        registerFarming(registry);
         registerWireless(registry);
         registerTransport(registry);
 
@@ -280,7 +283,7 @@ public final class ICCatalogue {
                 .name("Flex Set Admin")
                 .description("Sets a block at a specified location, without paying for it.")
                 .restricted()
-                .logic(BlockPlacers::flexSet)
+                .logic(BlockPlacers::flexSetAdmin)
                 .build());
 
         registry.register(ICDefinition.builder("MC1205", "SET ABOVE")
@@ -403,6 +406,46 @@ public final class ICCatalogue {
                 .name("Signal Extender")
                 .description("Holds the output high for a while after the input ends.")
                 .logic(TimeChips::signalExtender)
+                .build());
+    }
+
+    private static void registerFarming(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MCX211", "TOGGLE BLOCK")
+                .name("Toggle Block")
+                .description("Swaps one block between two kinds as its input changes.")
+                .layout(PinLayout.AISO)
+                .logic(BlockSwappers::toggleBlock)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1249", "BLOCK REPLACER")
+                .name("Block Replacer")
+                .description("Swaps a block between two kinds and lets the change spread outward.")
+                .restricted()
+                .logic(BlockSwappers::blockReplacer)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX213", "HARVESTER")
+                .name("Harvester")
+                .description("Gathers a grown crop out of an area into nearby containers.")
+                .layout(PinLayout.AISO)
+                .requiresAuthorisation()
+                .logic(BlockPlacers::harvester)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX215", "AREA PLANTER")
+                .name("Area Planter")
+                .description("Plants dropped seeds across a field of ground.")
+                .layout(PinLayout.AISO)
+                .selfTriggeringModel("MCZ215")
+                .logic(Farming::areaPlanter)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX216", "PLANTER")
+                .name("Planter")
+                .description("Plants a dropped seed above the block the sign hangs on.")
+                .layout(PinLayout.AISO)
+                .selfTriggeringModel("MCZ216")
+                .logic(Farming::planter)
                 .build());
     }
 

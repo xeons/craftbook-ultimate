@@ -37,6 +37,7 @@ class ICCatalogueTest {
         "[MCX207]", "[MCX208]", "[MCX209]", "[MCX210]", "[MCX206]",
         "[MC1205]", "[MC1206]", "[MC1207]",
         "[MC1110]", "[MC1111]", "[MC0111]", "[MC6543]", "[MCX112]", "[MCU113]",
+        "[MCX211]", "[MC1249]", "[MCX213]", "[MCX215]", "[MCZ215]", "[MCX216]", "[MCZ216]",
     })
     void resolvesEveryRegisteredModelNumber(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -57,6 +58,7 @@ class ICCatalogueTest {
         "=BRIDGE", "=DOOR", "=BRIDGE+", "=DOOR+", "=FLEX SET", "=FLEX SET ADMIN",
         "=SET ABOVE", "=SET BELOW",
         "=TRANSMITTER", "=RECEIVER", "=REDCODER", "=TRANSPORTER", "=DESTINATION",
+        "=TOGGLE BLOCK", "=BLOCK REPLACER", "=HARVESTER", "=AREA PLANTER", "=PLANTER",
     })
     void resolvesEveryRegisteredShorthand(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -94,6 +96,8 @@ class ICCatalogueTest {
         assertThat(REGISTRY.resolve("[MC0230]").orElseThrow().selfTriggering()).isTrue();
         assertThat(REGISTRY.resolve("[MC0111]").orElseThrow().selfTriggering()).isTrue();
         assertThat(REGISTRY.resolve("[MC1111]").orElseThrow().selfTriggering()).isFalse();
+        assertThat(REGISTRY.resolve("[MCZ215]").orElseThrow().selfTriggering()).isTrue();
+        assertThat(REGISTRY.resolve("[MCZ216]").orElseThrow().selfTriggering()).isTrue();
         assertThat(REGISTRY.resolve("[MC1420]").orElseThrow().definition().model())
                 .isEqualTo("MC1420");
     }
@@ -118,7 +122,7 @@ class ICCatalogueTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @ValueSource(strings = {"MCX207", "MCX208"})
+    @ValueSource(strings = {"MCX207", "MCX208", "MCX213"})
     void marksTheBuildingChipsAsNeedingAuthorisation(String model) {
         // These are created unauthorised so they cannot be dropped over someone's structure and
         // used to take it apart.
@@ -145,6 +149,16 @@ class ICCatalogueTest {
     @ValueSource(strings = {"MC1110", "MC1111", "MC6543"})
     void letsTheBandChipsNameTheirOwnerAsTheirNamespace(String model) {
         assertThat(REGISTRY.byModel(model).orElseThrow().playerIdentityLine()).hasValue(3);
+    }
+
+    @Test
+    void keepsTheTwoFlexSettersApart() {
+        // One pays for its block out of a nearby chest; the other conjures it and so is
+        // restricted instead.
+        assertThat(REGISTRY.byModel("MCX206").orElseThrow().restricted()).isFalse();
+        assertThat(REGISTRY.byModel("MC1207").orElseThrow().restricted()).isTrue();
+        assertThat(REGISTRY.byModel("MCX206").orElseThrow().newLogic())
+                .isNotEqualTo(REGISTRY.byModel("MC1207").orElseThrow().newLogic());
     }
 
     @Test

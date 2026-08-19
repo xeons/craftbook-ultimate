@@ -22,12 +22,18 @@ import org.jspecify.annotations.Nullable;
  * <p>Numeric ids are matched against the legacy materials the server still knows about, and the
  * pair is then handed to the server's own conversion. A name with a damage value is looked up the
  * same way, so {@code wool:14} works as well as {@code 35:14}.
+ *
+ * <p>Items went through the same flattening and are resolved the same way, which is what lets a
+ * farming chip on an old sign still name cocoa beans as {@code 351@3}.
  */
 @NullMarked
 public final class LegacyBlocks {
 
-    /** Legacy materials by the numeric id they used to have. */
-    private static final Map<Integer, Material> BY_LEGACY_ID = indexLegacyMaterials();
+    /** Legacy block materials by the numeric id they used to have. */
+    private static final Map<Integer, Material> BY_LEGACY_ID = indexLegacyMaterials(true);
+
+    /** Legacy item materials by the numeric id they used to have. */
+    private static final Map<Integer, Material> ITEMS_BY_LEGACY_ID = indexLegacyMaterials(false);
 
     private LegacyBlocks() {}
 
@@ -53,9 +59,57 @@ public final class LegacyBlocks {
         }
 
         return legacyMaterial(reference)
-                .map(legacy -> fromLegacy(legacy, reference.damage()))
+                .map(legacy -> fromLegacy(legacy, reference.damage(), false))
                 .filter(material -> material != null && material.isBlock())
                 .map(Material::getKey);
+    }
+
+    /**
+     * Works out which item a sign means, understanding both spellings.
+     *
+     * <p>Ids were shared between blocks and items before the flattening, so which half of a pair
+     * an id meant depended on where it was written. A farming chip names an item, so the item half
+     * is what is looked up here.
+     *
+     * @param written the text as it appears on the sign
+     * @return the item, or empty if the text names nothing that exists
+     */
+    public static Optional<Key> resolveItem(String written) {
+        Optional<BlockReference> parsed = BlockReference.parse(written);
+        if (parsed.isEmpty()) {
+            return Optional.empty();
+        }
+
+        BlockReference reference = parsed.get();
+
+        if (!reference.isLegacy()) {
+            return reference.asKey().filter(LegacyBlocks::isItem);
+        }
+
+        return legacyItem(reference)
+                .map(legacy -> fromLegacy(legacy, reference.damage(), true))
+                .filter(material -> material != null && material.isItem())
+                .map(Material::getKey);
+    }
+
+    /** The legacy item a reference names, by id or by its old name. */
+    private static Optional<Material> legacyItem(BlockReference reference) {
+        Optional<Integer> id = reference.id();
+        if (id.isPresent()) {
+            return Optional.ofNullable(ITEMS_BY_LEGACY_ID.get(id.get()));
+        }
+
+        Material legacy = Material.getMaterial(reference.name().toUpperCase(Locale.ROOT), true);
+        if (legacy != null) {
+            return Optional.of(legacy);
+        }
+        return Optional.ofNullable(Material.getMaterial(reference.name().toUpperCase(Locale.ROOT)));
+    }
+
+    /** Whether a key names an item that exists on this server. */
+    private static boolean isItem(Key key) {
+        Material material = org.bukkit.Registry.MATERIAL.get(key);
+        return material != null && material.isItem();
     }
 
     /** Whether a key names a block that exists on this server. */
@@ -91,23 +145,25 @@ public final class LegacyBlocks {
      * producing legacy pairs, but reading signs written years ago is exactly what they are for.
      */
     @SuppressWarnings({"deprecation", "removal"})
-    private static @Nullable Material fromLegacy(Material legacy, int damage) {
+    private static @Nullable Material fromLegacy(Material legacy, int damage, boolean asItem) {
         if (!legacy.isLegacy()) {
             return legacy;
         }
-        return Bukkit.getUnsafe().fromLegacy(new MaterialData(legacy, (byte) damage));
+        return Bukkit.getUnsafe().fromLegacy(new MaterialData(legacy, (byte) damage), asItem);
     }
 
     /**
      * Indexes the legacy materials by their old numeric id.
      *
-     * <p>Ids were reused between blocks and items, so only the block half is kept: a sign naming
-     * a block by id means the block.
+     * <p>Ids were reused between blocks and items, so each half is indexed separately and which
+     * one a sign means depends on what the chip reading it is after.
+     *
+     * @param blocksOnly true to index the blocks, false to index the items
      */
-    private static Map<Integer, Material> indexLegacyMaterials() {
+    private static Map<Integer, Material> indexLegacyMaterials(boolean blocksOnly) {
         Map<Integer, Material> byId = new HashMap<>();
         for (Material material : Material.values()) {
-            if (!material.isLegacy() || !material.isBlock()) {
+            if (!material.isLegacy() || (blocksOnly ? !material.isBlock() : !material.isItem())) {
                 continue;
             }
             byId.putIfAbsent(material.getId(), material);

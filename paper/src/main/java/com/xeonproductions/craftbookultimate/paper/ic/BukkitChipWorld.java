@@ -1,11 +1,16 @@
 package com.xeonproductions.craftbookultimate.paper.ic;
 
+import com.xeonproductions.craftbookultimate.core.entity.DroppedItem;
 import com.xeonproductions.craftbookultimate.core.entity.Traveller;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
+import com.xeonproductions.craftbookultimate.core.world.Placement;
+import com.xeonproductions.craftbookultimate.paper.adapter.Directions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import net.kyori.adventure.key.Key;
@@ -14,10 +19,14 @@ import org.bukkit.Registry;
 import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.AnaloguePowerable;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.Powerable;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Item;
+import org.bukkit.inventory.ItemStack;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -49,7 +58,7 @@ public record BukkitChipWorld(World world) implements ChipWorld {
     }
 
     @Override
-    public boolean setBlockAt(Vec3i position, Key block) {
+    public boolean setBlockAt(Vec3i position, Key block, Placement how) {
         if (!isLoaded(position) || !isInBounds(position)) {
             return false;
         }
@@ -60,12 +69,88 @@ public record BukkitChipWorld(World world) implements ChipWorld {
         }
 
         Block target = Positions.toBlock(world, position);
-        if (target.getType() == material) {
+        BlockData data = material.createBlockData();
+
+        // A block with a front is placed pointing the way it was asked to. Everything else has no
+        // facing to set, and asking for one is quietly ignored rather than refused.
+        if (data instanceof Directional directional) {
+            how.facing()
+                    .map(Directions::toServer)
+                    .filter(face -> directional.getFaces().contains(face))
+                    .ifPresent(directional::setFacing);
+        }
+
+        if (target.getType() == material && target.getBlockData().matches(data)) {
             return false;
         }
 
-        target.setType(material);
+        target.setBlockData(data, how.notifyNeighbours());
         return true;
+    }
+
+    @Override
+    public boolean canPlace(Vec3i position, Key block, Placement how) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+
+        Material material = Registry.MATERIAL.get(block);
+        if (material == null || !material.isBlock()) {
+            return false;
+        }
+
+        BlockData data = material.createBlockData();
+        if (data instanceof Directional directional) {
+            Optional<org.bukkit.block.BlockFace> face = how.facing()
+                    .map(Directions::toServer)
+                    .filter(candidate -> directional.getFaces().contains(candidate));
+            if (how.facing().isPresent() && face.isEmpty()) {
+                return false;
+            }
+            face.ifPresent(directional::setFacing);
+        }
+
+        return Positions.toBlock(world, position).canPlace(data);
+    }
+
+    @Override
+    public boolean isFullyGrown(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+        BlockData data = Positions.toBlock(world, position).getBlockData();
+        return !(data instanceof Ageable ageable) || ageable.getAge() >= ageable.getMaximumAge();
+    }
+
+    @Override
+    public Map<Key, Integer> dropsAt(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return Map.of();
+        }
+
+        Map<Key, Integer> totals = new HashMap<>();
+        for (ItemStack stack : Positions.toBlock(world, position).getDrops()) {
+            totals.merge(stack.getType().getKey(), stack.getAmount(), Integer::sum);
+        }
+        return totals;
+    }
+
+    @Override
+    public List<DroppedItem> itemsNear(Vec3i centre, int radius) {
+        if (!isLoaded(centre)) {
+            return List.of();
+        }
+        return world
+                .getNearbyEntitiesByType(Item.class, Positions.toCentre(world, centre), radius)
+                .stream()
+                .filter(Item::isValid)
+                .<DroppedItem>map(BukkitDroppedItem::new)
+                .toList();
+    }
+
+    @Override
+    public Optional<Key> resolveItem(String written) {
+        return LegacyBlocks.resolveItem(written);
     }
 
     @Override

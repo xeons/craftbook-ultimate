@@ -384,3 +384,67 @@ blocks belonging to a region it does not own, arbitrarily far away.
 **Rewrite:** a destination works out its own arrival point on its own thread and publishes it as
 a `Landing`. A transporter reads those three values and hands the traveller to the server to
 move, so it never reads a block that is not its own.
+
+## Blocks and farming
+
+### 30. Two spellings for a block with a damage value
+
+The chips that build an area read their block as `id[:damage]`, so red wool is `35:14`. The chips
+that set a single block read theirs as `type[@damage]` through a different parser, so on those
+signs the same block is `35@14`. Nothing marks the difference; it is simply two families of chip
+that grew separate parsers.
+
+**Rewrite:** `BlockReference` reads both. An `@` always separates a damage value, since no block
+name contains one, and the existing rule for `:` is unchanged. Either spelling therefore works on
+either family, and no sign already in the world has to be edited.
+
+### 31. The block replacer's output was always high
+
+`replaceBlocks` returned `traversedBlocks.size() > 0`, and the set was seeded with the block
+behind the sign before the walk began, so it could never be empty. The chip drove its output high
+on every trigger regardless of whether it had found anything to change, which makes the output
+useless for chaining.
+
+**Rewrite:** the output reports whether the block behind the sign was one of the chip's two, which
+is the question a builder is actually asking.
+
+### 32. The block replacer's configuration was not on its sign
+
+The two block states came from a pair of chat prompts when the sign was made and were kept in the
+IC's serialised data. Nothing about the chip could be read off the sign, so a player could not see
+what it was set to, and the setting was lost if the stored data was.
+
+The sign's third line was unused, and its fourth already carried `delay:mode:physics`.
+
+**Rewrite:** the pair goes on the third line as `driven|idle`, the same spelling the toggle block
+already used for its pair. Signs made under the old scheme carry no pair and need that line
+filled in; there was no way to carry the stored data across in any case.
+
+### 33. The block replacer scheduled one task per block
+
+Every block the change reached scheduled its own delayed continuation, and each of those looked at
+six neighbours and scheduled again. A wave over a few thousand blocks therefore created tens of
+thousands of scheduled tasks, all doing almost nothing.
+
+**Rewrite:** the wave is walked a ring at a time. One task per step of the delay covers the whole
+front, whatever its size, and blocks already reached are never queued twice.
+
+### 34. A crop's growth stage cannot be written as a block key
+
+The harvester matched an exact block state, so a sign reading `59:7` gathered fully grown wheat
+and left the rest. The flattening turned that pair into a single block, and a growth stage is a
+block state rather than part of the block's name, so the damage value has nowhere to go.
+
+**Rewrite:** the harvester matches the block and requires it to have finished growing. That is
+what `59:7` meant in practice, and it keeps working when a plant's number of growth stages
+changes.
+
+### 35. The planters read entities off the server thread
+
+`Planter.onTrigger` handed its work to an async batch and called `getNearbyItemsAsync`, walking
+the chunk provider's entity lists from that thread before hopping back to place the block. Reading
+entities off the server thread is unsafe on any Minecraft server, and on a regionised one it is
+unsafe even from another region's thread.
+
+**Rewrite:** a planter reads the items around it on the thread that owns them, which is its own,
+and the search goes through the world seam rather than through the chunk provider.

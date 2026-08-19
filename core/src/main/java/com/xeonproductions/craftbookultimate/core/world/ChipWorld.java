@@ -1,8 +1,10 @@
 package com.xeonproductions.craftbookultimate.core.world;
 
+import com.xeonproductions.craftbookultimate.core.entity.DroppedItem;
 import com.xeonproductions.craftbookultimate.core.entity.Traveller;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import net.kyori.adventure.key.Key;
@@ -41,9 +43,52 @@ public interface ChipWorld {
      *
      * @param position where to place
      * @param block the block's key
+     * @param how which way it should point and whether the neighbours are told
      * @return true if the world changed
      */
-    boolean setBlockAt(Vec3i position, Key block);
+    boolean setBlockAt(Vec3i position, Key block, Placement how);
+
+    /** Replaces the block at a position, the ordinary way. */
+    default boolean setBlockAt(Vec3i position, Key block) {
+        return setBlockAt(position, block, Placement.NORMAL);
+    }
+
+    /**
+     * Whether a block could legally sit at a position.
+     *
+     * <p>The game itself decides, so a chip planting something does not need its own table of
+     * what grows on what.
+     */
+    boolean canPlace(Vec3i position, Key block, Placement how);
+
+    /** Whether a block could legally sit at a position, placed the ordinary way. */
+    default boolean canPlace(Vec3i position, Key block) {
+        return canPlace(position, block, Placement.NORMAL);
+    }
+
+    /**
+     * Whether whatever grows at a position has finished growing.
+     *
+     * <p>True for anything that does not grow at all, so a chip can ask about any block and get a
+     * sensible answer.
+     */
+    boolean isFullyGrown(Vec3i position);
+
+    /**
+     * What breaking the block at a position would yield.
+     *
+     * <p>The game's own drops, so a harvested crop gives what harvesting it by hand would give
+     * rather than the crop block itself.
+     */
+    Map<Key, Integer> dropsAt(Vec3i position);
+
+    /**
+     * The items lying on the ground near a position.
+     *
+     * @param centre the block to measure from
+     * @param radius how far to look, in blocks
+     */
+    List<DroppedItem> itemsNear(Vec3i centre, int radius);
 
     /** Whether the chunk holding a position is loaded and safe to read. */
     boolean isLoaded(Vec3i position);
@@ -124,6 +169,19 @@ public interface ChipWorld {
 
     /** The length of a Minecraft day in ticks. */
     long TICKS_PER_DAY = 24_000L;
+
+    /**
+     * Works out which item a sign means.
+     *
+     * <p>The same two spellings as {@link #resolveBlock(String)}, since a sign written before the
+     * flattening names items by number too.
+     *
+     * @param written the text as it appears on the sign
+     * @return the item, or empty if the text names nothing that exists
+     */
+    default Optional<Key> resolveItem(String written) {
+        return BlockReference.parse(written).flatMap(BlockReference::asKey);
+    }
 
     /**
      * Works out which block a sign means.

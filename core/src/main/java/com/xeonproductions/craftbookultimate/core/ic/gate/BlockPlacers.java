@@ -4,11 +4,13 @@ import com.xeonproductions.craftbookultimate.core.ic.ChipState;
 import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
+import com.xeonproductions.craftbookultimate.core.sign.SignOffset;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
@@ -94,13 +96,42 @@ public final class BlockPlacers {
     }
 
     /**
+     * Takes a block out of an area and puts it in the stockpile, without ever putting one back.
+     *
+     * <p>Line 3 names the block and line 4 reads {@code width:length:height} with an optional
+     * {@code /verticalOffset}, which defaults to one so the area sits just above the sign.
+     *
+     * <p>It harvests as its input drops rather than while held, so a clock on it gathers a crop
+     * once per pulse. Only fully grown plants are taken, and what goes into the stockpile is what
+     * breaking the block by hand would have dropped.
+     */
+    public static ICLogic harvester() {
+        return new Harvester();
+    }
+
+    /**
      * Sets a single block at an offset from the block the sign hangs on.
      *
-     * <p>Line 2 reads {@code x:y:z:block}. Unlike the fixed setters this one pays for what it
-     * places out of the chip's stockpile and refunds it when the chip goes idle.
+     * <p>Line 3 reads {@code offset:block}, where the offset is one axis step such as {@code Y+1}
+     * and the block may carry a damage value as {@code wool@14}. Line 4 reading {@code h} makes
+     * the block follow the input, so it is taken away again when the chip goes idle; without it
+     * the block is placed once and left.
+     *
+     * <p>Unlike the fixed setters this one pays for what it places out of the chip's stockpile,
+     * and is refunded when it takes the block away.
      */
     public static ICLogic flexSet() {
-        return new FlexSetter();
+        return new FlexSetter(true);
+    }
+
+    /**
+     * Sets a single block as {@link #flexSet()} does, without paying for it.
+     *
+     * <p>Conjuring the block is also why this one replaces whatever is already there rather than
+     * only filling air.
+     */
+    public static ICLogic flexSetAdmin() {
+        return new FlexSetter(false);
     }
 
     /** Which way a chip's two configured dimensions run. */
@@ -130,7 +161,7 @@ public final class BlockPlacers {
                 return;
             }
 
-            if (!isAuthorised(state, area, block.get())) {
+            if (!isAuthorised(state, area, block.get(), forcing)) {
                 return;
             }
 
@@ -139,26 +170,6 @@ public final class BlockPlacers {
             } else {
                 clear(state, area, block.get());
             }
-        }
-
-        /**
-         * Whether the chip may act, authorising it if it has become able to.
-         *
-         * <p>An unauthorised chip whose area still holds the block it places stays unauthorised
-         * and does nothing.
-         */
-        private boolean isAuthorised(ChipState state, List<Vec3i> area, Key block) {
-            String identifier = state.sign().trimmedText(IDENTIFIER_LINE);
-            if (forcing || identifier.indexOf(AUTHORISATION_FLAG) < 0) {
-                return true;
-            }
-
-            if (areaContains(state.world(), area, block)) {
-                return false;
-            }
-
-            state.setSignLine(IDENTIFIER_LINE, identifier.replace(String.valueOf(AUTHORISATION_FLAG), ""));
-            return true;
         }
 
         /**
@@ -224,35 +235,6 @@ public final class BlockPlacers {
             }
         }
 
-        /**
-         * The blocks this chip acts on, in the order it acts on them.
-         *
-         * <p>Ordered outward from the sign, so a chip that runs out of materials leaves a
-         * structure that reaches part of the way rather than one that starts in mid-air. The
-         * order does not depend on which way the sign happens to face.
-         */
-        private List<Vec3i> areaOf(ChipState state, Dimensions dimensions) {
-            BlockFace away = state.facing().opposite();
-            BlockFace across = away.rotateClockwise();
-
-            Vec3i origin = state.signPosition()
-                    .offset(away, AREA_START_OFFSET)
-                    .offset(across, -(dimensions.width() / 2))
-                    .add(0, dimensions.verticalOffset(), 0);
-
-            List<Vec3i> positions = new ArrayList<>(
-                    dimensions.width() * dimensions.length() * dimensions.height());
-
-            for (int along = 0; along < dimensions.length(); along++) {
-                for (int side = 0; side < dimensions.width(); side++) {
-                    for (int up = 0; up < dimensions.height(); up++) {
-                        positions.add(origin.offset(away, along).offset(across, side).add(0, up, 0));
-                    }
-                }
-            }
-            return positions;
-        }
-
         /** Reads the two configured dimensions and the optional vertical offset. */
         private Optional<Dimensions> readDimensions(ChipState state) {
             String[] parts = state.sign().trimmedText(DIMENSIONS_LINE).split(":");
@@ -277,34 +259,197 @@ public final class BlockPlacers {
             }
         }
 
-        /** Whether a position can be built into, which means air or a liquid. */
-        private static boolean canBuildThrough(ChipWorld world, Vec3i position) {
-            return world.isAir(position) || world.isWater(position) || world.isLava(position);
-        }
+    }
 
-        /** Whether the area holds the block anywhere. */
-        private static boolean areaContains(ChipWorld world, List<Vec3i> area, Key block) {
-            for (Vec3i position : area) {
-                if (world.blockAt(position).equals(block)) {
-                    return true;
+    /**
+     * The blocks a chip acts on, in the order it acts on them.
+     *
+     * <p>Ordered outward from the sign, so a chip that runs out of materials leaves a structure
+     * that reaches part of the way rather than one that starts in mid-air. The order does not
+     * depend on which way the sign happens to face.
+     */
+    private static List<Vec3i> areaOf(ChipState state, Dimensions dimensions) {
+        BlockFace away = state.facing().opposite();
+        BlockFace across = away.rotateClockwise();
+
+        Vec3i origin = state.signPosition()
+                .offset(away, AREA_START_OFFSET)
+                .offset(across, -(dimensions.width() / 2))
+                .add(0, dimensions.verticalOffset(), 0);
+
+        List<Vec3i> positions = new ArrayList<>(
+                dimensions.width() * dimensions.length() * dimensions.height());
+
+        for (int along = 0; along < dimensions.length(); along++) {
+            for (int side = 0; side < dimensions.width(); side++) {
+                for (int up = 0; up < dimensions.height(); up++) {
+                    positions.add(origin.offset(away, along).offset(across, side).add(0, up, 0));
                 }
             }
+        }
+        return positions;
+    }
+
+    /**
+     * Whether a chip may act, authorising it if it has become able to.
+     *
+     * <p>An unauthorised chip whose area still holds the block it works with stays unauthorised
+     * and does nothing.
+     */
+    private static boolean isAuthorised(ChipState state, List<Vec3i> area, Key block, boolean forcing) {
+        String identifier = state.sign().trimmedText(IDENTIFIER_LINE);
+        if (forcing || identifier.indexOf(AUTHORISATION_FLAG) < 0) {
+            return true;
+        }
+
+        if (areaContains(state.world(), area, block)) {
             return false;
         }
 
+        state.setSignLine(IDENTIFIER_LINE, identifier.replace(String.valueOf(AUTHORISATION_FLAG), ""));
+        return true;
+    }
+
+    /** Whether a position can be built into, which means air or a liquid. */
+    private static boolean canBuildThrough(ChipWorld world, Vec3i position) {
+        return world.isAir(position) || world.isWater(position) || world.isLava(position);
+    }
+
+    /** Whether the area holds the block anywhere. */
+    private static boolean areaContains(ChipWorld world, List<Vec3i> area, Key block) {
+        for (Vec3i position : area) {
+            if (world.blockAt(position).equals(block)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether every block of an area can be reached.
+     *
+     * <p>A chip that reached into unloaded chunks would either pull them in or build half a
+     * structure, so it does nothing instead.
+     */
+    private static boolean isEntirelyLoaded(ChipWorld world, List<Vec3i> area) {
+        for (Vec3i position : area) {
+            if (!world.isLoaded(position) || !world.isInBounds(position)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Gathers a crop out of an area.
+     *
+     * <p>Never places anything: it exists to take what has grown and put it away. Harvesting
+     * happens as the input drops rather than while it is held, so a clock on it gathers once per
+     * pulse instead of continuously.
+     */
+    private static final class Harvester implements ICLogic {
+
+        /** The furthest the area may reach along any one side. */
+        private static final int MAX_SIDE = 64;
+
+        @Override
+        public void trigger(ChipState state) {
+            if (state.isAnyInputActive()) {
+                return;
+            }
+
+            Optional<Key> crop = state.world().resolveBlock(state.sign().trimmedText(BLOCK_LINE));
+            Optional<Dimensions> dimensions = readHarvestArea(state);
+            if (crop.isEmpty() || dimensions.isEmpty()) {
+                return;
+            }
+
+            List<Vec3i> area = areaOf(state, dimensions.get());
+            if (!isEntirelyLoaded(state.world(), area)) {
+                return;
+            }
+            if (!isAuthorised(state, area, crop.get(), false)) {
+                return;
+            }
+
+            harvest(state, area, crop.get());
+        }
+
         /**
-         * Whether every block of the area can be reached.
+         * Takes every grown plant of the right kind, putting what it drops into the stockpile.
          *
-         * <p>A chip that reached into unloaded chunks would either pull them in or build half a
-         * structure, so it does nothing instead.
+         * <p>A plant is left standing when there is nowhere to put what it would drop, so nothing
+         * is destroyed for want of room.
          */
-        private static boolean isEntirelyLoaded(ChipWorld world, List<Vec3i> area) {
+        private static void harvest(ChipState state, List<Vec3i> area, Key crop) {
+            ChipWorld world = state.world();
+            Stockpile stockpile = state.stockpile();
+            boolean gathered = false;
+
             for (Vec3i position : area) {
-                if (!world.isLoaded(position) || !world.isInBounds(position)) {
+                if (!world.blockAt(position).equals(crop) || !world.isFullyGrown(position)) {
+                    continue;
+                }
+
+                Map<Key, Integer> yield = world.dropsAt(position);
+                if (!hasRoomForAll(stockpile, yield)) {
+                    continue;
+                }
+                if (!world.setBlockAt(position, Blocks.AIR_KEY)) {
+                    continue;
+                }
+
+                yield.forEach(stockpile::give);
+                gathered = true;
+            }
+
+            state.setMainOutput(gathered);
+        }
+
+        private static boolean hasRoomForAll(Stockpile stockpile, Map<Key, Integer> yield) {
+            if (stockpile.isUnlimited()) {
+                return true;
+            }
+            for (Map.Entry<Key, Integer> entry : yield.entrySet()) {
+                if (!stockpile.hasRoomFor(entry.getKey(), entry.getValue())) {
                     return false;
                 }
             }
             return true;
+        }
+
+        /**
+         * Reads {@code width:length:height} with an optional {@code /verticalOffset}.
+         *
+         * <p>The offset defaults to one rather than zero, which puts the area just above the
+         * sign's own level, where a crop planted alongside it grows.
+         */
+        private static Optional<Dimensions> readHarvestArea(ChipState state) {
+            String line = state.sign().trimmedText(DIMENSIONS_LINE);
+
+            int slash = line.indexOf('/');
+            String sides = slash < 0 ? line : line.substring(0, slash);
+            String offset = slash < 0 ? "" : line.substring(slash + 1);
+
+            String[] parts = sides.split(":");
+            if (parts.length != 3) {
+                return Optional.empty();
+            }
+
+            try {
+                int width = Integer.parseInt(parts[0].trim());
+                int length = Integer.parseInt(parts[1].trim());
+                int height = Integer.parseInt(parts[2].trim());
+                int verticalOffset = offset.isBlank() ? 1 : Integer.parseInt(offset.trim());
+
+                if (width < 1 || length < 1 || height < 1
+                        || width > MAX_SIDE || length > MAX_SIDE || height > MAX_SIDE) {
+                    return Optional.empty();
+                }
+                return Optional.of(new Dimensions(width, length, height, verticalOffset));
+            } catch (NumberFormatException e) {
+                return Optional.empty();
+            }
         }
     }
 
@@ -347,66 +492,96 @@ public final class BlockPlacers {
         }
     }
 
-    /** Sets one block at a configured offset, paying for it out of the stockpile. */
-    private static final class FlexSetter implements ICLogic {
+    /**
+     * Sets one block at a configured offset from the block the sign hangs on.
+     *
+     * <p>Line 3 is the offset and the block, separated by the first colon on the line. The block
+     * may carry a damage value after an {@code @}, which is how a sign written before the
+     * flattening names a variant.
+     *
+     * <p>Line 4 reading {@code h} makes the block follow the input rather than being placed once
+     * and left. Without it, dropping the input leaves the block where it is.
+     *
+     * @param paying whether the block is taken from and returned to the chip's stockpile
+     */
+    private record FlexSetter(boolean paying) implements ICLogic {
 
-        /** How many parts line 2 has: three offsets and a block name. */
-        private static final int CONFIG_PARTS = 4;
+        /** The line carrying the offset and the block. */
+        private static final int CONFIG_LINE = 2;
 
-        /**
-         * The block part of the line, which is everything after the three offsets.
-         *
-         * <p>Rejoined rather than taken as one field, because a block written the old way carries
-         * its own colon, as in {@code 0:1:0:35:14}.
-         */
-        private static String legacyAwareBlockPart(String[] parts) {
-            StringBuilder block = new StringBuilder(parts[3].trim());
-            for (int i = CONFIG_PARTS; i < parts.length; i++) {
-                block.append(':').append(parts[i].trim());
-            }
-            return block.toString();
-        }
+        /** The line that makes the block follow the input. */
+        private static final int HOLD_LINE = 3;
+
+        /** What line 4 has to read for the block to be taken away again. */
+        private static final String HOLD = "h";
 
         @Override
         public void trigger(ChipState state) {
-            String[] parts = state.sign().trimmedText(BLOCK_LINE).split(":");
-            if (parts.length < CONFIG_PARTS) {
+            String line = state.sign().trimmedText(CONFIG_LINE);
+            int separator = line.indexOf(':');
+            if (separator < 0) {
                 return;
             }
 
-            Optional<Key> block = state.world().resolveBlock(legacyAwareBlockPart(parts));
-            if (block.isEmpty()) {
+            Optional<Vec3i> offset = SignOffset.parse(line.substring(0, separator));
+            Optional<Key> block = state.world().resolveBlock(line.substring(separator + 1));
+            if (offset.isEmpty() || block.isEmpty()) {
                 return;
             }
 
-            Vec3i target;
-            try {
-                target = state.backPosition().add(
-                        Integer.parseInt(parts[0].trim()),
-                        Integer.parseInt(parts[1].trim()),
-                        Integer.parseInt(parts[2].trim()));
-            } catch (NumberFormatException e) {
-                return;
-            }
-
+            Vec3i target = state.backPosition().add(offset.get());
             ChipWorld world = state.world();
             if (!world.isLoaded(target) || !world.isInBounds(target)) {
                 return;
             }
 
-            Stockpile stockpile = state.stockpile();
-
             if (state.isAnyInputActive()) {
-                if (!world.isAir(target) || !stockpile.takeAll(block.get(), 1)) {
-                    return;
-                }
-                if (!world.setBlockAt(target, block.get())) {
-                    stockpile.give(block.get(), 1);
-                }
-            } else if (world.blockAt(target).equals(block.get())
-                    && (stockpile.isUnlimited() || stockpile.hasRoomFor(block.get(), 1))
+                place(state, target, block.get());
+            } else if (state.sign().trimmedText(HOLD_LINE).equalsIgnoreCase(HOLD)) {
+                remove(state, target, block.get());
+            }
+        }
+
+        /**
+         * Puts the block down.
+         *
+         * <p>A paying chip only fills air, so it cannot be pointed at somebody's wall and used to
+         * replace it. One that conjures its block replaces whatever is there, which is why it
+         * needs elevated permission.
+         */
+        private void place(ChipState state, Vec3i target, Key block) {
+            ChipWorld world = state.world();
+            if (world.blockAt(target).equals(block)) {
+                return;
+            }
+            if (!paying) {
+                world.setBlockAt(target, block);
+                return;
+            }
+
+            if (!world.isAir(target) || !state.stockpile().takeAll(block, 1)) {
+                return;
+            }
+            if (!world.setBlockAt(target, block)) {
+                state.stockpile().give(block, 1);
+            }
+        }
+
+        /** Takes the block away again, refunding it if the chip paid for it. */
+        private void remove(ChipState state, Vec3i target, Key block) {
+            ChipWorld world = state.world();
+            if (!world.blockAt(target).equals(block)) {
+                return;
+            }
+            if (!paying) {
+                world.setBlockAt(target, Blocks.AIR_KEY);
+                return;
+            }
+
+            Stockpile stockpile = state.stockpile();
+            if ((stockpile.isUnlimited() || stockpile.hasRoomFor(block, 1))
                     && world.setBlockAt(target, Blocks.AIR_KEY)) {
-                stockpile.give(block.get(), 1);
+                stockpile.give(block, 1);
             }
         }
     }

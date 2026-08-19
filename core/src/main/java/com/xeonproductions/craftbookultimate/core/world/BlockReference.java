@@ -26,6 +26,15 @@ public record BlockReference(String name, int damage, boolean numericId) {
     /** Separates a block from its damage value, and a namespace from its path. */
     private static final char SEPARATOR = ':';
 
+    /**
+     * The other separator between a block and its damage value.
+     *
+     * <p>Two sign formats grew up side by side: the area-building chips write {@code 35:14} and
+     * the ones that set a single block write {@code 35@14}. Both are on signs in the world, and
+     * an {@code @} never appears in a block name, so both are read here.
+     */
+    private static final char AT_SEPARATOR = '@';
+
     public BlockReference {
         name = name.trim().toLowerCase(Locale.ROOT).replace(' ', '_');
         if (name.isEmpty()) {
@@ -46,10 +55,12 @@ public record BlockReference(String name, int damage, boolean numericId) {
      *   minecraft:red_wool a fully qualified block name
      *   35:14              a legacy numeric id and damage value
      *   wool:14            a legacy block name and damage value
+     *   35@14              the same, in the spelling the single-block chips use
      * </pre>
      *
      * <p>A qualified name is told apart from a name with a damage value by what follows the
-     * colon: a number means a damage value, anything else means a path within a namespace.
+     * colon: a number means a damage value, anything else means a path within a namespace. An
+     * {@code @} always separates a damage value, since no block name contains one.
      *
      * @return the reference, or empty if the text names nothing usable
      */
@@ -57,6 +68,12 @@ public record BlockReference(String name, int damage, boolean numericId) {
         String cleaned = text.trim();
         if (cleaned.isEmpty()) {
             return Optional.empty();
+        }
+
+        int at = cleaned.lastIndexOf(AT_SEPARATOR);
+        if (at >= 0) {
+            return asWholeNumber(cleaned.substring(at + 1))
+                    .flatMap(damage -> of(cleaned.substring(0, at), damage));
         }
 
         int separator = cleaned.lastIndexOf(SEPARATOR);

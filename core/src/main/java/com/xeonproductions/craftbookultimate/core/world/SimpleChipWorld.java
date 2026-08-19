@@ -1,12 +1,15 @@
 package com.xeonproductions.craftbookultimate.core.world;
 
+import com.xeonproductions.craftbookultimate.core.entity.DroppedItem;
 import com.xeonproductions.craftbookultimate.core.entity.Traveller;
+import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import net.kyori.adventure.key.Key;
@@ -35,7 +38,14 @@ public final class SimpleChipWorld implements ChipWorld {
     private final Map<Vec3i, List<Traveller>> travellers = new HashMap<>();
     private final Set<Vec3i> pressedPlates = new HashSet<>();
     private final Set<Vec3i> passable = new HashSet<>();
+    private final Set<Vec3i> growing = new HashSet<>();
+    private final Set<Vec3i> plantable = new HashSet<>();
+    private final Map<Vec3i, Map<Key, Integer>> drops = new HashMap<>();
+    private final Map<Vec3i, BlockFace> facings = new HashMap<>();
+    private final Set<Vec3i> silentlyPlaced = new HashSet<>();
+    private final List<PlacedItem> items = new ArrayList<>();
 
+    private BlockFace acceptedFacing = BlockFace.NORTH;
     private int minHeight = DEFAULT_MIN_HEIGHT;
     private int maxHeight = DEFAULT_MAX_HEIGHT;
     private int ambientLight = DEFAULT_LIGHT;
@@ -59,12 +69,54 @@ public final class SimpleChipWorld implements ChipWorld {
     }
 
     @Override
-    public boolean setBlockAt(Vec3i position, Key block) {
+    public boolean setBlockAt(Vec3i position, Key block, Placement how) {
         if (!isLoaded(position) || !isInBounds(position)) {
             return false;
         }
         Key previous = blocks.put(position, block);
+        how.facing().ifPresent(face -> facings.put(position, face));
+        if (how.notifyNeighbours()) {
+            silentlyPlaced.remove(position);
+        } else {
+            silentlyPlaced.add(position);
+        }
         return !block.equals(previous);
+    }
+
+    @Override
+    public boolean canPlace(Vec3i position, Key block, Placement how) {
+        // Nothing here knows the game's placement rules, so a test says which positions accept a
+        // block and everywhere else refuses.
+        return isLoaded(position)
+                && isInBounds(position)
+                && plantable.contains(position)
+                && how.facing().map(face -> face == acceptedFacing).orElse(true);
+    }
+
+    @Override
+    public boolean isFullyGrown(Vec3i position) {
+        return !growing.contains(position);
+    }
+
+    @Override
+    public Map<Key, Integer> dropsAt(Vec3i position) {
+        Map<Key, Integer> yielded = drops.get(position);
+        if (yielded != null) {
+            return Map.copyOf(yielded);
+        }
+        // With nothing said about it, a block yields itself, which is what most of them do.
+        return isAir(position) ? Map.of() : Map.of(blockAt(position), 1);
+    }
+
+    @Override
+    public List<DroppedItem> itemsNear(Vec3i centre, int radius) {
+        List<DroppedItem> found = new ArrayList<>();
+        for (PlacedItem placed : items) {
+            if (placed.item().isPresent() && placed.position().chebyshevDistance(centre) <= radius) {
+                found.add(placed.item());
+            }
+        }
+        return found;
     }
 
     @Override
@@ -169,6 +221,46 @@ public final class SimpleChipWorld implements ChipWorld {
         return this;
     }
 
+    /** Marks a position as somewhere the game would allow a block to be placed. */
+    public SimpleChipWorld withPlantable(Vec3i position) {
+        plantable.add(position);
+        return this;
+    }
+
+    /** Sets which facing a block that has one is allowed to be placed with. */
+    public SimpleChipWorld withAcceptedFacing(BlockFace face) {
+        this.acceptedFacing = face;
+        return this;
+    }
+
+    /** Marks whatever is at a position as still growing. */
+    public SimpleChipWorld withGrowing(Vec3i position) {
+        growing.add(position);
+        return this;
+    }
+
+    /** Says what breaking the block at a position yields. */
+    public SimpleChipWorld withDrops(Vec3i position, Map<Key, Integer> yielded) {
+        drops.put(position, Map.copyOf(yielded));
+        return this;
+    }
+
+    /** Drops a stack of items on the ground. */
+    public SimpleChipWorld withDroppedItem(Vec3i position, DroppedItem item) {
+        items.add(new PlacedItem(position, item));
+        return this;
+    }
+
+    /** Which way the block at a position was placed, if a chip gave it a facing. */
+    public Optional<BlockFace> facingAt(Vec3i position) {
+        return Optional.ofNullable(facings.get(position));
+    }
+
+    /** Whether the block at a position was placed without telling its neighbours. */
+    public boolean wasPlacedSilently(Vec3i position) {
+        return silentlyPlaced.contains(position);
+    }
+
     /** Puts someone in a block, where a chip that moves people will find them. */
     public SimpleChipWorld withTraveller(Vec3i position, Traveller traveller) {
         travellers.computeIfAbsent(position, ignored -> new ArrayList<>()).add(traveller);
@@ -210,6 +302,9 @@ public final class SimpleChipWorld implements ChipWorld {
         this.maxHeight = maxHeight;
         return this;
     }
+
+    /** A stack of items and where it is lying. */
+    private record PlacedItem(Vec3i position, DroppedItem item) {}
 
     /** The number of blocks explicitly placed, which is what a test asserts changes against. */
     public int placedBlockCount() {

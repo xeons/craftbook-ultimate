@@ -84,6 +84,33 @@ class BlockReferenceTest {
         }
 
         @Test
+        void readsTheAtSpelling() {
+            // The chips that set a single block write the damage value after an at sign.
+            BlockReference reference = BlockReference.parse("35@14").orElseThrow();
+
+            assertThat(reference.isNumericId()).isTrue();
+            assertThat(reference.id()).contains(35);
+            assertThat(reference.damage()).isEqualTo(14);
+        }
+
+        @Test
+        void readsANameWithAnAtDamageValue() {
+            BlockReference reference = BlockReference.parse("wool@14").orElseThrow();
+
+            assertThat(reference.name()).isEqualTo("wool");
+            assertThat(reference.damage()).isEqualTo(14);
+            assertThat(reference.isNumericId()).isFalse();
+        }
+
+        @Test
+        void readsAQualifiedNameWithAnAtDamageValue() {
+            BlockReference reference = BlockReference.parse("minecraft:wool@14").orElseThrow();
+
+            assertThat(reference.name()).isEqualTo("minecraft:wool");
+            assertThat(reference.damage()).isEqualTo(14);
+        }
+
+        @Test
         void hasNoModernKeyForANumericId() {
             // A numeric id means nothing without the server's flattening tables.
             assertThat(BlockReference.parse("35:14").orElseThrow().asKey()).isEmpty();
@@ -127,7 +154,7 @@ class BlockReferenceTest {
     class Rejection {
 
         @ParameterizedTest(name = "\"{0}\"")
-        @ValueSource(strings = {"", "   ", ":", ":14"})
+        @ValueSource(strings = {"", "   ", ":", ":14", "@14", "wool@x"})
         void rejectsTextThatNamesNothing(String written) {
             assertThat(BlockReference.parse(written)).isEmpty();
         }

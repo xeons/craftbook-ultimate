@@ -6,9 +6,9 @@ A ground-up rewrite of CraftBook for **Paper 26.x** on **Java 25**, in the names
 ## Project status
 
 **Phase: chips run in game. Writing a recognised model reference on a wall sign creates a
-working chip that responds to redstone and to the passage of time, places blocks, drives wireless
-bands and moves people between named pads. The chips that spawn or harm entities, the ones that
-talk to players, and the mechanics have not been started.**
+working chip that responds to redstone and to the passage of time, places and swaps blocks, farms,
+drives wireless bands and moves people between named pads. The chips that spawn or harm entities,
+the ones that talk to players, and the mechanics have not been started.**
 
 | Area | State |
 | --- | --- |
@@ -23,7 +23,7 @@ talk to players, and the mechanics have not been started.**
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (58 chips) | Done |
+| IC catalogue wiring (61 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
@@ -36,13 +36,15 @@ talk to players, and the mechanics have not been started.**
 | Shared chip registries (`ChipServices`, `Radio`, `Destinations`) | Done |
 | Entity seam: finding and moving people (`Traveller`) | Done |
 | Block placing chips (bridge, door, flex set, set above/below) | Done |
+| Block swapping chips (toggle block, block replacer) | Done |
+| Harvesting and planting (harvester, planter, area planter) | Done |
 | Wireless bands (transmitter, receiver, analog transmitter) | Done |
 | Transporters and destinations | Done |
 | World-changing ICs (entities, messaging) | Not started |
 | Mechanics | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**691 tests passing**.
+**784 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 

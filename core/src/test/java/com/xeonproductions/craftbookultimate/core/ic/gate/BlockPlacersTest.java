@@ -11,6 +11,7 @@ import com.xeonproductions.craftbookultimate.core.stock.SimpleStockpile;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpiles;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import com.xeonproductions.craftbookultimate.core.world.SimpleChipWorld;
+import java.util.Map;
 import net.kyori.adventure.key.Key;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -353,5 +354,308 @@ class BlockPlacersTest {
         bridge.trigger(state);
 
         assertThat(world.blockAt(inArea(4, 0, 0))).isEqualTo(STONE);
+    }
+
+    @Nested
+    @DisplayName("harvester")
+    class Harvester {
+
+        private static final Key WHEAT = Blocks.key("wheat");
+        private static final Key SEEDS = Blocks.key("wheat_seeds");
+
+        private SimpleChipState.Builder chip(
+                SimpleChipWorld world, SimpleStockpile stockpile, String area) {
+            return SimpleChipState.forLayout(PinLayout.AISO)
+                    .at(SIGN, BlockFace.SOUTH)
+                    .world(world)
+                    .stockpile(stockpile)
+                    .sign("HARVESTER", "[MCX213]", "wheat", area);
+        }
+
+        /** A row of three grown crops, which is where a 1:3:1 area sits. */
+        private SimpleChipWorld rowOfWheat() {
+            return new SimpleChipWorld()
+                    .withBlock(inArea(2, 0, 1), WHEAT)
+                    .withBlock(inArea(3, 0, 1), WHEAT)
+                    .withBlock(inArea(4, 0, 1), WHEAT);
+        }
+
+        @Test
+        void gathersTheCropWhenItsInputDrops() {
+            SimpleChipWorld world = rowOfWheat();
+            SimpleStockpile stockpile = SimpleStockpile.empty();
+            SimpleChipState state = chip(world, stockpile, "1:3:1")
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.harvester().trigger(state);
+
+            assertThat(world.blockAt(inArea(2, 0, 1))).isEqualTo(Blocks.AIR_KEY);
+            assertThat(world.blockAt(inArea(4, 0, 1))).isEqualTo(Blocks.AIR_KEY);
+            assertThat(stockpile.count(WHEAT)).isEqualTo(3);
+            assertThat(state.output(0)).isTrue();
+        }
+
+        @Test
+        void gathersNothingWhileItIsDriven() {
+            SimpleChipWorld world = rowOfWheat();
+            SimpleChipState state = chip(world, SimpleStockpile.empty(), "1:3:1")
+                    .inputs(true, false, false, false)
+                    .build();
+
+            BlockPlacers.harvester().trigger(state);
+
+            assertThat(world.blockAt(inArea(2, 0, 1))).isEqualTo(WHEAT);
+        }
+
+        @Test
+        void neverPutsAnythingBack() {
+            // Unlike a bridge it only ever takes, so a cleared area stays cleared.
+            SimpleChipWorld world = new SimpleChipWorld();
+            SimpleStockpile stockpile = SimpleStockpile.empty().with(WHEAT, 64);
+            SimpleChipState state = chip(world, stockpile, "1:3:1")
+                    .inputs(true, false, false, false)
+                    .build();
+
+            BlockPlacers.harvester().trigger(state);
+
+            assertThat(world.placedBlockCount()).isZero();
+            assertThat(stockpile.count(WHEAT)).isEqualTo(64);
+        }
+
+        @Test
+        void leavesWhatHasNotFinishedGrowing() {
+            SimpleChipWorld world = rowOfWheat().withGrowing(inArea(3, 0, 1));
+            SimpleStockpile stockpile = SimpleStockpile.empty();
+            SimpleChipState state = chip(world, stockpile, "1:3:1")
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.harvester().trigger(state);
+
+            assertThat(world.blockAt(inArea(3, 0, 1))).isEqualTo(WHEAT);
+            assertThat(stockpile.count(WHEAT)).isEqualTo(2);
+        }
+
+        @Test
+        void putsAwayWhatTheCropActuallyDrops() {
+            SimpleChipWorld world = new SimpleChipWorld()
+                    .withBlock(inArea(2, 0, 1), WHEAT)
+                    .withDrops(inArea(2, 0, 1), Map.of(WHEAT, 1, SEEDS, 2));
+            SimpleStockpile stockpile = SimpleStockpile.empty();
+            SimpleChipState state = chip(world, stockpile, "1:1:1")
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.harvester().trigger(state);
+
+            assertThat(stockpile.count(WHEAT)).isEqualTo(1);
+            assertThat(stockpile.count(SEEDS)).isEqualTo(2);
+        }
+
+        @Test
+        void leavesACropStandingWithNowhereToPutIt() {
+            SimpleChipWorld world = rowOfWheat();
+            SimpleChipState state = chip(world, SimpleStockpile.withCapacity(0), "1:3:1")
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.harvester().trigger(state);
+
+            assertThat(world.blockAt(inArea(2, 0, 1))).isEqualTo(WHEAT);
+            assertThat(state.output(0)).isFalse();
+        }
+
+        @Test
+        void ignoresAnythingThatIsNotTheCropItWasToldAbout() {
+            SimpleChipWorld world = rowOfWheat().withBlock(inArea(3, 0, 1), STONE);
+            SimpleStockpile stockpile = SimpleStockpile.empty();
+            SimpleChipState state = chip(world, stockpile, "1:3:1")
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.harvester().trigger(state);
+
+            assertThat(world.blockAt(inArea(3, 0, 1))).isEqualTo(STONE);
+            assertThat(stockpile.count(WHEAT)).isEqualTo(2);
+        }
+
+        @Test
+        void sitsJustAboveTheSignUnlessToldOtherwise() {
+            // The area's default vertical offset is one, not zero.
+            SimpleChipWorld world = new SimpleChipWorld().withBlock(inArea(2, 0, 0), WHEAT);
+            SimpleStockpile stockpile = SimpleStockpile.empty();
+            SimpleChipState state = chip(world, stockpile, "1:1:1")
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.harvester().trigger(state);
+
+            assertThat(world.blockAt(inArea(2, 0, 0))).isEqualTo(WHEAT);
+        }
+
+        @Test
+        void takesItsVerticalOffsetAfterASlash() {
+            SimpleChipWorld world = new SimpleChipWorld().withBlock(inArea(2, 0, 0), WHEAT);
+            SimpleStockpile stockpile = SimpleStockpile.empty();
+            SimpleChipState state = chip(world, stockpile, "1:1:1/0")
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.harvester().trigger(state);
+
+            assertThat(world.blockAt(inArea(2, 0, 0))).isEqualTo(Blocks.AIR_KEY);
+            assertThat(stockpile.count(WHEAT)).isEqualTo(1);
+        }
+
+        @Test
+        void refusesAnAreaItCannotRead() {
+            SimpleChipWorld world = rowOfWheat();
+            SimpleChipState state = chip(world, SimpleStockpile.empty(), "1:3")
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.harvester().trigger(state);
+
+            assertThat(world.blockAt(inArea(2, 0, 1))).isEqualTo(WHEAT);
+        }
+
+        @Test
+        void waitsUntilItsAreaIsClearWhenItIsUnauthorised() {
+            SimpleChipWorld world = rowOfWheat();
+            SimpleChipState state = SimpleChipState.forLayout(PinLayout.AISO)
+                    .at(SIGN, BlockFace.SOUTH)
+                    .world(world)
+                    .stockpile(SimpleStockpile.empty())
+                    .sign("HARVESTER", "[MCX213]*", "wheat", "1:3:1")
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.harvester().trigger(state);
+
+            assertThat(world.blockAt(inArea(2, 0, 1))).isEqualTo(WHEAT);
+        }
+    }
+
+    @Nested
+    @DisplayName("flex set")
+    class FlexSet {
+
+        /** One above the block the sign hangs on, which is where {@code Y+1} points. */
+        private static final Vec3i TARGET = new Vec3i(0, 65, -1);
+
+        private SimpleChipState.Builder chip(
+                SimpleChipWorld world, SimpleStockpile stockpile, String config, String hold) {
+            return SimpleChipState.forLayout(PinLayout.AISO)
+                    .at(SIGN, BlockFace.SOUTH)
+                    .world(world)
+                    .stockpile(stockpile)
+                    .sign("FLEX SET", "[MCX206]", config, hold);
+        }
+
+        @Test
+        void readsAnOffsetAndABlockFromOneLine() {
+            SimpleChipWorld world = new SimpleChipWorld();
+            SimpleStockpile stockpile = SimpleStockpile.empty().with(STONE, 4);
+            SimpleChipState state = chip(world, stockpile, "Y+1:stone", "")
+                    .inputs(true, false, false, false)
+                    .build();
+
+            BlockPlacers.flexSet().trigger(state);
+
+            assertThat(world.blockAt(TARGET)).isEqualTo(STONE);
+            assertThat(stockpile.count(STONE)).isEqualTo(3);
+        }
+
+        @Test
+        void leavesTheBlockWhereItIsWhenTheInputDrops() {
+            SimpleChipWorld world = new SimpleChipWorld().withBlock(TARGET, STONE);
+            SimpleStockpile stockpile = SimpleStockpile.empty();
+            SimpleChipState state = chip(world, stockpile, "Y+1:stone", "")
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.flexSet().trigger(state);
+
+            assertThat(world.blockAt(TARGET)).isEqualTo(STONE);
+        }
+
+        @Test
+        void takesTheBlockBackWhenToldToHold() {
+            SimpleChipWorld world = new SimpleChipWorld().withBlock(TARGET, STONE);
+            SimpleStockpile stockpile = SimpleStockpile.empty();
+            SimpleChipState state = chip(world, stockpile, "Y+1:stone", "h")
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.flexSet().trigger(state);
+
+            assertThat(world.blockAt(TARGET)).isEqualTo(Blocks.AIR_KEY);
+            assertThat(stockpile.count(STONE)).isEqualTo(1);
+        }
+
+        @Test
+        void onlyFillsAir() {
+            SimpleChipWorld world = new SimpleChipWorld().withBlock(TARGET, Blocks.key("dirt"));
+            SimpleStockpile stockpile = SimpleStockpile.empty().with(STONE, 4);
+            SimpleChipState state = chip(world, stockpile, "Y+1:stone", "")
+                    .inputs(true, false, false, false)
+                    .build();
+
+            BlockPlacers.flexSet().trigger(state);
+
+            assertThat(world.blockAt(TARGET)).isEqualTo(Blocks.key("dirt"));
+            assertThat(stockpile.count(STONE)).isEqualTo(4);
+        }
+
+        @Test
+        void doesNothingWithoutTheBlockToPlace() {
+            SimpleChipWorld world = new SimpleChipWorld();
+            SimpleChipState state = chip(world, SimpleStockpile.empty(), "Y+1:stone", "")
+                    .inputs(true, false, false, false)
+                    .build();
+
+            BlockPlacers.flexSet().trigger(state);
+
+            assertThat(world.blockAt(TARGET)).isEqualTo(Blocks.AIR_KEY);
+        }
+
+        @Test
+        void reachesAlongWhicheverAxisItWasGiven() {
+            SimpleChipWorld world = new SimpleChipWorld();
+            SimpleChipState state = chip(world, SimpleStockpile.empty().with(STONE, 4), "X-2:stone", "")
+                    .inputs(true, false, false, false)
+                    .build();
+
+            BlockPlacers.flexSet().trigger(state);
+
+            assertThat(world.blockAt(new Vec3i(-2, 64, -1))).isEqualTo(STONE);
+        }
+
+        @Test
+        void refusesALineWithoutBothHalves() {
+            SimpleChipWorld world = new SimpleChipWorld();
+            SimpleChipState state = chip(world, SimpleStockpile.empty().with(STONE, 4), "stone", "")
+                    .inputs(true, false, false, false)
+                    .build();
+
+            BlockPlacers.flexSet().trigger(state);
+
+            assertThat(world.placedBlockCount()).isZero();
+        }
+
+        @Test
+        void replacesWhatIsThereWithoutPayingWhenItIsTheAdminVariant() {
+            SimpleChipWorld world = new SimpleChipWorld().withBlock(TARGET, Blocks.key("dirt"));
+            SimpleStockpile stockpile = SimpleStockpile.empty();
+            SimpleChipState state = chip(world, stockpile, "Y+1:stone", "")
+                    .inputs(true, false, false, false)
+                    .build();
+
+            BlockPlacers.flexSetAdmin().trigger(state);
+
+            assertThat(world.blockAt(TARGET)).isEqualTo(STONE);
+            assertThat(stockpile.isEmpty()).isTrue();
+        }
     }
 }

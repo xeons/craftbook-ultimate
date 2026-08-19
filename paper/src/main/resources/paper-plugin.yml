@@ -1,0 +1,10 @@
+name: CraftBookUltimate
+version: '${version}'
+main: com.xeonproductions.craftbookultimate.paper.CraftBookPlugin
+bootstrapper: com.xeonproductions.craftbookultimate.paper.CraftBookBootstrap
+api-version: '26.2'
+description: Redstone circuitry, minecarts and sign mechanics.
+authors:
+  - Xeon Productions
+website: https://github.com/xeonproductions/craftbook-ultimate
+folia-supported: true

@@ -1,0 +1,21 @@
+[versions]
+java = "25"
+paper = "26.2.build.+"
+adventure = "5.2.0"
+jspecify = "1.0.0"
+junit = "5.11.4"
+assertj = "3.27.3"
+configurate = "4.2.0"
+
+[libraries]
+paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper" }
+adventure-bom = { module = "net.kyori:adventure-bom", version.ref = "adventure" }
+adventure-api = { module = "net.kyori:adventure-api" }
+adventure-serializer-plain = { module = "net.kyori:adventure-text-serializer-plain" }
+adventure-minimessage = { module = "net.kyori:adventure-text-minimessage" }
+jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
+configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref = "configurate" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }

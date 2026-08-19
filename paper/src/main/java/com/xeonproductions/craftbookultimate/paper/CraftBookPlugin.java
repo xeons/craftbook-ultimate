@@ -1,23 +1,37 @@
 package com.xeonproductions.craftbookultimate.paper;
 
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
+import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
+import com.xeonproductions.craftbookultimate.paper.listener.ICChunkListener;
+import com.xeonproductions.craftbookultimate.paper.listener.ICRedstoneListener;
+import com.xeonproductions.craftbookultimate.paper.listener.ICSignListener;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
-import org.bukkit.Bukkit;
+import java.util.ArrayList;
+import java.util.List;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Chunk;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Sign;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The plugin itself.
  *
- * <p>Holds the pieces that outlive any one mechanic: the chip catalogue, assembled during
- * bootstrap, and the scheduler factory that binds work to the region owning it.
+ * <p>Holds the pieces that outlive any one mechanic: the chip catalogue assembled during
+ * bootstrap, the scheduler factory that binds work to the region owning it, and the manager
+ * tracking which chips are currently loaded.
  */
 @NullMarked
 public final class CraftBookPlugin extends JavaPlugin {
 
     private final ICRegistry icRegistry;
 
-    private RegionSchedulers schedulers;
+    private @Nullable RegionSchedulers schedulers;
+    private @Nullable ICManager icManager;
 
     /**
      * @param icRegistry the chip catalogue, built during bootstrap
@@ -28,22 +42,67 @@ public final class CraftBookPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        this.schedulers = new RegionSchedulers(this);
+        RegionSchedulers regionSchedulers = new RegionSchedulers(this);
+        ICManager manager = new ICManager(icRegistry, regionSchedulers);
 
-        getComponentLogger().info(
-                net.kyori.adventure.text.Component.text(
-                        "Enabled with " + icRegistry.size() + " integrated circuits"
-                                + (isFolia() ? ", running regionised" : "")));
+        this.schedulers = regionSchedulers;
+        this.icManager = manager;
+
+        getServer().getPluginManager().registerEvents(new ICSignListener(manager, regionSchedulers), this);
+        getServer().getPluginManager().registerEvents(new ICRedstoneListener(manager), this);
+        getServer().getPluginManager().registerEvents(new ICChunkListener(manager), this);
+
+        adoptAlreadyLoadedChunks(manager);
+
+        getComponentLogger().info(Component.text(
+                "Enabled with " + icRegistry.size() + " integrated circuits"
+                        + (isFolia() ? ", running regionised" : "")));
     }
 
     @Override
     public void onDisable() {
-        getComponentLogger().info(net.kyori.adventure.text.Component.text("Disabled"));
+        if (icManager != null) {
+            icManager.unloadAll();
+        }
+        getComponentLogger().info(Component.text("Disabled"));
+    }
+
+    /**
+     * Picks up chips in chunks that were already loaded when the plugin enabled.
+     *
+     * <p>On a reload the chunk load events have long since fired, so without this the circuitry
+     * around every online player would stay dead until its chunk cycled.
+     */
+    private void adoptAlreadyLoadedChunks(ICManager manager) {
+        for (World world : getServer().getWorlds()) {
+            for (Chunk chunk : world.getLoadedChunks()) {
+                List<Block> signs = new ArrayList<>();
+                for (BlockState state : chunk.getTileEntities(false)) {
+                    if (state instanceof Sign) {
+                        signs.add(state.getBlock());
+                    }
+                }
+                if (!signs.isEmpty()) {
+                    // Each chunk is adopted on the region that owns it, which is a requirement on
+                    // a regionised server and harmless on a plain one.
+                    schedulers().at(chunk.getBlock(0, 0, 0).getLocation())
+                            .runLater(() -> manager.loadAll(signs), 1);
+                }
+            }
+        }
     }
 
     /** The chip catalogue. */
     public ICRegistry icRegistry() {
         return icRegistry;
+    }
+
+    /** The chips currently loaded in the world. */
+    public ICManager icManager() {
+        if (icManager == null) {
+            throw new IllegalStateException("The IC manager is not available until the plugin is enabled");
+        }
+        return icManager;
     }
 
     /** Builds schedulers bound to a place in the world. */
@@ -80,10 +139,5 @@ public final class CraftBookPlugin extends JavaPlugin {
                 return false;
             }
         }
-    }
-
-    /** The running server, for the few places that need it without an injected reference. */
-    static org.bukkit.Server server() {
-        return Bukkit.getServer();
     }
 }

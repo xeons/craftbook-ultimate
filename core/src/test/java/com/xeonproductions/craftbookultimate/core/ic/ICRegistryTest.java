@@ -298,6 +298,47 @@ class ICRegistryTest {
         }
 
         @Test
+        void rewritesAShorthandSignToNameTheChipByNumber() {
+            ICLine written = ICLine.parse("=repeater").orElseThrow();
+
+            assertThat(repeater().build().canonicalLine(written, false).render()).isEqualTo("[MC1000]");
+        }
+
+        @Test
+        void carriesTheModeStringThroughUntouched() {
+            ICLine written = ICLine.parse("[mc1000]p").orElseThrow();
+
+            assertThat(repeater().build().canonicalLine(written, false).render()).isEqualTo("[MC1000]p");
+        }
+
+        @Test
+        void recordsTheSelfTriggeringChoiceOnTheSign() {
+            ICLine written = ICLine.parse("=REPEATER ST").orElseThrow();
+
+            assertThat(repeater().build().canonicalLine(written, true).render()).isEqualTo("[MC1000]S");
+        }
+
+        @Test
+        void marksARestrictedChipAsVetted() {
+            ICLine written = ICLine.parse("[MC1000]").orElseThrow();
+
+            assertThat(repeater().restricted().build().canonicalLine(written, false).render())
+                    .isEqualTo("[MC1000]*");
+        }
+
+        @Test
+        void producesALineThatParsesBackToTheSameChip() {
+            ICRegistry registry = new ICRegistry().register(repeater().build());
+            ICLine written = ICLine.parse("=repeater st").orElseThrow();
+
+            String canonical = repeater().build().canonicalLine(written, true).render();
+
+            ICRegistry.Resolution resolved = registry.resolve(canonical).orElseThrow();
+            assertThat(resolved.definition().model()).isEqualTo("MC1000");
+            assertThat(resolved.selfTriggering()).isTrue();
+        }
+
+        @Test
         void rejectsAModelNumberThatTheSignGrammarCouldNotCarry() {
             assertThatThrownBy(() -> ICDefinition.builder("MC 1000", "X").logic(() -> state -> {}).build())
                     .isInstanceOf(IllegalArgumentException.class);

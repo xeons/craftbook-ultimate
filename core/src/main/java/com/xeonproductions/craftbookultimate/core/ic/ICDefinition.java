@@ -106,6 +106,21 @@ public record ICDefinition(
         return "[" + model + "]";
     }
 
+    /**
+     * The identifier line a sign should carry once this chip has been created on it.
+     *
+     * <p>A player may name a chip by shorthand, in lower case, with the flags in either order.
+     * The line they end up with always names the chip by its catalogue number, so later reads see
+     * one spelling. Their mode string is carried over untouched, and the restricted marker is
+     * applied for a chip that needs one, recording that its creation was permission checked.
+     *
+     * @param written the line as the player typed it
+     * @param selfTriggering whether this sign asked for the ticking variant
+     */
+    public ICLine canonicalLine(ICLine written, boolean selfTriggering) {
+        return new ICLine(ICLine.Kind.MODEL, model, selfTriggering, restricted, written.mode());
+    }
+
     /** Every model number that resolves to this chip, including its own and any aliases. */
     public Set<String> allModels() {
         Set<String> models = new LinkedHashSet<>();

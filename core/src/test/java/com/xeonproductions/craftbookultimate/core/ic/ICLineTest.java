@@ -22,7 +22,7 @@ class ICLineTest {
             assertThat(line.kind()).isEqualTo(ICLine.Kind.MODEL);
             assertThat(line.identifier()).isEqualTo("MC1000");
             assertThat(line.selfTriggering()).isFalse();
-            assertThat(line.restricted()).isFalse();
+            assertThat(line.awaitingAuthorisation()).isFalse();
             assertThat(line.mode()).isEmpty();
         }
 
@@ -36,10 +36,10 @@ class ICLineTest {
         }
 
         @Test
-        void treatsTheStarSuffixAsTheRestrictedMarker() {
+        void treatsTheStarSuffixAsTheAuthorisationMarker() {
             ICLine line = ICLine.parse("[MCX131]*").orElseThrow();
 
-            assertThat(line.restricted()).isTrue();
+            assertThat(line.awaitingAuthorisation()).isTrue();
             assertThat(line.selfTriggering()).isFalse();
         }
 
@@ -48,8 +48,8 @@ class ICLineTest {
             // Both flags are recognised wherever they appear, so neither marker can hide the other.
             assertThat(ICLine.parse("[MCX131]S*").orElseThrow().selfTriggering()).isTrue();
             assertThat(ICLine.parse("[MCX131]*S").orElseThrow().selfTriggering()).isTrue();
-            assertThat(ICLine.parse("[MCX131]S*").orElseThrow().restricted()).isTrue();
-            assertThat(ICLine.parse("[MCX131]*S").orElseThrow().restricted()).isTrue();
+            assertThat(ICLine.parse("[MCX131]S*").orElseThrow().awaitingAuthorisation()).isTrue();
+            assertThat(ICLine.parse("[MCX131]*S").orElseThrow().awaitingAuthorisation()).isTrue();
         }
 
         @Test
@@ -194,11 +194,11 @@ class ICLineTest {
         }
 
         @Test
-        void applyingTheRestrictedMarkerIsIdempotent() {
+        void applyingTheAuthorisationMarkerIsIdempotent() {
             ICLine line = ICLine.parse("[MCX131]").orElseThrow();
 
-            assertThat(line.withRestricted().render()).isEqualTo("[MCX131]*");
-            assertThat(line.withRestricted().withRestricted().render()).isEqualTo("[MCX131]*");
+            assertThat(line.withAwaitingAuthorisation().render()).isEqualTo("[MCX131]*");
+            assertThat(line.withAwaitingAuthorisation().withAwaitingAuthorisation().render()).isEqualTo("[MCX131]*");
         }
 
         @Test

@@ -5,6 +5,7 @@ import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Arithmetic;
+import com.xeonproductions.craftbookultimate.core.ic.gate.BlockPlacers;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Latches;
 import com.xeonproductions.craftbookultimate.core.ic.gate.LogicGates;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
@@ -42,6 +43,7 @@ public final class ICCatalogue {
         registerTimeChips(registry);
         registerSensors(registry);
         registerWeather(registry);
+        registerBlockPlacers(registry);
 
         return registry;
     }
@@ -227,6 +229,68 @@ public final class ICCatalogue {
                 .description("Randomly sets the outputs high.")
                 .layout(PinLayout.SI5O)
                 .logic(ICCatalogue::randomBits)
+                .build());
+    }
+
+    private static void registerBlockPlacers(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MCX207", "BRIDGE")
+                .name("Bridge")
+                .description("Places a set type and amount of blocks.")
+                .layout(PinLayout.AISO)
+                .requiresAuthorisation()
+                .logic(() -> BlockPlacers.bridge(false))
+                .build());
+
+        registry.register(ICDefinition.builder("MCX209", "BRIDGE+")
+                .name("Bridge+")
+                .description("Places blocks, replacing whatever is already there.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .logic(() -> BlockPlacers.bridge(true))
+                .build());
+
+        registry.register(ICDefinition.builder("MCX208", "DOOR")
+                .name("Door")
+                .description("Places a set type and amount of blocks.")
+                .layout(PinLayout.AISO)
+                .requiresAuthorisation()
+                .logic(() -> BlockPlacers.door(false))
+                .build());
+
+        registry.register(ICDefinition.builder("MCX210", "DOOR+")
+                .name("Door+")
+                .description("Places blocks, replacing whatever is already there.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .logic(() -> BlockPlacers.door(true))
+                .build());
+
+        registry.register(ICDefinition.builder("MCX206", "FLEX SET")
+                .name("Flex Set")
+                .description("Sets a block at a specified location.")
+                .layout(PinLayout.AISO)
+                .logic(BlockPlacers::flexSet)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1207", "FLEX SET ADMIN")
+                .name("Flex Set Admin")
+                .description("Sets a block at a specified location, without paying for it.")
+                .restricted()
+                .logic(BlockPlacers::flexSet)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1205", "SET ABOVE")
+                .name("Set Block Above")
+                .description("Sets a block above the IC block.")
+                .restricted()
+                .logic(BlockPlacers::setBlockAbove)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1206", "SET BELOW")
+                .name("Set Block Below")
+                .description("Sets a block below the IC block.")
+                .restricted()
+                .logic(BlockPlacers::setBlockBelow)
                 .build());
     }
 

@@ -18,7 +18,7 @@ import org.jspecify.annotations.NullMarked;
  * <pre>
  *   [MC1000]        a plain repeater
  *   [MC1000]S       the self-triggering variant
- *   [MCX131]*       a restricted chip, marked as vetted when it was created
+ *   [MCX131]*       a awaitingAuthorisation chip, marked as vetted when it was created
  *   [MC1000]!       inverted outputs, via the mode string
  *   [MC1000]S!abcdef  self-triggering, inverted, with the pins remapped
  * </pre>
@@ -40,12 +40,12 @@ import org.jspecify.annotations.NullMarked;
  * @param kind which of the two spellings was used
  * @param identifier the model id or shorthand, trimmed and upper-cased
  * @param selfTriggering whether the self-triggering variant was requested
- * @param restricted whether the restricted marker was present
+ * @param awaitingAuthorisation whether the awaitingAuthorisation marker was present
  * @param mode the remaining suffix, with its case intact; empty when there is none
  */
 @NullMarked
 public record ICLine(
-        Kind kind, String identifier, boolean selfTriggering, boolean restricted, String mode) {
+        Kind kind, String identifier, boolean selfTriggering, boolean awaitingAuthorisation, String mode) {
 
     /** Which spelling an {@link ICLine} was written in. */
     public enum Kind {
@@ -58,8 +58,8 @@ public record ICLine(
     /** Marks the self-triggering variant in a model suffix. */
     private static final char SELF_TRIGGER_FLAG = 'S';
 
-    /** Marks a restricted chip whose creation was already permission checked. */
-    private static final char RESTRICTED_FLAG = '*';
+    /** Marks a awaitingAuthorisation chip whose creation was already permission checked. */
+    private static final char AUTHORISATION_FLAG = '*';
 
     /** The suffix that selects the self-triggering variant of a shorthand. */
     private static final String ST_MARKER = " ST";
@@ -68,7 +68,7 @@ public record ICLine(
     private static final Pattern MODEL_PATTERN = Pattern.compile("^\\[([A-Za-z0-9]{2,16})](.*)$");
 
     /**
-     * A shorthand alias. Shorthands are drawn from a restricted alphabet that happens to include
+     * A shorthand alias. Shorthands are drawn from a awaitingAuthorisation alphabet that happens to include
      * spaces, so they cannot simply run to the end of the line without care.
      */
     private static final Pattern SHORTHAND_PATTERN =
@@ -122,36 +122,36 @@ public record ICLine(
     /**
      * Splits a model suffix into its flags and its mode string.
      *
-     * <p>Flags are recognised wherever they appear in the suffix, so {@code [MCX131]S*} and
-     * {@code [MCX131]*S} mean the same thing. Everything left over is the mode string.
+     * <p>Flags are recognised wherever they appear in the suffix, so {@code [MCX207]S*} and
+     * {@code [MCX207]*S} mean the same thing. Everything left over is the mode string.
      */
     private static ICLine fromSuffix(String modelId, String suffix) {
         boolean selfTriggering = false;
-        boolean restricted = false;
+        boolean awaitingAuthorisation = false;
         StringBuilder mode = new StringBuilder(suffix.length());
 
         for (int i = 0; i < suffix.length(); i++) {
             char c = suffix.charAt(i);
             if (c == SELF_TRIGGER_FLAG) {
                 selfTriggering = true;
-            } else if (c == RESTRICTED_FLAG) {
-                restricted = true;
+            } else if (c == AUTHORISATION_FLAG) {
+                awaitingAuthorisation = true;
             } else {
                 mode.append(c);
             }
         }
 
-        return new ICLine(Kind.MODEL, modelId, selfTriggering, restricted, mode.toString());
+        return new ICLine(Kind.MODEL, modelId, selfTriggering, awaitingAuthorisation, mode.toString());
     }
 
-    /** Returns this reference with the restricted marker applied. */
-    public ICLine withRestricted() {
-        return restricted ? this : new ICLine(kind, identifier, selfTriggering, true, mode);
+    /** Returns this reference with the awaitingAuthorisation marker applied. */
+    public ICLine withAwaitingAuthorisation() {
+        return awaitingAuthorisation ? this : new ICLine(kind, identifier, selfTriggering, true, mode);
     }
 
     /** Returns this reference with the self-triggering marker applied. */
     public ICLine withSelfTriggering() {
-        return selfTriggering ? this : new ICLine(kind, identifier, true, restricted, mode);
+        return selfTriggering ? this : new ICLine(kind, identifier, true, awaitingAuthorisation, mode);
     }
 
     /** True when a mode string is present for {@link ICMode} to interpret. */
@@ -174,8 +174,8 @@ public record ICLine(
             if (selfTriggering) {
                 out.append(SELF_TRIGGER_FLAG);
             }
-            if (restricted) {
-                out.append(RESTRICTED_FLAG);
+            if (awaitingAuthorisation) {
+                out.append(AUTHORISATION_FLAG);
             }
             out.append(mode);
         } else {

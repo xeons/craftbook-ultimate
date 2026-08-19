@@ -34,6 +34,8 @@ class ICCatalogueTest {
         "[MC1020]", "[MC2020]", "[MC6020]",
         "[MC1420]", "[MC1230]", "[MCX027]", "[MC1025]", "[MC1026]", "[MCX010]", "[MCX011]",
         "[MC1260]", "[MC1261]", "[MC1262]", "[MCX230]", "[MCX231]", "[MCX205]",
+        "[MCX207]", "[MCX208]", "[MCX209]", "[MCX210]", "[MCX206]",
+        "[MC1205]", "[MC1206]", "[MC1207]",
     })
     void resolvesEveryRegisteredModelNumber(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -51,6 +53,8 @@ class ICCatalogueTest {
         "=PULSE", "=SIGNAL EXTENDER",
         "=SENSE WATER", "=SENSE LAVA", "=SENSE LIGHT", "=IS IT RAIN", "=IS IT A STORM",
         "=DETECT BLOCK",
+        "=BRIDGE", "=DOOR", "=BRIDGE+", "=DOOR+", "=FLEX SET", "=FLEX SET ADMIN",
+        "=SET ABOVE", "=SET BELOW",
     })
     void resolvesEveryRegisteredShorthand(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -105,6 +109,23 @@ class ICCatalogueTest {
     @ValueSource(strings = {"MC1000", "MC3002", "MC4000", "MC1260", "MC1420"})
     void leavesTheChipsThatOnlyMoveRedstoneUnrestricted(String model) {
         assertThat(REGISTRY.byModel(model).orElseThrow().restricted()).isFalse();
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"MCX207", "MCX208"})
+    void marksTheBuildingChipsAsNeedingAuthorisation(String model) {
+        // These are created unauthorised so they cannot be dropped over someone's structure and
+        // used to take it apart.
+        assertThat(REGISTRY.byModel(model).orElseThrow().requiresAuthorisation()).isTrue();
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"MCX209", "MCX210"})
+    void restrictsTheForcingVariantsInstead(String model) {
+        // A forcing chip skips the authorisation check, so permission is the only thing left
+        // standing between it and someone else's blocks.
+        assertThat(REGISTRY.byModel(model).orElseThrow().restricted()).isTrue();
+        assertThat(REGISTRY.byModel(model).orElseThrow().requiresAuthorisation()).isFalse();
     }
 
     @Test

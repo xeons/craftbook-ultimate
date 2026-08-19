@@ -22,7 +22,7 @@ world beyond redstone, and the mechanics, have not been started.**
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (43 chips) | Done |
+| IC catalogue wiring (51 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
@@ -32,11 +32,12 @@ world beyond redstone, and the mechanics, have not been started.**
 | World sensors (liquid, light, weather, block detector) | Done |
 | Weather and time control chips | Done |
 | Stockpiles, formerly BlockBags | Done |
-| World-changing ICs (blocks, entities, messaging, wireless) | Not started |
+| Block placing chips (bridge, door, flex set, set above/below) | Done |
+| World-changing ICs (entities, messaging, wireless) | Not started |
 | Mechanics | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**533 tests passing**.
+**574 tests passing**.
 
 Run `./gradlew build` to compile, test, and produce
 `paper/build/libs/CraftBookUltimate-<version>.jar`. That jar carries the core module's classes;

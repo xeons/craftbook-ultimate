@@ -267,3 +267,45 @@ halves, so identity comparison is not a reliable way to tell that two blocks sha
 
 **Rewrite:** finding either half claims both positions, worked out from the chest's own block
 data rather than from the inventory it returns.
+
+---
+
+## Block placing
+
+### 21. A partly-affordable structure built from the wrong end
+
+`BlockPlacingIC` walked its area from the region's minimum corner to its maximum. Which end of a
+bridge that corresponds to depends on which way the sign faces: for a sign facing one way the
+minimum corner is nearest the sign, and for the opposite facing it is furthest from it.
+
+A chip that ran out of materials part-way therefore left a structure that reached out from the
+sign in one direction and floated in mid-air, detached from the sign, in the other.
+
+**Rewrite:** the area is walked outward from the sign regardless of facing, so a partial
+structure always reaches part of the way rather than starting at the far end.
+
+### 22. The `*` marker is an arming marker, not a permission marker
+
+Worth recording because the name invites the wrong reading. A `*` appended to the model reference
+does not mean the chip was permission checked. It means the chip has not yet been authorised: a
+block-placing chip is created with the marker, refuses to act while its area still contains the
+block it would place, and clears the marker once the area is free. The purpose is to stop a chip
+being built over an existing structure and used to mine it.
+
+Permission restriction is a separate and independent thing: `Bridge.ForcingFactory` is
+permission restricted and skips the authorisation check, while `Bridge.Factory` is neither
+restricted nor pre-authorised.
+
+**Rewrite:** the two are modelled separately. `ICLine.awaitingAuthorisation` carries the marker,
+and `ICDefinition.requiresAuthorisation()` says which chips are created with it, independently of
+`restricted()`.
+
+### 23. Legacy numeric block ids on signs no longer resolve
+
+Line 2 of a block-placing sign was parsed as `id[:damage]`, where the id could be numeric and the
+damage value selected a variant, so red wool was `35:14`. Both went away when block states were
+flattened in 1.13.
+
+**Rewrite:** line 2 names the block, so `red_wool` or `minecraft:red_wool`. Signs still carrying
+numeric ids will not resolve to a block and the chip does nothing until the line is rewritten.
+There is no general mapping back from the old pairs, so this cannot be handled automatically.

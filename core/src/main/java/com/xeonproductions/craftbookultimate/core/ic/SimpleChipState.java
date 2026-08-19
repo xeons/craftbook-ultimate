@@ -6,6 +6,8 @@ import com.xeonproductions.craftbookultimate.core.platform.ManualScheduler;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import com.xeonproductions.craftbookultimate.core.stock.SimpleStockpile;
+import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
 import com.xeonproductions.craftbookultimate.core.world.SimpleChipWorld;
 import java.util.Arrays;
@@ -36,6 +38,7 @@ public final class SimpleChipState implements ChipState {
     private final ICMode mode;
     private final ManualScheduler scheduler;
     private final SimpleChipWorld world;
+    private Stockpile stockpile;
     private final Vec3i signPosition;
     private final BlockFace facing;
     private SignLines sign;
@@ -52,6 +55,7 @@ public final class SimpleChipState implements ChipState {
         this.mode = builder.mode;
         this.scheduler = builder.scheduler;
         this.world = builder.world;
+        this.stockpile = builder.stockpile;
         this.signPosition = builder.signPosition;
         this.facing = builder.facing;
         this.time = builder.time;
@@ -166,6 +170,17 @@ public final class SimpleChipState implements ChipState {
     @Override
     public BlockFace facing() {
         return facing;
+    }
+
+    @Override
+    public Stockpile stockpile() {
+        return stockpile;
+    }
+
+    /** Sets where this chip takes materials from. */
+    public SimpleChipState withStockpile(Stockpile stockpile) {
+        this.stockpile = stockpile;
+        return this;
     }
 
     /** The world this chip sees, so a test can place blocks in it and read back what changed. */
@@ -317,6 +332,7 @@ public final class SimpleChipState implements ChipState {
         private ICMode mode = ICMode.NONE;
         private final ManualScheduler scheduler = new ManualScheduler();
         private SimpleChipWorld world = new SimpleChipWorld();
+        private Stockpile stockpile = SimpleStockpile.empty();
         private Vec3i signPosition = Vec3i.ZERO;
         private BlockFace facing = BlockFace.SOUTH;
         private TimeSource time = TimeSource.fixed(0, 0);
@@ -355,6 +371,12 @@ public final class SimpleChipState implements ChipState {
                         "Expected " + connected.length + " inputs, got " + values.length);
             }
             System.arraycopy(values, 0, connected, 0, values.length);
+            return this;
+        }
+
+        /** Sets where this chip takes materials from. */
+        public Builder stockpile(Stockpile stockpile) {
+            this.stockpile = stockpile;
             return this;
         }
 

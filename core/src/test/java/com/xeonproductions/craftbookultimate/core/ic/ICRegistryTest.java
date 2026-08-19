@@ -322,7 +322,7 @@ class ICRegistryTest {
         void marksARestrictedChipAsVetted() {
             ICLine written = ICLine.parse("[MC1000]").orElseThrow();
 
-            assertThat(repeater().restricted().build().canonicalLine(written, false).render())
+            assertThat(repeater().requiresAuthorisation().build().canonicalLine(written, false).render())
                     .isEqualTo("[MC1000]*");
         }
 

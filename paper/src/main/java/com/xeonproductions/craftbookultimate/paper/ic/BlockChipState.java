@@ -8,7 +8,9 @@ import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
+import com.xeonproductions.craftbookultimate.paper.stock.NearbyStockpiles;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
 import org.bukkit.Material;
@@ -42,6 +44,7 @@ public final class BlockChipState implements ChipState {
     private final Scheduler scheduler;
     private final TimeSource time;
     private final ChipWorld chipWorld;
+    private @org.jspecify.annotations.Nullable Stockpile stockpile;
 
     private BlockChipState(Builder builder) {
         this.world = builder.world;
@@ -197,6 +200,16 @@ public final class BlockChipState implements ChipState {
     @Override
     public ChipWorld world() {
         return chipWorld;
+    }
+
+    @Override
+    public Stockpile stockpile() {
+        // Scanning for containers walks a cube of blocks, so it is put off until a chip actually
+        // asks, and then kept for the rest of this run.
+        if (stockpile == null) {
+            stockpile = NearbyStockpiles.around(world, backPosition());
+        }
+        return stockpile;
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
 import org.jspecify.annotations.NullMarked;
 
@@ -127,6 +128,14 @@ public interface ChipState {
 
     /** The world this chip is in. */
     ChipWorld world();
+
+    /**
+     * Where this chip takes materials from and gives them back to.
+     *
+     * <p>Usually the containers near the chip. A chip that builds pays for what it places and is
+     * refunded what it removes, so a structure it puts up costs the same as building it by hand.
+     */
+    Stockpile stockpile();
 
     /** The position of this chip's sign. */
     Vec3i signPosition();

@@ -33,6 +33,7 @@ public record ICDefinition(
         String description,
         PinLayout defaultLayout,
         boolean restricted,
+        boolean requiresAuthorisation,
         Set<String> aliases,
         Optional<String> selfTriggeringModel,
         Supplier<ICLogic> logicFactory) {
@@ -118,7 +119,8 @@ public record ICDefinition(
      * @param selfTriggering whether this sign asked for the ticking variant
      */
     public ICLine canonicalLine(ICLine written, boolean selfTriggering) {
-        return new ICLine(ICLine.Kind.MODEL, model, selfTriggering, restricted, written.mode());
+        return new ICLine(
+                ICLine.Kind.MODEL, model, selfTriggering, requiresAuthorisation, written.mode());
     }
 
     /** Every model number that resolves to this chip, including its own and any aliases. */
@@ -147,6 +149,7 @@ public record ICDefinition(
         private String description = "";
         private PinLayout defaultLayout = PinLayout.defaultLayout();
         private boolean restricted;
+        private boolean requiresAuthorisation;
         private final Set<String> aliases = new LinkedHashSet<>();
         private Optional<String> selfTriggeringModel = Optional.empty();
         private Supplier<ICLogic> logicFactory =
@@ -180,6 +183,18 @@ public record ICDefinition(
         /** Marks this chip as needing elevated permission to create. */
         public Builder restricted() {
             this.restricted = true;
+            return this;
+        }
+
+        /**
+         * Marks this chip as needing authorisation before it will act.
+         *
+         * <p>Used by the chips that build: one is created unauthorised, and refuses to run while
+         * the area it would build in still holds the block it places. That stops a chip being
+         * dropped over someone's structure and used to take it apart.
+         */
+        public Builder requiresAuthorisation() {
+            this.requiresAuthorisation = true;
             return this;
         }
 
@@ -220,6 +235,7 @@ public record ICDefinition(
                     description,
                     defaultLayout,
                     restricted,
+                    requiresAuthorisation,
                     aliases,
                     selfTriggeringModel,
                     logicFactory);

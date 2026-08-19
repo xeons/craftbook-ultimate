@@ -1,5 +1,8 @@
 package com.xeonproductions.craftbookultimate.core.ic;
 
+import com.xeonproductions.craftbookultimate.core.platform.ManualScheduler;
+import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
+import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import java.util.Arrays;
 import org.jspecify.annotations.NullMarked;
@@ -27,7 +30,9 @@ public final class SimpleChipState implements ChipState {
     private final boolean[] connected;
     private final boolean[] outputs;
     private final ICMode mode;
+    private final ManualScheduler scheduler;
     private SignLines sign;
+    private TimeSource time;
     private boolean powerSourceBehind;
     private int triggeredInput;
 
@@ -38,6 +43,8 @@ public final class SimpleChipState implements ChipState {
         this.outputs = builder.outputs.clone();
         this.sign = builder.sign;
         this.mode = builder.mode;
+        this.scheduler = builder.scheduler;
+        this.time = builder.time;
         this.powerSourceBehind = builder.powerSourceBehind;
         this.triggeredInput = builder.triggeredInput;
     }
@@ -124,6 +131,39 @@ public final class SimpleChipState implements ChipState {
     @Override
     public ICMode mode() {
         return mode;
+    }
+
+    @Override
+    public Scheduler scheduler() {
+        return scheduler;
+    }
+
+    @Override
+    public TimeSource time() {
+        return time;
+    }
+
+    /**
+     * The scheduler this chip uses, so a test can advance it and see what the chip does next.
+     */
+    public ManualScheduler manualScheduler() {
+        return scheduler;
+    }
+
+    /** Moves the clock this chip reads. */
+    public SimpleChipState withTime(TimeSource time) {
+        this.time = time;
+        return this;
+    }
+
+    /** Moves the world clock this chip reads, leaving the wall clock alone. */
+    public SimpleChipState withWorldTicks(long worldTicks) {
+        return withTime(TimeSource.fixed(worldTicks, time.unixSeconds()));
+    }
+
+    /** Moves the wall clock this chip reads, leaving the world clock alone. */
+    public SimpleChipState withUnixSeconds(long unixSeconds) {
+        return withTime(TimeSource.fixed(time.worldTicks(), unixSeconds));
     }
 
     /**
@@ -245,6 +285,8 @@ public final class SimpleChipState implements ChipState {
         private final boolean[] outputs;
         private SignLines sign = SignLines.EMPTY;
         private ICMode mode = ICMode.NONE;
+        private final ManualScheduler scheduler = new ManualScheduler();
+        private TimeSource time = TimeSource.fixed(0, 0);
         private boolean powerSourceBehind;
         private int triggeredInput = -1;
 
@@ -281,6 +323,17 @@ public final class SimpleChipState implements ChipState {
             }
             System.arraycopy(values, 0, connected, 0, values.length);
             return this;
+        }
+
+        /** Sets the clock this chip reads. */
+        public Builder time(TimeSource time) {
+            this.time = time;
+            return this;
+        }
+
+        /** Sets the world age this chip reads, leaving the wall clock at zero. */
+        public Builder worldTicks(long worldTicks) {
+            return time(TimeSource.fixed(worldTicks, 0));
         }
 
         /** Marks the block behind the sign as a power source. */

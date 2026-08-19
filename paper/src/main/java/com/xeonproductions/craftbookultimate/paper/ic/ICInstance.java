@@ -51,6 +51,7 @@ public final class ICInstance {
     private final ICLogic logic;
 
     private Scheduler.@Nullable Task tickTask;
+    private @Nullable Scheduler scheduler;
     private boolean running;
     private boolean unloaded;
 
@@ -135,6 +136,7 @@ public final class ICInstance {
      * @param scheduler used to tick the chip if it is self-triggering
      */
     void load(Scheduler scheduler) {
+        this.scheduler = scheduler;
         logic.load(newState(-1));
 
         if (selfTriggering) {
@@ -194,10 +196,14 @@ public final class ICInstance {
     }
 
     private BlockChipState newState(int triggeredInput) {
-        return BlockChipState.at(world, signPosition, front, layout)
+        BlockChipState.Builder builder = BlockChipState.at(world, signPosition, front, layout)
                 .mode(mode)
-                .triggeredInput(triggeredInput)
-                .build();
+                .triggeredInput(triggeredInput);
+
+        if (scheduler != null) {
+            builder.scheduler(scheduler);
+        }
+        return builder.build();
     }
 
     @Override

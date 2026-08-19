@@ -32,6 +32,7 @@ class ICCatalogueTest {
         "[MC4000]", "[MC4010]", "[MC4100]", "[MC4110]",
         "[MC4200]", "[MC3040]", "[MC4040]",
         "[MC1020]", "[MC2020]", "[MC6020]",
+        "[MC1420]", "[MC1230]", "[MCX027]", "[MC1025]", "[MC1026]", "[MCX010]", "[MCX011]",
     })
     void resolvesEveryRegisteredModelNumber(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -45,6 +46,8 @@ class ICCatalogueTest {
         "=FULL ADDER", "=HALF ADDER", "=FULL SUBTR", "=HALF SUBTR",
         "=DISPATCH", "=MULTIPLEXER", "=DEMULTIPLEXER",
         "=RANDOM BIT", "=RANDOM 3", "=RANDOM 5",
+        "=CLOCK", "=SENSE DAY", "=BETWEEN TIME", "=TIME MODULUS", "=UNIX TIME",
+        "=PULSE", "=SIGNAL EXTENDER",
     })
     void resolvesEveryRegisteredShorthand(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -71,6 +74,21 @@ class ICCatalogueTest {
         ICDefinition inverse = REGISTRY.byModel("MC3031").orElseThrow();
 
         assertThat(plain.newLogic()).hasSameClassAs(inverse.newLogic());
+    }
+
+    @Test
+    void resolvesTheSeparateSelfTriggeringNumbers() {
+        // A few chips were catalogued twice, once ticking and once not.
+        assertThat(REGISTRY.resolve("[MC0420]").orElseThrow().selfTriggering()).isTrue();
+        assertThat(REGISTRY.resolve("[MC0230]").orElseThrow().selfTriggering()).isTrue();
+        assertThat(REGISTRY.resolve("[MC1420]").orElseThrow().definition().model())
+                .isEqualTo("MC1420");
+    }
+
+    @Test
+    void ticksTheChipsThatHaveNothingToReactTo() {
+        assertThat(REGISTRY.byModel("MC1420").orElseThrow().supportsSelfTriggering()).isTrue();
+        assertThat(REGISTRY.byModel("MC1230").orElseThrow().supportsSelfTriggering()).isTrue();
     }
 
     @Test

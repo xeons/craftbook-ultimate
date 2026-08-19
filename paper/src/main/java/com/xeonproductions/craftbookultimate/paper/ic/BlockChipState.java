@@ -5,6 +5,8 @@ import com.xeonproductions.craftbookultimate.core.ic.ICMode;
 import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
+import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
+import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
@@ -36,6 +38,8 @@ public final class BlockChipState implements ChipState {
     private final PinLayout layout;
     private final ICMode mode;
     private final int triggeredInput;
+    private final Scheduler scheduler;
+    private final TimeSource time;
 
     private BlockChipState(Builder builder) {
         this.world = builder.world;
@@ -44,6 +48,27 @@ public final class BlockChipState implements ChipState {
         this.layout = builder.layout;
         this.mode = builder.mode;
         this.triggeredInput = builder.triggeredInput;
+        this.scheduler = builder.scheduler;
+        this.time = builder.time == null ? new WorldTime(builder.world) : builder.time;
+    }
+
+    /** Reads the clocks a chip in a world cares about. */
+    private record WorldTime(World world) implements TimeSource {
+
+        @Override
+        public long worldTicks() {
+            return world.getFullTime();
+        }
+
+        @Override
+        public long timeOfDay() {
+            return world.getTime();
+        }
+
+        @Override
+        public long unixSeconds() {
+            return System.currentTimeMillis() / 1000L;
+        }
     }
 
     /**
@@ -161,6 +186,16 @@ public final class BlockChipState implements ChipState {
         return mode;
     }
 
+    @Override
+    public Scheduler scheduler() {
+        return scheduler;
+    }
+
+    @Override
+    public TimeSource time() {
+        return time;
+    }
+
     /** The chip's sign, if it is still there. */
     public java.util.Optional<Sign> signState() {
         return Signs.at(signBlock());
@@ -183,6 +218,8 @@ public final class BlockChipState implements ChipState {
         private final PinLayout layout;
         private ICMode mode = ICMode.NONE;
         private int triggeredInput = -1;
+        private Scheduler scheduler = RejectingScheduler.INSTANCE;
+        private @org.jspecify.annotations.Nullable TimeSource time;
 
         private Builder(World world, Vec3i signPosition, BlockFace front, PinLayout layout) {
             this.world = world;
@@ -197,6 +234,18 @@ public final class BlockChipState implements ChipState {
             return this;
         }
 
+        /** Sets the scheduler a chip uses to act after a delay. */
+        public Builder scheduler(Scheduler scheduler) {
+            this.scheduler = scheduler;
+            return this;
+        }
+
+        /** Overrides the clock this chip reads, which otherwise comes from its world. */
+        public Builder time(TimeSource time) {
+            this.time = time;
+            return this;
+        }
+
         /** Records which input caused this run, or {@code -1} for a tick. */
         public Builder triggeredInput(int index) {
             this.triggeredInput = index;
@@ -205,6 +254,27 @@ public final class BlockChipState implements ChipState {
 
         public BlockChipState build() {
             return new BlockChipState(this);
+        }
+    }
+
+    /**
+     * Stands in when a chip state is built without a scheduler.
+     *
+     * <p>Refusing loudly beats handing back a scheduler that silently drops work, which would
+     * make a chip that acts after a delay simply never act.
+     */
+    private enum RejectingScheduler implements Scheduler {
+        INSTANCE;
+
+        @Override
+        public Task runLater(Runnable task, long delayTicks) {
+            throw new IllegalStateException(
+                    "This chip needs a scheduler; build its state with scheduler(...)");
+        }
+
+        @Override
+        public Task runRepeating(Runnable task, long delayTicks, long periodTicks) {
+            return runLater(task, delayTicks);
         }
     }
 }

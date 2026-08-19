@@ -202,3 +202,21 @@ whatever it had already written in place.
 ordinary circuits terminate. A chip additionally cannot re-enter itself, and a chain unwinds at a
 fixed depth rather than exhausting the stack, leaving the circuit consistent so the next redstone
 change carries it forward.
+
+### 16. The daylight sensor's wrapping window was always true
+
+`DaySensor.isDay` handles a window whose start is after its end, which describes a window running
+through midnight:
+
+```java
+if (day < night) return time >= day && time <= night;
+else if (day > night) return time <= day || time >= night;
+```
+
+The second branch is satisfied by every possible time. With a start of 18000 and an end of 6000,
+a time fails `time <= 18000` only by being above 18000, and fails `time >= 6000` only by being
+below 6000; no time does both. Any sensor configured to span midnight therefore reported daytime
+permanently.
+
+**Rewrite:** the wrapping branch reads `time >= dawn || time <= dusk`, which is the window the
+configuration describes.

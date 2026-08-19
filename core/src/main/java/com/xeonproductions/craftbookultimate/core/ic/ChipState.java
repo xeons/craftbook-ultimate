@@ -1,5 +1,7 @@
 package com.xeonproductions.craftbookultimate.core.ic;
 
+import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
+import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import org.jspecify.annotations.NullMarked;
 
@@ -107,6 +109,18 @@ public interface ChipState {
 
     /** The mode written after the model reference on the sign. */
     ICMode mode();
+
+    /**
+     * Schedules work on the region owning this chip.
+     *
+     * <p>A chip that acts after a delay, or repeatedly, goes through here. Work scheduled this
+     * way runs on the thread allowed to touch the chip's blocks, and stops when the chip is
+     * unloaded.
+     */
+    Scheduler scheduler();
+
+    /** Where this chip reads the time from. */
+    TimeSource time();
 
     /**
      * Whether a particular input caused this run.

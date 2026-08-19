@@ -6,8 +6,8 @@ A ground-up rewrite of CraftBook for **Paper 26.x** on **Java 25**, in the names
 ## Project status
 
 **Phase: chips run in game. Writing a recognised model reference on a wall sign creates a
-working chip that responds to redstone. Only the chips that need nothing from the world beyond
-redstone exist so far; the mechanics have not been started.**
+working chip that responds to redstone and to the passage of time. The chips that act on the
+world beyond redstone, and the mechanics, have not been started.**
 
 | Area | State |
 | --- | --- |
@@ -22,17 +22,17 @@ redstone exist so far; the mechanics have not been started.**
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (27 chips) | Done |
+| IC catalogue wiring (34 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
-| Time-based chips (clock, pulse, delays) | Not started |
+| Time-based chips (clock, sensors, pulse, delays) | Done |
 | Commands, configuration, persistence | Not started |
 | World-affecting ICs | Not started |
 | Mechanics | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**378 tests passing**.
+**447 tests passing**.
 
 Run `./gradlew build` to compile, test, and produce
 `paper/build/libs/CraftBookUltimate-<version>.jar`. That jar carries the core module's classes;

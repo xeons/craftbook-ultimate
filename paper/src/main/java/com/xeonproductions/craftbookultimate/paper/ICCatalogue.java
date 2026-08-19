@@ -8,6 +8,7 @@ import com.xeonproductions.craftbookultimate.core.ic.gate.Arithmetic;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Latches;
 import com.xeonproductions.craftbookultimate.core.ic.gate.LogicGates;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
+import com.xeonproductions.craftbookultimate.core.ic.gate.TimeChips;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.random.RandomGenerator;
 import org.jspecify.annotations.NullMarked;
@@ -36,6 +37,7 @@ public final class ICCatalogue {
         registerLatches(registry);
         registerArithmetic(registry);
         registerRouting(registry);
+        registerTimeChips(registry);
 
         return registry;
     }
@@ -45,14 +47,14 @@ public final class ICCatalogue {
                 .name("Repeater")
                 .description("Repeats a redstone signal.")
                 .layout(PinLayout.AISO)
-                .logic(LogicGates::repeater)
+                .logic(TimeChips::delayedRepeater)
                 .build());
 
         registry.register(ICDefinition.builder("MC1001", "INVERTER")
                 .name("Inverter")
                 .description("Inverts a redstone signal.")
                 .layout(PinLayout.AISO)
-                .logic(LogicGates::inverter)
+                .logic(TimeChips::delayedInverter)
                 .build());
     }
 
@@ -221,6 +223,52 @@ public final class ICCatalogue {
                 .description("Randomly sets the outputs high.")
                 .layout(PinLayout.SI5O)
                 .logic(ICCatalogue::randomBits)
+                .build());
+    }
+
+    private static void registerTimeChips(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MC1420", "CLOCK")
+                .name("Clock")
+                .description("Toggles its output every X ticks.")
+                .selfTriggeringModel("MC0420")
+                .logic(TimeChips::clock)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1230", "SENSE DAY")
+                .name("Daylight Sensor")
+                .description("Outputs high while the world time is within the day.")
+                .selfTriggeringModel("MC0230")
+                .logic(TimeChips::daySensor)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX027", "BETWEEN TIME")
+                .name("Between Time")
+                .description("Outputs high if the time is between the specified ticks.")
+                .logic(TimeChips::betweenTime)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1025", "TIME MODULUS")
+                .name("World Time Modulus")
+                .description("Outputs high when the world time mod X is at least Y.")
+                .logic(TimeChips::worldTimeModulus)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1026", "UNIX TIME")
+                .name("Unix Time Modulus")
+                .description("Outputs high when unix time mod X is at least Y.")
+                .logic(TimeChips::unixTimeModulus)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX010", "PULSE")
+                .name("Pulse")
+                .description("Sends a burst of pulses when triggered.")
+                .logic(TimeChips::pulse)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX011", "SIGNAL EXTENDER")
+                .name("Signal Extender")
+                .description("Holds the output high for a while after the input ends.")
+                .logic(TimeChips::signalExtender)
                 .build());
     }
 

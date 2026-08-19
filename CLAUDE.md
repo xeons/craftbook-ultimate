@@ -100,3 +100,27 @@ anywhere in the plugin.
 - `@NullMarked` at type level; JSpecify annotations, not JetBrains or JSR-305.
 - Tests use JUnit 5 with `@Nested` groupings and AssertJ. Test names read as sentences.
 - One behaviour per test; assert on outcomes, not on how they were reached.
+
+## Folia and regions
+
+Folia splits a world into regions that tick on separate threads, and a thread may only touch
+blocks its own region owns. Three consequences shape the design.
+
+**A single chip never spans regions.** Its pins sit within a few blocks of its sign, and Folia's
+regionizer guarantees that everything within the merge radius of a loaded chunk belongs to the
+same region as that chunk. Adjacent loaded chunks merge; regions only separate across a gap of
+unloaded chunks, which contiguous redstone cannot have.
+
+**A large build is one region, not many.** Every chunk of a connected redstone machine is loaded
+and adjacent, so the whole thing merges into a single region on a single thread. Folia does not
+make one big build faster; it stops that build from holding up the rest of the server.
+
+**Action at a distance is the real cross-region case.** Wireless transmitters and receivers,
+transporters and destinations, marquee and analog transmitters, teleporters and cart warps all
+act on somewhere arbitrarily far away, which is very likely another region. None of them may
+touch the far end directly. They must go through
+`RegionSchedulers.executeAt(world, position, task)`, which runs the work immediately when the
+caller already owns that place and otherwise hands it to the region that does.
+
+`ICManager.triggerAt` already routes through `executeAt`, so a chip only ever runs on the thread
+owning its sign even if the invariant above is ever violated, or if a region splits mid-update.

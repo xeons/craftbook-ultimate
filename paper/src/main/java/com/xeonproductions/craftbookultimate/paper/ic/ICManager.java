@@ -170,9 +170,18 @@ public final class ICManager {
                 continue;
             }
             int input = chip.inputAt(position);
-            if (input >= 0) {
-                chip.trigger(input);
+            if (input < 0) {
+                continue;
             }
+
+            // A chip is normally in the same region as the pin that changed, and runs straight
+            // away. Should it not be, it runs on the region owning its sign instead of this
+            // thread reaching into blocks it does not own.
+            schedulers.executeAt(chip.world(), chip.signPosition(), () -> {
+                if (!chip.isUnloaded()) {
+                    chip.trigger(input);
+                }
+            });
         }
     }
 

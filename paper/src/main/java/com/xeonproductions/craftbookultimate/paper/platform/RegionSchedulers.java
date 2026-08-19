@@ -50,6 +50,41 @@ public final class RegionSchedulers {
         return new GlobalScheduler(plugin);
     }
 
+    /**
+     * Whether the calling thread is allowed to touch a place in the world right now.
+     *
+     * <p>Always true on a server that ticks everything on one thread.
+     */
+    public boolean ownsCurrentThread(World world, Vec3i position) {
+        return Bukkit.isOwnedByCurrentRegion(world, position.x() >> 4, position.z() >> 4);
+    }
+
+    /**
+     * Runs work against a place in the world, on the thread allowed to touch it.
+     *
+     * <p>Runs straight away when the caller already owns that place, which is the usual case and
+     * keeps a chain of chips settling within one redstone update. Otherwise the work is handed to
+     * the owning region and runs shortly afterwards.
+     *
+     * <p>This is what makes an action at a distance safe: a chip that drives something far away
+     * cannot reach into another region's blocks, but it can ask that region to do the work.
+     *
+     * @param world the world the work touches
+     * @param position the place in that world the work touches
+     * @param task the work to run
+     * @return true if the work ran immediately, false if it was handed to another region
+     */
+    public boolean executeAt(World world, Vec3i position, Runnable task) {
+        if (ownsCurrentThread(world, position)) {
+            task.run();
+            return true;
+        }
+
+        Bukkit.getRegionScheduler().execute(
+                plugin, new Location(world, position.x(), position.y(), position.z()), task);
+        return false;
+    }
+
     /** Runs work on the region that owns one location. */
     private record LocationScheduler(Plugin plugin, Location location) implements Scheduler {
 

@@ -173,3 +173,32 @@ input combinations, but reads as though it were comparing `C & A` against `B`.
 
 **Rewrite:** the borrow is written in its conventional sum-of-products form, with an exhaustive
 test against integer subtraction.
+
+---
+
+## Chip triggering
+
+### 15. A chain of chips could recurse until the stack ran out
+
+`AbstractIC.trigger` pushes a cause frame and calls `onTrigger` with no re-entrancy guard and no
+depth limit. Driving an output goes through `LocationWorldUtil.toggleLever`, which calls
+`setBlockState` followed by `notifyNeighborsOfStateChange` on the same call stack, so one chip
+triggering the next happens synchronously inside a single redstone update.
+
+In practice most circuits are safe, because `AbstractPinSet.setOutput` writes a lever only when
+its value actually changes:
+
+```java
+if (blockState.get(Keys.POWERED).orElse(false) != powered) {
+    LocationWorldUtil.toggleLever(block, false);
+}
+```
+
+A settling circuit stops changing and the chain ends. A circuit that oscillates never settles,
+and recurses until it throws `StackOverflowError` part-way through a redstone update, leaving
+whatever it had already written in place.
+
+**Rewrite:** the "only write when the value changes" behaviour is kept, since that is what makes
+ordinary circuits terminate. A chip additionally cannot re-enter itself, and a chain unwinds at a
+fixed depth rather than exhausting the stack, leaving the circuit consistent so the next redstone
+change carries it forward.

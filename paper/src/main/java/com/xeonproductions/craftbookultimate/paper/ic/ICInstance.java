@@ -26,12 +26,17 @@ public final class ICInstance {
     /**
      * How deep a chain of chips triggering one another may run before it is abandoned.
      *
-     * <p>Chips wired into a loop would otherwise drive each other without end inside a single
-     * redstone update. Unwinding at a fixed depth leaves the loop in a consistent state and lets
-     * the next redstone change carry it forward, which is how a clock built from chips is
-     * expected to behave.
+     * <p>Driving an output notifies its neighbours immediately, so one chip triggering the next
+     * happens inside a single redstone update, on one call stack. A chain normally ends on its
+     * own, because an output is only written when its value actually changes and a settling
+     * circuit soon stops changing. A circuit that oscillates never settles, and without a limit
+     * would run until the stack ran out.
+     *
+     * <p>The limit is therefore set well above any plausible chain of chips wired in series, such
+     * as the adders of a wide ripple-carry sum, and well below the depth at which the stack would
+     * be at risk.
      */
-    private static final int MAX_TRIGGER_DEPTH = 32;
+    private static final int MAX_TRIGGER_DEPTH = 256;
 
     /** Counts how deep the current thread is in a chain of chips triggering one another. */
     private static final ThreadLocal<int[]> TRIGGER_DEPTH = ThreadLocal.withInitial(() -> new int[1]);

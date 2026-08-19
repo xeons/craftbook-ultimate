@@ -9,6 +9,7 @@ import com.xeonproductions.craftbookultimate.core.ic.gate.Latches;
 import com.xeonproductions.craftbookultimate.core.ic.gate.LogicGates;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensors;
+import com.xeonproductions.craftbookultimate.core.ic.gate.WeatherChips;
 import com.xeonproductions.craftbookultimate.core.ic.gate.TimeChips;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.random.RandomGenerator;
@@ -40,6 +41,7 @@ public final class ICCatalogue {
         registerRouting(registry);
         registerTimeChips(registry);
         registerSensors(registry);
+        registerWeather(registry);
 
         return registry;
     }
@@ -225,6 +227,29 @@ public final class ICCatalogue {
                 .description("Randomly sets the outputs high.")
                 .layout(PinLayout.SI5O)
                 .logic(ICCatalogue::randomBits)
+                .build());
+    }
+
+    private static void registerWeather(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MCX233", "WEATHER CONTROL")
+                .name("Simple Weather Control")
+                .description("Turns the weather on for a set duration while the input is held.")
+                .restricted()
+                .logic(WeatherChips::simpleWeatherControl)
+                .build());
+
+        registry.register(ICDefinition.builder("MCT233", "WEATHER CTRL ADV")
+                .name("Weather Control")
+                .description("Sets rain and thunder using three inputs.")
+                .restricted()
+                .logic(WeatherChips::weatherControl)
+                .build());
+
+        registry.register(ICDefinition.builder("MC3231", "T CONTROL ADV")
+                .name("Time Control Advanced")
+                .description("Moves the world to the next morning or night when clocked.")
+                .restricted()
+                .logic(WeatherChips::timeControlAdvanced)
                 .build());
     }
 

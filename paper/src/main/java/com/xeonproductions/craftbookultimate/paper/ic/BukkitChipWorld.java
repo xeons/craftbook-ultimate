@@ -75,9 +75,20 @@ public record BukkitChipWorld(World world) implements ChipWorld {
     }
 
     @Override
-    public void setWeather(boolean raining, boolean thundering) {
+    public void setRaining(boolean raining, int durationTicks) {
         world.setStorm(raining);
+        world.setWeatherDuration(durationTicks);
+    }
+
+    @Override
+    public void setThundering(boolean thundering, int durationTicks) {
         world.setThundering(thundering);
+        world.setThunderDuration(durationTicks);
+    }
+
+    @Override
+    public void setWorldTicks(long worldTicks) {
+        world.setFullTime(worldTicks);
     }
 
     @Override

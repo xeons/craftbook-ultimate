@@ -220,3 +220,13 @@ permanently.
 
 **Rewrite:** the wrapping branch reads `time >= dawn || time <= dusk`, which is the window the
 configuration describes.
+
+### 17. Two weather chips shared one shorthand
+
+`MCX233` (Simple Weather Control) and `MCT233` (Weather Control) are both registered with the
+shorthand `WEATHER CONTROL`. As with finding 10, which of them a `=WEATHER CONTROL` sign resolved
+to depended on catalogue iteration order rather than on anything a player could see.
+
+**Rewrite:** `MCX233` keeps the shorthand, since it is the one listed first and the simpler of
+the two. `MCT233` is registered as `WEATHER CTRL ADV`. Both model numbers resolve as before, so
+only signs written with the ambiguous shorthand are affected, and those now resolve predictably.

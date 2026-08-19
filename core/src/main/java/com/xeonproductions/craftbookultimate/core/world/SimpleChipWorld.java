@@ -33,6 +33,9 @@ public final class SimpleChipWorld implements ChipWorld {
     private int ambientLight = DEFAULT_LIGHT;
     private boolean raining;
     private boolean thundering;
+    private int rainDuration;
+    private int thunderDuration;
+    private long worldTicks;
 
     @Override
     public Key blockAt(Vec3i position) {
@@ -72,9 +75,35 @@ public final class SimpleChipWorld implements ChipWorld {
     }
 
     @Override
-    public void setWeather(boolean raining, boolean thundering) {
+    public void setRaining(boolean raining, int durationTicks) {
         this.raining = raining;
+        this.rainDuration = durationTicks;
+    }
+
+    @Override
+    public void setThundering(boolean thundering, int durationTicks) {
         this.thundering = thundering;
+        this.thunderDuration = durationTicks;
+    }
+
+    @Override
+    public void setWorldTicks(long worldTicks) {
+        this.worldTicks = worldTicks;
+    }
+
+    /** The world age this world was last set to. */
+    public long worldTicks() {
+        return worldTicks;
+    }
+
+    /** How long the current precipitation was set to last. */
+    public int rainDuration() {
+        return rainDuration;
+    }
+
+    /** How long the current thunderstorm was set to last. */
+    public int thunderDuration() {
+        return thunderDuration;
     }
 
     @Override

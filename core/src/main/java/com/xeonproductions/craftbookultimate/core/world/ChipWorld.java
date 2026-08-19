@@ -50,12 +50,42 @@ public interface ChipWorld {
     boolean isThundering();
 
     /**
-     * Sets the weather.
+     * Starts or stops precipitation.
+     *
+     * @param raining whether precipitation should fall
+     * @param durationTicks how long before the weather is free to change on its own
+     */
+    void setRaining(boolean raining, int durationTicks);
+
+    /**
+     * Starts or stops a thunderstorm.
+     *
+     * @param thundering whether a thunderstorm should run
+     * @param durationTicks how long before the weather is free to change on its own
+     */
+    void setThundering(boolean thundering, int durationTicks);
+
+    /**
+     * Sets the world's age in ticks, which moves the time of day with it.
+     *
+     * <p>Given as a full age rather than a time of day so that a caller can move the world
+     * forward into the next day rather than backwards within the current one.
+     */
+    void setWorldTicks(long worldTicks);
+
+    /**
+     * Sets both kinds of weather at once, leaving each free to change again after a day.
      *
      * @param raining whether precipitation should fall
      * @param thundering whether a thunderstorm should run
      */
-    void setWeather(boolean raining, boolean thundering);
+    default void setWeather(boolean raining, boolean thundering) {
+        setRaining(raining, (int) TICKS_PER_DAY);
+        setThundering(thundering, (int) TICKS_PER_DAY);
+    }
+
+    /** The length of a Minecraft day in ticks. */
+    long TICKS_PER_DAY = 24_000L;
 
     /** The lowest y coordinate that can hold a block. */
     int minHeight();

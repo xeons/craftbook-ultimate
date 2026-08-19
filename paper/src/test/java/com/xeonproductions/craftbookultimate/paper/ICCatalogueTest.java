@@ -94,12 +94,24 @@ class ICCatalogueTest {
         assertThat(REGISTRY.byModel("MC1230").orElseThrow().supportsSelfTriggering()).isTrue();
     }
 
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"MCX233", "MCT233", "MC3231"})
+    void restrictsTheChipsThatChangeTheWholeWorld(String model) {
+        // Weather and time affect every player in the world, not just what is near the sign.
+        assertThat(REGISTRY.byModel(model).orElseThrow().restricted()).isTrue();
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"MC1000", "MC3002", "MC4000", "MC1260", "MC1420"})
+    void leavesTheChipsThatOnlyMoveRedstoneUnrestricted(String model) {
+        assertThat(REGISTRY.byModel(model).orElseThrow().restricted()).isFalse();
+    }
+
     @Test
-    void marksNothingAsRestrictedYet() {
-        // Every chip registered so far only moves redstone about, so none of them needs
-        // elevated permission to build.
-        assertThat(REGISTRY.definitions()).allSatisfy(definition ->
-                assertThat(definition.restricted()).isFalse());
+    void keepsTheWeatherControlShorthandOnTheSimplerChip() {
+        // Both weather chips were catalogued under the same shorthand, so only one can keep it.
+        assertThat(REGISTRY.byShorthand("WEATHER CONTROL").orElseThrow().model()).isEqualTo("MCX233");
+        assertThat(REGISTRY.byModel("MCT233")).isPresent();
     }
 
     @Test

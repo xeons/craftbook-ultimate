@@ -8,6 +8,7 @@ import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
 import org.bukkit.Material;
@@ -40,6 +41,7 @@ public final class BlockChipState implements ChipState {
     private final int triggeredInput;
     private final Scheduler scheduler;
     private final TimeSource time;
+    private final ChipWorld chipWorld;
 
     private BlockChipState(Builder builder) {
         this.world = builder.world;
@@ -50,6 +52,7 @@ public final class BlockChipState implements ChipState {
         this.triggeredInput = builder.triggeredInput;
         this.scheduler = builder.scheduler;
         this.time = builder.time == null ? new WorldTime(builder.world) : builder.time;
+        this.chipWorld = new BukkitChipWorld(builder.world);
     }
 
     /** Reads the clocks a chip in a world cares about. */
@@ -86,11 +89,6 @@ public final class BlockChipState implements ChipState {
     /** The pin layout this chip is wired for. */
     public PinLayout layout() {
         return layout;
-    }
-
-    /** The position of the chip's sign. */
-    public Vec3i signPosition() {
-        return signPosition;
     }
 
     /** The block the chip's sign occupies. */
@@ -194,6 +192,21 @@ public final class BlockChipState implements ChipState {
     @Override
     public TimeSource time() {
         return time;
+    }
+
+    @Override
+    public ChipWorld world() {
+        return chipWorld;
+    }
+
+    @Override
+    public Vec3i signPosition() {
+        return signPosition;
+    }
+
+    @Override
+    public BlockFace facing() {
+        return front;
     }
 
     /** The chip's sign, if it is still there. */

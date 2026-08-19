@@ -8,6 +8,7 @@ import com.xeonproductions.craftbookultimate.core.ic.gate.Arithmetic;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Latches;
 import com.xeonproductions.craftbookultimate.core.ic.gate.LogicGates;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Sensors;
 import com.xeonproductions.craftbookultimate.core.ic.gate.TimeChips;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.random.RandomGenerator;
@@ -38,6 +39,7 @@ public final class ICCatalogue {
         registerArithmetic(registry);
         registerRouting(registry);
         registerTimeChips(registry);
+        registerSensors(registry);
 
         return registry;
     }
@@ -223,6 +225,45 @@ public final class ICCatalogue {
                 .description("Randomly sets the outputs high.")
                 .layout(PinLayout.SI5O)
                 .logic(ICCatalogue::randomBits)
+                .build());
+    }
+
+    private static void registerSensors(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MC1260", "SENSE WATER")
+                .name("Water Sensor")
+                .description("Outputs high if water is detected.")
+                .logic(Sensors::waterSensor)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1261", "SENSE LAVA")
+                .name("Lava Sensor")
+                .description("Outputs high if lava is detected.")
+                .logic(Sensors::lavaSensor)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1262", "SENSE LIGHT")
+                .name("Light Sensor")
+                .description("Outputs high if the specified light level is detected.")
+                .logic(Sensors::lightSensor)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX230", "IS IT RAIN")
+                .name("Rain Sensor")
+                .description("Outputs high while it is raining.")
+                .logic(Sensors::rainSensor)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX231", "IS IT A STORM")
+                .name("Storm Sensor")
+                .description("Outputs high while a thunderstorm is running.")
+                .logic(Sensors::stormSensor)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX205", "DETECT BLOCK")
+                .name("Block Detector")
+                .description("Detects a block above or below.")
+                .layout(PinLayout.AISO)
+                .logic(Sensors::blockDetector)
                 .build());
     }
 

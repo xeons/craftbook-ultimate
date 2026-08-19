@@ -33,6 +33,7 @@ class ICCatalogueTest {
         "[MC4200]", "[MC3040]", "[MC4040]",
         "[MC1020]", "[MC2020]", "[MC6020]",
         "[MC1420]", "[MC1230]", "[MCX027]", "[MC1025]", "[MC1026]", "[MCX010]", "[MCX011]",
+        "[MC1260]", "[MC1261]", "[MC1262]", "[MCX230]", "[MCX231]", "[MCX205]",
     })
     void resolvesEveryRegisteredModelNumber(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -48,6 +49,8 @@ class ICCatalogueTest {
         "=RANDOM BIT", "=RANDOM 3", "=RANDOM 5",
         "=CLOCK", "=SENSE DAY", "=BETWEEN TIME", "=TIME MODULUS", "=UNIX TIME",
         "=PULSE", "=SIGNAL EXTENDER",
+        "=SENSE WATER", "=SENSE LAVA", "=SENSE LIGHT", "=IS IT RAIN", "=IS IT A STORM",
+        "=DETECT BLOCK",
     })
     void resolvesEveryRegisteredShorthand(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();

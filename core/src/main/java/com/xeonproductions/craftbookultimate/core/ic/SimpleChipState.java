@@ -1,9 +1,13 @@
 package com.xeonproductions.craftbookultimate.core.ic;
 
+import com.xeonproductions.craftbookultimate.core.math.BlockFace;
+import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.platform.ManualScheduler;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
+import com.xeonproductions.craftbookultimate.core.world.SimpleChipWorld;
 import java.util.Arrays;
 import org.jspecify.annotations.NullMarked;
 
@@ -31,6 +35,9 @@ public final class SimpleChipState implements ChipState {
     private final boolean[] outputs;
     private final ICMode mode;
     private final ManualScheduler scheduler;
+    private final SimpleChipWorld world;
+    private final Vec3i signPosition;
+    private final BlockFace facing;
     private SignLines sign;
     private TimeSource time;
     private boolean powerSourceBehind;
@@ -44,6 +51,9 @@ public final class SimpleChipState implements ChipState {
         this.sign = builder.sign;
         this.mode = builder.mode;
         this.scheduler = builder.scheduler;
+        this.world = builder.world;
+        this.signPosition = builder.signPosition;
+        this.facing = builder.facing;
         this.time = builder.time;
         this.powerSourceBehind = builder.powerSourceBehind;
         this.triggeredInput = builder.triggeredInput;
@@ -141,6 +151,26 @@ public final class SimpleChipState implements ChipState {
     @Override
     public TimeSource time() {
         return time;
+    }
+
+    @Override
+    public ChipWorld world() {
+        return world;
+    }
+
+    @Override
+    public Vec3i signPosition() {
+        return signPosition;
+    }
+
+    @Override
+    public BlockFace facing() {
+        return facing;
+    }
+
+    /** The world this chip sees, so a test can place blocks in it and read back what changed. */
+    public SimpleChipWorld simpleWorld() {
+        return world;
     }
 
     /**
@@ -286,6 +316,9 @@ public final class SimpleChipState implements ChipState {
         private SignLines sign = SignLines.EMPTY;
         private ICMode mode = ICMode.NONE;
         private final ManualScheduler scheduler = new ManualScheduler();
+        private SimpleChipWorld world = new SimpleChipWorld();
+        private Vec3i signPosition = Vec3i.ZERO;
+        private BlockFace facing = BlockFace.SOUTH;
         private TimeSource time = TimeSource.fixed(0, 0);
         private boolean powerSourceBehind;
         private int triggeredInput = -1;
@@ -322,6 +355,19 @@ public final class SimpleChipState implements ChipState {
                         "Expected " + connected.length + " inputs, got " + values.length);
             }
             System.arraycopy(values, 0, connected, 0, values.length);
+            return this;
+        }
+
+        /** Sets the world this chip sees. */
+        public Builder world(SimpleChipWorld world) {
+            this.world = world;
+            return this;
+        }
+
+        /** Places this chip's sign, which is what everything it does is measured from. */
+        public Builder at(Vec3i signPosition, BlockFace facing) {
+            this.signPosition = signPosition;
+            this.facing = facing;
             return this;
         }
 

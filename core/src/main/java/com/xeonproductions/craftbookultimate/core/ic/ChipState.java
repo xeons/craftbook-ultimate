@@ -1,8 +1,11 @@
 package com.xeonproductions.craftbookultimate.core.ic;
 
+import com.xeonproductions.craftbookultimate.core.math.BlockFace;
+import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -121,6 +124,25 @@ public interface ChipState {
 
     /** Where this chip reads the time from. */
     TimeSource time();
+
+    /** The world this chip is in. */
+    ChipWorld world();
+
+    /** The position of this chip's sign. */
+    Vec3i signPosition();
+
+    /** The direction this chip's sign faces, which is away from the block it hangs on. */
+    BlockFace facing();
+
+    /**
+     * The block the sign hangs on.
+     *
+     * <p>This is where a chip acts from. A chip that affects the world measures from here rather
+     * than from the sign, so that the sign itself is never in the way of what it is doing.
+     */
+    default Vec3i backPosition() {
+        return signPosition().offset(facing().opposite());
+    }
 
     /**
      * Whether a particular input caused this run.

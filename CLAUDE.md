@@ -22,17 +22,19 @@ world beyond redstone, and the mechanics, have not been started.**
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (34 chips) | Done |
+| IC catalogue wiring (40 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
 | Time-based chips (clock, sensors, pulse, delays) | Done |
 | Commands, configuration, persistence | Not started |
-| World-affecting ICs | Not started |
+| World seam (`ChipWorld`, `SimpleChipWorld`) | Done |
+| World sensors (liquid, light, weather, block detector) | Done |
+| World-changing ICs (blocks, entities, messaging, wireless) | Not started |
 | Mechanics | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**447 tests passing**.
+**484 tests passing**.
 
 Run `./gradlew build` to compile, test, and produce
 `paper/build/libs/CraftBookUltimate-<version>.jar`. That jar carries the core module's classes;
@@ -82,6 +84,9 @@ Between them: 58 ICs in both, 73 upstream only, **64 only in this fork**, for a 
 8. **Comments describe behaviour**, not the rewrite's own history.
 9. **Merge duplicated behaviour.** Where two ICs do the same thing, write one and register it
    under the **craftbook-extra number**, keeping the retired number as an alias.
+10. **Never invent a model number or shorthand.** Look every one up in the legacy registry before
+   registering it. A wrong number silently breaks existing signs and can collide with a chip that
+   has not been ported yet.
 
 ## Scope decisions
 

@@ -38,6 +38,7 @@ class ICCatalogueTest {
         "[MC1205]", "[MC1206]", "[MC1207]",
         "[MC1110]", "[MC1111]", "[MC0111]", "[MC6543]", "[MCX112]", "[MCU113]",
         "[MCX211]", "[MC1249]", "[MCX213]", "[MCX215]", "[MCZ215]", "[MCX216]", "[MCZ216]",
+        "[MCX120]", "[MCZ120]", "[MCX121]", "[MCZ121]", "[MC2022]", "[MCU440]", "[MCX295]", "[MCZ295]",
     })
     void resolvesEveryRegisteredModelNumber(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -59,6 +60,7 @@ class ICCatalogueTest {
         "=SET ABOVE", "=SET BELOW",
         "=TRANSMITTER", "=RECEIVER", "=REDCODER", "=TRANSPORTER", "=DESTINATION",
         "=TOGGLE BLOCK", "=BLOCK REPLACER", "=HARVESTER", "=AREA PLANTER", "=PLANTER",
+        "=COMMAND CTRL", "=PASSWORD CTRL", "=BITSHIFT", "=^MONOFLOP", "=TRIGGER READER",
     })
     void resolvesEveryRegisteredShorthand(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -98,6 +100,8 @@ class ICCatalogueTest {
         assertThat(REGISTRY.resolve("[MC1111]").orElseThrow().selfTriggering()).isFalse();
         assertThat(REGISTRY.resolve("[MCZ215]").orElseThrow().selfTriggering()).isTrue();
         assertThat(REGISTRY.resolve("[MCZ216]").orElseThrow().selfTriggering()).isTrue();
+        assertThat(REGISTRY.resolve("[MCZ120]").orElseThrow().selfTriggering()).isTrue();
+        assertThat(REGISTRY.resolve("[MCZ295]").orElseThrow().selfTriggering()).isTrue();
         assertThat(REGISTRY.resolve("[MC1420]").orElseThrow().definition().model())
                 .isEqualTo("MC1420");
     }
@@ -149,6 +153,14 @@ class ICCatalogueTest {
     @ValueSource(strings = {"MC1110", "MC1111", "MC6543"})
     void letsTheBandChipsNameTheirOwnerAsTheirNamespace(String model) {
         assertThat(REGISTRY.byModel(model).orElseThrow().playerIdentityLine()).hasValue(3);
+    }
+
+    @Test
+    void keepsTheTwoCommandControlledChipsApart() {
+        // They are the same chip in every respect a builder can see, but they read different
+        // switchboards, so one cannot be used to throw the other's switches.
+        assertThat(REGISTRY.byModel("MCX120").orElseThrow().newLogic())
+                .isNotEqualTo(REGISTRY.byModel("MCX121").orElseThrow().newLogic());
     }
 
     @Test

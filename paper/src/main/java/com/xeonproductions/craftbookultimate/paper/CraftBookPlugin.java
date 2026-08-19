@@ -1,12 +1,18 @@
 package com.xeonproductions.craftbookultimate.paper;
 
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
+import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
+import com.xeonproductions.craftbookultimate.paper.command.CatalogueCommands;
+import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
+import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
+import com.xeonproductions.craftbookultimate.paper.store.PasswordFile;
 import com.xeonproductions.craftbookultimate.paper.listener.ICChunkListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICRedstoneListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICSignListener;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import net.kyori.adventure.text.Component;
@@ -15,6 +21,9 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -33,6 +42,8 @@ public final class CraftBookPlugin extends JavaPlugin {
 
     private @Nullable RegionSchedulers schedulers;
     private @Nullable ICManager icManager;
+    private @Nullable PasswordFile passwordFile;
+    private @Nullable ChipServices services;
 
     /**
      * @param icRegistry the chip catalogue, built during bootstrap
@@ -44,10 +55,17 @@ public final class CraftBookPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         RegionSchedulers regionSchedulers = new RegionSchedulers(this);
-        ICManager manager = new ICManager(icRegistry, regionSchedulers, ChipServices.create());
+        ChipServices chipServices = ChipServices.create();
+        ICManager manager = new ICManager(icRegistry, regionSchedulers, chipServices);
 
         this.schedulers = regionSchedulers;
         this.icManager = manager;
+        this.services = chipServices;
+        this.passwordFile = new PasswordFile(getDataPath());
+
+        registerPermissions();
+        loadPasswords();
+        registerCommands(chipServices);
 
         getServer().getPluginManager().registerEvents(new ICSignListener(manager, regionSchedulers), this);
         getServer().getPluginManager().registerEvents(new ICRedstoneListener(manager), this);
@@ -65,7 +83,93 @@ public final class CraftBookPlugin extends JavaPlugin {
         if (icManager != null) {
             icManager.unloadAll();
         }
+        savePasswords();
         getComponentLogger().info(Component.text("Disabled"));
+    }
+
+    /**
+     * Declares a permission for every chip in the catalogue.
+     *
+     * <p>Each one hangs off whichever wildcard matches it, so an operator can grant every safe
+     * chip or every restricted one in a single node without listing them, and a permission plugin
+     * shows the whole set rather than only the ones somebody has already tried to build.
+     */
+    private void registerPermissions() {
+        PluginManager manager = getServer().getPluginManager();
+        Permission safe = wildcard(manager, "craftbook.ic.safe.*");
+        Permission restricted = wildcard(manager, "craftbook.ic.restricted.*");
+
+        for (ICDefinition definition : icRegistry.definitions()) {
+            Permission node = new Permission(
+                    definition.permission(),
+                    "Build the " + definition.name() + " chip.",
+                    definition.restricted() ? PermissionDefault.OP : PermissionDefault.TRUE);
+            manager.addPermission(node);
+            node.addParent(definition.restricted() ? restricted : safe, true);
+        }
+    }
+
+    /** The wildcard permission of a name, which the descriptor declares. */
+    private static Permission wildcard(PluginManager manager, String name) {
+        Permission existing = manager.getPermission(name);
+        if (existing != null) {
+            return existing;
+        }
+        Permission created = new Permission(name);
+        manager.addPermission(created);
+        return created;
+    }
+
+    /** Puts the plugin's commands into the server's command tree. */
+    private void registerCommands(ChipServices chipServices) {
+        SwitchCommands switchCommands = new SwitchCommands(
+                chipServices.switchboard(),
+                chipServices.guardedSwitchboard(),
+                chipServices.passwords(),
+                this::runOffThread,
+                this::savePasswords);
+
+        new CraftBookCommands(new CatalogueCommands(icRegistry), switchCommands).registerOn(this);
+    }
+
+    /**
+     * Runs work away from the thread that ticks the world.
+     *
+     * <p>Checking a password is slow on purpose. Doing it on a region's own thread would let
+     * anybody hold that region up by typing the command over and over.
+     */
+    private void runOffThread(Runnable work) {
+        getServer().getAsyncScheduler().runNow(this, task -> work.run());
+    }
+
+    /** Reads the switch passwords back in, if any were saved. */
+    private void loadPasswords() {
+        if (passwordFile == null || services == null) {
+            return;
+        }
+        try {
+            int read = passwordFile.load(services.passwords());
+            if (read > 0) {
+                getComponentLogger().info(Component.text("Read " + read + " switch passwords"));
+            }
+        } catch (IOException e) {
+            getComponentLogger().error(
+                    Component.text("Could not read " + passwordFile.path() + "; guarded switches "
+                            + "will not open until it is fixed"), e);
+        }
+    }
+
+    /** Writes the switch passwords out. Safe to call from any thread. */
+    private void savePasswords() {
+        if (passwordFile == null || services == null) {
+            return;
+        }
+        try {
+            passwordFile.save(services.passwords());
+        } catch (IOException e) {
+            getComponentLogger().error(
+                    Component.text("Could not write " + passwordFile.path()), e);
+        }
     }
 
     /**

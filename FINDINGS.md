@@ -448,3 +448,61 @@ unsafe even from another region's thread.
 
 **Rewrite:** a planter reads the items around it on the thread that owns them, which is its own,
 and the search goes through the world seam rather than through the chunk provider.
+
+## Logic and control
+
+### 36. The password chip's "encryption" was `String.hashCode`
+
+`PasswordControlled.encrypt` was `"" + password.hashCode()`, and that value was written into
+`mcx121.txt` next to the switch name. A Java string hash is a 32-bit non-cryptographic checksum:
+it is trivial to find a second string that produces the same number, so a door could be opened
+without ever learning the password that was set on it, and equally trivial to work backwards
+through a list of likely passwords. Anyone who could read the file had the door.
+
+The comparison was also an ordinary string equality, which takes longer the more of the value
+matches. That leaks how close a guess was, though it hardly matters next to the hash itself.
+
+**Rewrite:** `PasswordStore` derives a key with PBKDF2-HMAC-SHA256 over a random salt per switch,
+and compares in constant time. Nothing that can be typed back in is written anywhere. Deriving a
+key is slow by design, so it is done away from the thread that ticks the world; that also means
+somebody typing the command over and over cannot hold a region up.
+
+### 37. The command controlled chips never released a switch
+
+`CommandControlled.unload` was empty and `PasswordControlled` had no unload at all, so every
+switch name that had ever loaded stayed in the map for as long as the server ran. A command could
+therefore still throw a switch that no chip was following, and the listing filled up with names of
+chips that had long since been broken.
+
+**Rewrite:** a chip claims its switch as it loads and gives it up as it unloads, so the listing is
+what is actually out there and a name means something.
+
+### 38. Several chips parsed their signs during load with nothing catching failure
+
+Finding 26 records this for the analog transmitter, but it is a pattern rather than one mistake.
+`BitShift.load` called `Integer.parseInt(getLine(2))` outright. `Monoflop.load` indexed into the
+result of a split without checking its length first. Both threw out of chunk load if a player had
+edited the sign since the chip was made.
+
+**Rewrite:** every one of these reads its sign afresh each time it runs, and a line it cannot use
+leaves the chip idle rather than throwing.
+
+### 39. The trigger reader swallowed a bad target and then used it
+
+`TriggerReader.load` caught `NumberFormatException` around parsing its target and commented the
+catch block `//eat it`, leaving the offsets at whatever they already were. On a fresh load that is
+zero, so a sign with a damaged target line silently made the chip watch its own sign block rather
+than doing nothing.
+
+**Rewrite:** a target that cannot be read means no target, and the chip leaves its output where it
+is.
+
+### 40. The monoflop kept its clock progress as spaces on its fourth line
+
+`Monoflop.unload` wrote its part-completed count out as that many space characters on line 4, and
+`load` read the count back as the length of that line. The sign's fourth line was therefore both
+required to be empty when the chip was made and quietly filled with whitespace afterwards.
+
+**Rewrite:** the countdown is kept in memory. A timer caught mid-count by a chunk unloading comes
+back ready rather than part way through, which is only visible to somebody who was not there to
+see it.

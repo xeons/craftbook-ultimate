@@ -144,7 +144,7 @@ public final class Transport {
         }
 
         @Override
-        public void unload() {
+        public void unload(ChipState state) {
             release();
         }
 

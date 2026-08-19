@@ -7,6 +7,7 @@ import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Arithmetic;
 import com.xeonproductions.craftbookultimate.core.ic.gate.BlockPlacers;
 import com.xeonproductions.craftbookultimate.core.ic.gate.BlockSwappers;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Control;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Farming;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Latches;
 import com.xeonproductions.craftbookultimate.core.ic.gate.LogicGates;
@@ -49,6 +50,7 @@ public final class ICCatalogue {
         registerWeather(registry);
         registerBlockPlacers(registry);
         registerFarming(registry);
+        registerControl(registry);
         registerWireless(registry);
         registerTransport(registry);
 
@@ -406,6 +408,42 @@ public final class ICCatalogue {
                 .name("Signal Extender")
                 .description("Holds the output high for a while after the input ends.")
                 .logic(TimeChips::signalExtender)
+                .build());
+    }
+
+    private static void registerControl(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MCX120", "COMMAND CTRL")
+                .name("Command Controlled")
+                .description("Follows a switch that anyone may throw by command.")
+                .selfTriggeringModel("MCZ120")
+                .logic(Control::commandControlled)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX121", "PASSWORD CTRL")
+                .name("Password Controlled")
+                .description("Follows a switch that takes a password to throw.")
+                .selfTriggeringModel("MCZ121")
+                .logic(Control::passwordControlled)
+                .build());
+
+        registry.register(ICDefinition.builder("MC2022", "BITSHIFT")
+                .name("Bit Shift")
+                .description("Remembers a row of bits and rotates them along.")
+                .logic(Control::bitShift)
+                .build());
+
+        registry.register(ICDefinition.builder("MCU440", "^MONOFLOP")
+                .name("Monoflop")
+                .description("Waits out a countdown, then turns on.")
+                .layout(PinLayout.AISO)
+                .logic(Control::monoflop)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX295", "TRIGGER READER")
+                .name("Trigger Reader")
+                .description("Mirrors the redstone at somewhere else in the world.")
+                .selfTriggeringModel("MCZ295")
+                .logic(Control::triggerReader)
                 .build());
     }
 

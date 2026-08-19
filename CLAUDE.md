@@ -7,8 +7,9 @@ A ground-up rewrite of CraftBook for **Paper 26.x** on **Java 25**, in the names
 
 **Phase: chips run in game. Writing a recognised model reference on a wall sign creates a
 working chip that responds to redstone and to the passage of time, places and swaps blocks, farms,
-drives wireless bands and moves people between named pads. The chips that spawn or harm entities,
-the ones that talk to players, and the mechanics have not been started.**
+drives wireless bands, moves people between named pads and follows switches thrown by command. The
+chips that spawn or harm entities, the ones that talk to players, and the mechanics have not been
+started.**
 
 | Area | State |
 | --- | --- |
@@ -23,12 +24,14 @@ the ones that talk to players, and the mechanics have not been started.**
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (61 chips) | Done |
+| IC catalogue wiring (66 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
 | Time-based chips (clock, sensors, pulse, delays) | Done |
-| Commands, configuration, persistence | Not started |
+| Commands (Brigadier, `/craftbook` and the switch commands) | Done |
+| Configuration | Not started |
+| Persistence | Switch passwords only |
 | World seam (`ChipWorld`, `SimpleChipWorld`) | Done |
 | World sensors (liquid, light, weather, block detector) | Done |
 | Weather and time control chips | Done |
@@ -38,13 +41,14 @@ the ones that talk to players, and the mechanics have not been started.**
 | Block placing chips (bridge, door, flex set, set above/below) | Done |
 | Block swapping chips (toggle block, block replacer) | Done |
 | Harvesting and planting (harvester, planter, area planter) | Done |
+| Command driven switches, shift register, monoflop, trigger reader | Done |
 | Wireless bands (transmitter, receiver, analog transmitter) | Done |
 | Transporters and destinations | Done |
 | World-changing ICs (entities, messaging) | Not started |
 | Mechanics | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**784 tests passing**.
+**854 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -158,6 +162,11 @@ itself.
 *Hand the work over.* Where a value cannot stand in for the work,
 `RegionSchedulers.executeAt(world, position, task)` runs it immediately when the caller already
 owns that place and otherwise hands it to the region that does.
+
+Where a chip needs an answer now and cannot wait for either, it asks and accepts that there may be
+none: `ChipWorld.poweredAt` reports nothing at all for a place this thread may not read, and the
+trigger reader leaves its output where it is rather than guessing. That is only safe because the
+answer was advisory to begin with.
 
 `ICManager.triggerAt` already routes through `executeAt`, so a chip only ever runs on the thread
 owning its sign even if the invariant above is ever violated, or if a region splits mid-update.

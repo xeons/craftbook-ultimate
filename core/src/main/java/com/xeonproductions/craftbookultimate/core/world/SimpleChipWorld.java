@@ -40,6 +40,8 @@ public final class SimpleChipWorld implements ChipWorld {
     private final Set<Vec3i> passable = new HashSet<>();
     private final Set<Vec3i> growing = new HashSet<>();
     private final Set<Vec3i> plantable = new HashSet<>();
+    private final Set<Vec3i> powered = new HashSet<>();
+    private final Set<Vec3i> unreadable = new HashSet<>();
     private final Map<Vec3i, Map<Key, Integer>> drops = new HashMap<>();
     private final Map<Vec3i, BlockFace> facings = new HashMap<>();
     private final Set<Vec3i> silentlyPlaced = new HashSet<>();
@@ -122,6 +124,14 @@ public final class SimpleChipWorld implements ChipWorld {
     @Override
     public boolean isLoaded(Vec3i position) {
         return !unloaded.contains(position);
+    }
+
+    @Override
+    public Optional<Boolean> poweredAt(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position) || unreadable.contains(position)) {
+            return Optional.empty();
+        }
+        return Optional.of(powered.contains(position));
     }
 
     @Override
@@ -230,6 +240,22 @@ public final class SimpleChipWorld implements ChipWorld {
     /** Sets which facing a block that has one is allowed to be placed with. */
     public SimpleChipWorld withAcceptedFacing(BlockFace face) {
         this.acceptedFacing = face;
+        return this;
+    }
+
+    /** Marks a position as receiving redstone power. */
+    public SimpleChipWorld withPowered(Vec3i position) {
+        powered.add(position);
+        return this;
+    }
+
+    /**
+     * Marks a position as somewhere this thread cannot read from.
+     *
+     * <p>Stands in for a place that belongs to another region on a server that splits them.
+     */
+    public SimpleChipWorld withUnreadable(Vec3i position) {
+        unreadable.add(position);
         return this;
     }
 

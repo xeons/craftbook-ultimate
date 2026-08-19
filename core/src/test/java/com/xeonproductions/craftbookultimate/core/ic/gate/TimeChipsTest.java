@@ -352,7 +352,7 @@ class TimeChipsTest {
             SimpleChipState state = pulsing("100", "5");
 
             pulse.trigger(state);
-            pulse.unload();
+            pulse.unload(state);
 
             assertThat(state.manualScheduler().pendingCount()).isZero();
         }

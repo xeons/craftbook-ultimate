@@ -155,7 +155,7 @@ public final class ICInstance {
             tickTask.cancel();
             tickTask = null;
         }
-        logic.unload();
+        logic.unload(newState(-1));
     }
 
     /**

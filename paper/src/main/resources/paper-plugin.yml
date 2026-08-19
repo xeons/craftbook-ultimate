@@ -8,3 +8,17 @@ authors:
   - Xeon Productions
 website: https://github.com/xeonproductions/craftbook-ultimate
 folia-supported: true
+
+permissions:
+  craftbook.command:
+    description: Read the integrated circuit catalogue.
+    default: true
+  craftbook.switch.list:
+    description: List the switches that command controlled chips are following.
+    default: op
+  craftbook.ic.safe.*:
+    description: Build any chip that needs no elevated permission.
+    default: true
+  craftbook.ic.restricted.*:
+    description: Build any chip, including those that act beyond their own surroundings.
+    default: op

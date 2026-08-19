@@ -5,7 +5,7 @@ are in `CLAUDE.md`; bugs found in the legacy code are in `FINDINGS.md`.
 
 ## Integrated circuits
 
-**61 chips are registered, under 66 model numbers.** 56 of the extra fork's remain, plus 4
+**66 chips are registered, under 74 model numbers.** 51 of the extra fork's remain, plus 4
 dropped by decision.
 
 The legacy class named in each row is the one to read for behaviour, under
@@ -97,16 +97,6 @@ by sending packets directly. Paper has `Player#setPlayerWeather`, so no packet w
 | `MCU706` | JUKEBOX | Jukebox | `Jukebox` | AISO |
 | `MCX251` | SOUND EFFECT | Sound Effect | `SoundEffect` | 3ISO |
 
-### Logic and control
-
-| Model | Shorthand | Name | Legacy class | Layout |
-| --- | --- | --- | --- | --- |
-| `MC2022` | BITSHIFT | Bit Shift | `BitShift` | 3ISO |
-| `MCU440` | ^MONOFLOP | Monoflop | `Monoflop` | AISO |
-| `MCX120` | COMMAND CTRL | Command Controlled IC | `CommandControlled` | 3ISO |
-| `MCX121` | PASSWORD CTRL | Command Controlled IC | `PasswordControlled` | 3ISO |
-| `MCX295` | TRIGGER READER | Trigger Reader | `TriggerReader` | 3ISO |
-
 ### Dropped by decision
 
 Not to be implemented.
@@ -161,10 +151,10 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 | --- | --- |
 | Entity seam | Spawning, damaging entities and launching projectiles. Blocks ~24 ICs. Finding and moving people exists already as `Traveller`, and finding and consuming dropped items as `DroppedItem`. |
 | Audience seam | Sending Adventure components to players near a chip. Blocks ~9 ICs, and the warning a destination should give when its name is already in use. |
-| Persistence | Chips that keep state across a restart currently keep it only on the sign. |
+| Persistence | Only the switch passwords are saved, in `switch-passwords.txt`. Everything else a chip remembers is kept on its own sign or lost when its chunk unloads. |
 | Configuration | Nothing is configurable. The legacy code had per-mechanic config with an enable flag. |
-| Commands | No commands at all. The legacy code had `/cb`, plus per-mechanic commands. |
-| Permissions | `ICDefinition.permission()` exists and is checked on creation. Nothing else checks anything. |
+| Commands | `/craftbook` reads the catalogue and the switch commands drive `MCX120` and `MCX121`, all through Brigadier. The per-mechanic commands come with their mechanics. |
+| Permissions | Every chip's permission is registered under `craftbook.ic.safe.*` or `craftbook.ic.restricted.*` and checked on creation. Nothing yet checks anything at run time. |
 | Documentation generator | The legacy code generated its own IC documentation. |
 
 ## Verification
@@ -179,4 +169,6 @@ at all. Worth checking early, in roughly this order:
 4. A bridge builds and retracts, paying into and out of a nearby chest.
 5. A transmitter drives a receiver in another world, and a transporter delivers to a destination.
 6. A planter sows seeds thrown at it, and a harvester gathers the crop into a chest.
-7. Region behaviour on an actual Folia server.
+7. `/craftbook ic list` reports the catalogue, and `/mcx120` throws a switch a chip follows.
+8. A password set with `/mcx121pass add` still works after a restart.
+9. Region behaviour on an actual Folia server.

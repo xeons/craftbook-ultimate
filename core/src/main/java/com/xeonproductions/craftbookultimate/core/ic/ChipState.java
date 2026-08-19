@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.core.ic;
 
+import com.xeonproductions.craftbookultimate.core.control.Switchboard;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
@@ -146,6 +147,16 @@ public interface ChipState {
     /** Which destination answers to each name. */
     default Destinations destinations() {
         return services().destinations();
+    }
+
+    /** The switches anyone may throw by command. */
+    default Switchboard switchboard() {
+        return services().switchboard();
+    }
+
+    /** The switches that take a password to throw. */
+    default Switchboard guardedSwitchboard() {
+        return services().guardedSwitchboard();
     }
 
     /**

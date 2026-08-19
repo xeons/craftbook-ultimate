@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import net.kyori.adventure.key.Key;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Registry;
 import org.bukkit.Tag;
@@ -156,6 +157,22 @@ public record BukkitChipWorld(World world) implements ChipWorld {
     @Override
     public boolean isLoaded(Vec3i position) {
         return world.isChunkLoaded(position.x() >> 4, position.z() >> 4);
+    }
+
+    @Override
+    public Optional<Boolean> poweredAt(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return Optional.empty();
+        }
+
+        // The place may be a long way off, and on a server that splits regions across threads a
+        // distant place can belong to one this is not. Reading it anyway would be a race, so the
+        // answer is that there is no answer.
+        if (!Bukkit.isOwnedByCurrentRegion(world, position.x() >> 4, position.z() >> 4)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(Redstone.isPowered(Positions.toBlock(world, position)));
     }
 
     @Override

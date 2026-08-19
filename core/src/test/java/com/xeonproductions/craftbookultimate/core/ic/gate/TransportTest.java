@@ -100,7 +100,7 @@ class TransportTest {
             SelfTriggeringICLogic chip = Transport.destination();
 
             chip.load(state);
-            chip.unload();
+            chip.unload(state);
 
             assertThat(services.destinations().find("atrium")).isEmpty();
         }
@@ -176,7 +176,7 @@ class TransportTest {
 
             Transport.destination().load(first);
             loser.load(second);
-            loser.unload();
+            loser.unload(second);
 
             assertThat(services.destinations().find("atrium")).isPresent();
         }

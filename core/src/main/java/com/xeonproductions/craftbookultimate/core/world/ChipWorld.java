@@ -94,10 +94,20 @@ public interface ChipWorld {
     boolean isLoaded(Vec3i position);
 
     /**
+     * Whether a block anywhere in the world is receiving redstone power.
+     *
+     * <p>Unlike a chip's own pins this may name somewhere far away, which is not always readable
+     * from where the asking chip runs: the place may not be loaded, or on a regionised server it
+     * may belong to a thread that is not this one. Either way the answer is empty rather than a
+     * guess, and a chip reading it should leave its output where it is.
+     */
+    Optional<Boolean> poweredAt(Vec3i position);
+
+    /**
      * Whether something could stand in the block at a position without being inside it.
      *
-     * <p>Broader than being air: a torch, a carpet or an open door all leave room, and a chip
-     * looking for somewhere to put a player wants any of them.
+     * <p>Broader than being air: a torch, tall grass, an open door or a body of water all leave
+     * room, and a chip looking for somewhere to put a player wants any of them.
      */
     boolean isPassable(Vec3i position);
 

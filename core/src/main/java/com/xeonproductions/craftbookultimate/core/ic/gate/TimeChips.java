@@ -313,7 +313,7 @@ public final class TimeChips {
         }
 
         @Override
-        public void unload() {
+        public void unload(ChipState state) {
             cancel();
         }
 
@@ -390,7 +390,7 @@ public final class TimeChips {
         }
 
         @Override
-        public void unload() {
+        public void unload(ChipState state) {
             cancel();
         }
 
@@ -427,7 +427,7 @@ public final class TimeChips {
         }
 
         @Override
-        public void unload() {
+        public void unload(ChipState state) {
             cancel();
         }
 

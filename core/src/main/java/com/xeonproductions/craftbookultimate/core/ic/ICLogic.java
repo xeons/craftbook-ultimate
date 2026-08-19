@@ -47,9 +47,15 @@ public interface ICLogic {
     /**
      * Called once when the chip is unloaded, after which it will not run again.
      *
-     * <p>The default does nothing. Override to release anything the chip registered elsewhere.
+     * <p>The default does nothing. Override to release anything the chip registered elsewhere, or
+     * to write state a chip keeps on its sign back to it.
+     *
+     * <p>The sign may already be gone, if the chip is unloading because somebody broke it. Writing
+     * to it is safe either way; the write simply does nothing.
+     *
+     * @param state the chip's inputs, outputs and configuration
      */
-    default void unload() {
+    default void unload(ChipState state) {
         // Most chips hold nothing that needs releasing.
     }
 }

@@ -31,12 +31,12 @@ world beyond redstone, and the mechanics, have not been started.**
 | World seam (`ChipWorld`, `SimpleChipWorld`) | Done |
 | World sensors (liquid, light, weather, block detector) | Done |
 | Weather and time control chips | Done |
-| BlockBags, which the block-placing chips need | Not started |
+| Stockpiles, formerly BlockBags | Done |
 | World-changing ICs (blocks, entities, messaging, wireless) | Not started |
 | Mechanics | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**509 tests passing**.
+**533 tests passing**.
 
 Run `./gradlew build` to compile, test, and produce
 `paper/build/libs/CraftBookUltimate-<version>.jar`. That jar carries the core module's classes;
@@ -89,6 +89,13 @@ Between them: 58 ICs in both, 73 upstream only, **64 only in this fork**, for a 
 10. **Never invent a model number or shorthand.** Look every one up in the legacy registry before
    registering it. A wrong number silently breaks existing signs and can collide with a chip that
    has not been ported yet.
+
+## Naming
+
+The legacy code called a place to take materials from a "block bag". The rewrite calls it a
+**stockpile**, which says what it is, and its operations are `take` and `give` rather than
+`remove` and `add`. A mechanic asks a stockpile for materials before it builds and gives them
+back when it takes the structure down.
 
 ## Scope decisions
 

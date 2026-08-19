@@ -230,3 +230,40 @@ to depended on catalogue iteration order rather than on anything a player could 
 **Rewrite:** `MCX233` keeps the shorthand, since it is the one listed first and the simpler of
 the two. `MCT233` is registered as `WEATHER CTRL ADV`. Both model numbers resolve as before, so
 only signs written with the ambiguous shorthand are affected, and those now resolve predictably.
+
+---
+
+## Block bags, rewritten as stockpiles
+
+### 18. The single-chest search box was off by one on three sides
+
+`NearbyChestBlockBag.fromSourcePositionNearby` searched with
+
+```java
+for (int dx = -5; dx < 5; dx++)
+```
+
+on each axis, which covers -5 to 4 rather than -5 to 5. The search box was therefore 10 blocks
+wide instead of 11 and sat off-centre, so a chest exactly five blocks to the north, east or above
+was found while the same chest to the south, west or below was not.
+
+**Rewrite:** the radius is inclusive on both sides, so the box is centred on the mechanic.
+
+### 19. Taking across several containers could half-empty them
+
+`MultiNearbyChestBlockBag` drew from each container in turn without first checking that the
+containers held enough between them. A withdrawal that ran out part-way left the earlier
+containers already emptied, so a mechanic that then declined to build had still taken the
+materials.
+
+**Rewrite:** `Stockpile.takeAll` puts back everything it took if it cannot take the whole amount,
+so a mechanic either gets all its materials or leaves the containers as they were.
+
+### 20. Double chests risked being counted twice
+
+Halves of a double chest were skipped by remembering the inventory objects already seen. The
+inventory a chest hands back for a double chest is not guaranteed to be the same object for both
+halves, so identity comparison is not a reliable way to tell that two blocks share one container.
+
+**Rewrite:** finding either half claims both positions, worked out from the chest's own block
+data rather than from the inventory it returns.

@@ -23,6 +23,7 @@ import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensors;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Transport;
+import com.xeonproductions.craftbookultimate.core.ic.gate.WeatherIllusions;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Wireless;
 import com.xeonproductions.craftbookultimate.core.ic.gate.WeatherChips;
 import com.xeonproductions.craftbookultimate.core.ic.gate.TimeChips;
@@ -70,6 +71,7 @@ public final class ICCatalogue {
         registerEffects(registry);
         registerSensing(registry);
         registerMessages(registry);
+        registerWeatherIllusions(registry);
 
         return registry;
     }
@@ -140,6 +142,38 @@ public final class ICCatalogue {
                 .description("Outputs high while a named player is logged in.")
                 .selfTriggeringModel("MC0500")
                 .logic(Sensing::playerOnline)
+                .build());
+    }
+
+    private static void registerWeatherIllusions(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MCX235", "FALSE WEATHER")
+                .name("False Weather")
+                .description("Shows rain to people it is not raining on.")
+                .restricted()
+                .logic(WeatherIllusions::falseWeather)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX236", "DIST FALSE RAIN")
+                .name("Distance False Weather")
+                .description("Shows rain to everybody standing within a distance of the sign.")
+                .restricted()
+                .selfTriggeringModel("MCZ236")
+                .logic(WeatherIllusions::distanceFalseWeather)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX237", "HIDE WEATHER")
+                .name("Hide Weather")
+                .description("Hides the rain from people it is raining on.")
+                .restricted()
+                .logic(WeatherIllusions::hideWeather)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX238", "DIST HIDE RAIN")
+                .name("Distance Hide Weather")
+                .description("Hides the rain from everybody standing within a distance of the sign.")
+                .restricted()
+                .selfTriggeringModel("MCZ238")
+                .logic(WeatherIllusions::distanceHideWeather)
                 .build());
     }
 

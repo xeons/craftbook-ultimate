@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.core.entity;
 
+import com.xeonproductions.craftbookultimate.core.illusion.Sky;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.stock.SimpleStockpile;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
@@ -42,6 +43,7 @@ public final class SimpleBystander implements Bystander {
     private final List<Bystander> riders = new ArrayList<>();
     private final List<PotionDose> doses = new ArrayList<>();
     private final List<Component> messages = new ArrayList<>();
+    private Sky shownSky = Sky.REAL;
     private double damageTaken;
     private boolean present = true;
 
@@ -142,6 +144,20 @@ public final class SimpleBystander implements Bystander {
         }
         messages.add(message);
         return true;
+    }
+
+    @Override
+    public boolean showSky(Sky sky) {
+        if (!player) {
+            return false;
+        }
+        shownSky = sky;
+        return true;
+    }
+
+    /** What sky it is being shown, which is the real one until something changes it. */
+    public Sky shownSky() {
+        return shownSky;
     }
 
     @Override

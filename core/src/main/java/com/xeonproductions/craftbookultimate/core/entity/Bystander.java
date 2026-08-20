@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.core.entity;
 
+import com.xeonproductions.craftbookultimate.core.illusion.Sky;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import java.util.List;
@@ -110,6 +111,17 @@ public interface Bystander {
      * @return whether there was anybody there to hear it
      */
     boolean tell(Component message);
+
+    /**
+     * Shows it a sky of its own, whatever the weather is really doing.
+     *
+     * <p>Only a player sees anything, and the world is untouched: nobody else notices, and the
+     * rain goes on falling or not falling as it was. The illusion lasts until it is taken away
+     * with {@link Sky#REAL}, so whatever puts one up is responsible for taking it down.
+     *
+     * @return whether there was anybody there to show it to
+     */
+    boolean showSky(Sky sky);
 
     /** The things riding on it. */
     List<Bystander> riders();

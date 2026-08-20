@@ -9,8 +9,9 @@ A ground-up rewrite of CraftBook for **Paper 26.x** on **Java 25**, in the names
 working chip that responds to redstone and to the passage of time, places and swaps blocks, farms,
 drives wireless bands, moves people between named pads, follows switches thrown by command,
 spawns, shoots at, hurts, doses and senses what stands near it, and speaks to whoever is near, to
-one player anywhere, to the whole server or to the log. The chips that show weather illusions or
-play music, and the mechanics other than the minecart ones, have not been started.**
+one player anywhere, to the whole server or to the log, and shows people weather the world is not
+having. The chips that play music, and the mechanics other than the minecart ones, have not been
+started.**
 
 | Area | State |
 | --- | --- |
@@ -25,7 +26,7 @@ play music, and the mechanics other than the minecart ones, have not been starte
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (106 chips) | Done |
+| IC catalogue wiring (110 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
@@ -53,11 +54,12 @@ play music, and the mechanics other than the minecart ones, have not been starte
 | Potion areas, particles and fireworks | Done |
 | Sensing people, creatures and items | Done |
 | Messaging, logging and the two marquees | Done |
+| Weather illusions (false and hidden rain) | Done |
 | Minecart mechanics (13 on the rails, plus the dispenser) | Done |
 | Mechanics other than the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1384 tests passing**.
+**1405 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 

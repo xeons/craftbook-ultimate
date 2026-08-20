@@ -3,6 +3,7 @@ package com.xeonproductions.craftbookultimate.paper.ic;
 import com.xeonproductions.craftbookultimate.core.entity.Bystander;
 import com.xeonproductions.craftbookultimate.core.entity.ItemView;
 import com.xeonproductions.craftbookultimate.core.entity.PotionDose;
+import com.xeonproductions.craftbookultimate.core.illusion.Sky;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.paper.stock.ContainerStockpile;
@@ -191,6 +192,15 @@ public record BukkitBystander(Entity entity) implements Bystander {
             return false;
         }
         player.sendMessage(message);
+        return true;
+    }
+
+    @Override
+    public boolean showSky(Sky sky) {
+        if (!(entity instanceof Player player)) {
+            return false;
+        }
+        PlayerSkies.show(player, sky);
         return true;
     }
 

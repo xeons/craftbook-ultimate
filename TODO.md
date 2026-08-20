@@ -5,24 +5,12 @@ are in `CLAUDE.md`; bugs found in the legacy code are in `FINDINGS.md`.
 
 ## Integrated circuits
 
-**106 chips are registered, under 133 model numbers.** 8 of the extra fork's remain, plus 4
+**110 chips are registered, under 139 model numbers.** 4 of the extra fork's remain, plus 4
 dropped by decision.
 
 The legacy class named in each row is the one to read for behaviour, under
 `src/main/java/com/minecraftonline/` or `src/main/java/com/sk89q/craftbook/sponge/mechanics/ics/chips/`.
 Look every model number and shorthand up in `ICManager` before registering it; do not invent them.
-
-### Weather illusions
-
-These show one player different weather from another, which the legacy code did
-by sending packets directly. Paper has `Player#setPlayerWeather`, so no packet work is needed.
-
-| Model | Shorthand | Name | Legacy class | Layout |
-| --- | --- | --- | --- | --- |
-| `MCX235` | FALSE WEATHER | False Weather | `FalseWeather` | 3ISO |
-| `MCX236` | DIST FALSE RAIN | Distance False Weather | `DistanceFalseWeather` | 3ISO |
-| `MCX237` | HIDE WEATHER | Hide Weather | `HideWeather` | 3ISO |
-| `MCX238` | DIST HIDE RAIN | Distance Hide Weather | `DistanceHideWeather` | 3ISO |
 
 ### Sound and music
 

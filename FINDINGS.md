@@ -969,3 +969,88 @@ a mistyped page scheduled a message for some time next week and held a task open
 
 **Rewrite:** a book cannot hold a message back by more than an hour, which is the same bound the
 cart delay takes.
+
+## Weather illusions
+
+### 74. A one-character audience line threw out of the redstone handler
+
+Both `FalseWeather` and `HideWeather` read the audience with
+
+```java
+if(getLine(2).length() > 0 && getLine(2).charAt(1) == ':')
+```
+
+A line of exactly one character passes the length check and is then read at index 1.
+`StringIndexOutOfBoundsException`, thrown out of the chip's trigger and taking the rest of that
+redstone update with it. A single stray letter on line 3 was enough.
+
+**Rewrite:** a line shorter than a prefix and a colon names no audience, which means the whole
+world, the same as a blank one.
+
+### 75. A distance weather chip refused to load unless its sign named a distance
+
+`create` treats line 3 as optional and leaves the radius at its default of ten. `load` does not:
+
+```java
+radius = Integer.parseInt(getLine(2));
+```
+
+So a chip built without a distance — which creation explicitly allowed — threw on every load from
+then on. The same shape as finding 67, in a different family.
+
+**Rewrite:** a line that is not a number means the default reach, and the reach is read afresh
+each time the chip runs.
+
+### 76. The message on a distance weather chip could not contain a space
+
+`create` rejects line 4 outright if it contains one:
+
+```java
+if (line4.contains(" ")) {
+    throw new InvalidICException("Fourth line contains an invalid message.");
+}
+```
+
+The field is described as a message and shown to players as one, so this left it able to say
+exactly one word.
+
+**Rewrite:** the greeting is whatever is written on line 4. Nothing existing breaks, because
+nothing existing could have had a space in it.
+
+### 77. The output reported which pin had fired, not whether anything happened
+
+Both of the named-audience chips end with
+
+```java
+boolean out = getPinSet().isTriggered(0,this);
+...
+getPinSet().setOutput(0,out,this);
+```
+
+which is true when input 1 happened to be the pin that caused the run and false otherwise —
+unrelated to whether an illusion went up, and false for a chip driven on any other pin. The two
+distance chips set no output at all.
+
+**Rewrite:** the output is high while the chip has an illusion up, on all four.
+
+### 78. The named player was whichever one came last
+
+```java
+for(Player anyPerson : Sponge.getServer().getOnlinePlayers()){
+    if(anyPerson.getName().contains(id)) player = anyPerson;
+}
+```
+
+No break, so a sign reading `p:Ste` fooled the last matching player the server happened to list
+rather than the first, and which one that was could change between runs.
+
+**Rewrite:** the first match wins, so the same sign fools the same person.
+
+### 79. An illusion outlived the chip that put it up
+
+None of the four chips restores anybody's weather when it unloads. A chunk going out of view while
+the illusion was up left the player seeing weather that was not there, with the only thing that
+could have taken it away now gone. Relogging was the fix.
+
+**Rewrite:** each chip remembers exactly who it has fooled and puts those people back when it
+stops being driven, when the real weather catches up with the illusion, and when it unloads.

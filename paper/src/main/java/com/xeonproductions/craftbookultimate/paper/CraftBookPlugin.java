@@ -15,6 +15,7 @@ import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
 import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
 import com.xeonproductions.craftbookultimate.paper.config.ConfigFile;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitAnnouncer;
+import com.xeonproductions.craftbookultimate.paper.ic.BukkitIllusions;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitRoster;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.store.FireworkFiles;
@@ -75,7 +76,9 @@ public final class CraftBookPlugin extends JavaPlugin {
     public void onEnable() {
         RegionSchedulers regionSchedulers = new RegionSchedulers(this);
         ChipServices chipServices = ChipServices.create(
-                new BukkitRoster(getServer()), new BukkitAnnouncer(getServer(), getLogger()));
+                new BukkitRoster(getServer()),
+                new BukkitAnnouncer(getServer(), getLogger()),
+                new BukkitIllusions(getServer()));
         ICManager manager = new ICManager(icRegistry, regionSchedulers, chipServices);
 
         this.schedulers = regionSchedulers;

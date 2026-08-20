@@ -2,6 +2,7 @@ package com.xeonproductions.craftbookultimate.core.ic;
 
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.control.Switchboard;
+import com.xeonproductions.craftbookultimate.core.illusion.Illusions;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.message.Announcer;
@@ -173,6 +174,17 @@ public interface ChipState {
      */
     default Announcer announcer() {
         return services().announcer();
+    }
+
+    /**
+     * How this chip shows somebody something other than what is there.
+     *
+     * <p>For the audience that is the server rather than a place, as {@link #announcer()} is. A
+     * chip that already has the people in front of it should use {@link
+     * com.xeonproductions.craftbookultimate.core.entity.Bystander#showSky} instead.
+     */
+    default Illusions illusions() {
+        return services().illusions();
     }
 
     /** What every wireless band is currently carrying. */

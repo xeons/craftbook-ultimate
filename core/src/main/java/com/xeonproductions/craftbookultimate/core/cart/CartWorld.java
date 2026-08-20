@@ -1,12 +1,15 @@
 package com.xeonproductions.craftbookultimate.core.cart;
 
 import com.xeonproductions.craftbookultimate.core.entity.Bystander;
+import com.xeonproductions.craftbookultimate.core.entity.DroppedItem;
+import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.core.world.BlockReference;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
 
@@ -48,6 +51,17 @@ public interface CartWorld {
     /** Whether a position is loaded and can be read. */
     boolean isLoaded(Vec3i position);
 
+    /**
+     * Which sides a climbable block clings to.
+     *
+     * <p>A ladder clings to the one wall it is nailed to and a vine to however many it has grown
+     * across. Empty for anything that is not climbable, which is nearly every block.
+     *
+     * <p>This is what lets a cart climb one: it is pushed up and into whatever the ladder or vine
+     * is holding on to, so it rides the face rather than sliding off it.
+     */
+    Set<BlockFace> climbableSidesAt(Vec3i position);
+
     /** The lowest block a world has. */
     int minHeight();
 
@@ -64,6 +78,15 @@ public interface CartWorld {
      * any more than they set off a sensor.
      */
     List<Bystander> playersNear(Vec3d centre, double radius);
+
+    /**
+     * Everything lying on the ground within a distance of a point.
+     *
+     * <p>What a storage cart gathers up as it passes. A cart runs through a dropped item rather
+     * than colliding with it, so this is asked as the cart moves rather than when it hits
+     * something.
+     */
+    List<DroppedItem> itemsNear(Vec3d centre, double radius);
 
     /**
      * The containers at a list of positions, taken as one stockpile.

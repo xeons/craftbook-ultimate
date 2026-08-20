@@ -1605,3 +1605,82 @@ mechanism that had stopped working, with nothing connecting the two.
 
 **Rewrite:** the filter is read only off a sign that names the ejector. A sign naming something else
 leaves the ejector to empty every cart, which is what an ejector with no sign of its own does.
+
+## The habits every cart has
+
+### 117. A crossroads normalised a velocity without asking whether there was one
+
+`MoreRails` sends a cart straight across a pressure plate by pointing its existing velocity
+somewhere faster:
+
+```java
+minecart.setVelocity(minecart.getVelocity().normalize().mul(4d));
+```
+
+flow-math refuses the zero vector outright — `throw new ArithmeticException("Cannot normalize the
+zero vector")` — and nothing above this asks whether the cart is moving. A cart whose velocity has
+already been zeroed on the same event, by a station or a delay or a direction block built on the
+plate, takes the mechanic down with an exception instead of being left where it is.
+
+**Rewrite:** a cart with no direction has no direction to be sent in, so it is left alone. The
+domain's own `Vec3d.normalise` answers zero for the zero vector rather than throwing, so this is
+the only place that has to think about it.
+
+### 118. A storage cart that could not hold a whole stack duplicated it
+
+```java
+Collection<ItemStackSnapshot> rejects = chestMinecart.getInventory()
+        .offer(item.get(Keys.REPRESENTED_ITEM).get().createStack()).getRejectedItems();
+if (rejects.isEmpty()) {
+    item.remove();
+}
+```
+
+`offer` puts in as much as fits and hands back the remainder. So a cart with room for four of a
+stack of twelve takes four, is handed eight back, finds the rejects not empty, and leaves the
+stack of twelve lying on the ground. Sixteen items where there were twelve, and the cart can be
+run over the same stack until it is full.
+
+**Rewrite:** a stack is taken whole or not at all. A cart with no room for the lot leaves it where
+it lies, which is also what a player watching would expect to see.
+
+### 119. Damage-only still destroyed the carts it hit
+
+```java
+if (damageOnly.getValue() && (!(entity instanceof Living) && !(entity instanceof Minecart))) {
+    return;
+}
+...
+} else {
+    entity.remove();
+}
+```
+
+The guard lets a minecart through as though it were something that could be damaged, and the
+branch below then removes it, because a minecart is not `Living`. So the setting whose description
+is *"Only damage entities, don't remove them"* removed every cart a laden cart caught up with,
+which is the one thing on a railway that is expensive to lose.
+
+**Rewrite:** hurting only means nothing is removed. What cannot be hurt is left alone, carts
+included.
+
+### 120. A cart was taken out from under whoever climbed in next
+
+`ExitRemover` waits two ticks after somebody gets out and then removes the cart, and what it checks
+in between is only whether the cart is still there:
+
+```java
+public void run() {
+    if(minecart.isRemoved()) return;
+    ...
+    minecart.remove();
+}
+```
+
+Two ticks is long enough for the next person in the queue to get in, and they were taken out of a
+cart that then vanished. The delay exists because the rider is not clear of the cart when the event
+fires, so it cannot simply be dropped.
+
+**Rewrite:** the cart is taken away only if it is still empty when the wait is over. A cart
+somebody is sitting in is left alone, which leaves one cart behind rather than dropping a player on
+the platform.

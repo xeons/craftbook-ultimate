@@ -7,11 +7,15 @@ import com.xeonproductions.craftbookultimate.core.cart.CartWorld;
 import com.xeonproductions.craftbookultimate.core.cart.RailShape;
 import com.xeonproductions.craftbookultimate.core.cart.VehicleKind;
 import com.xeonproductions.craftbookultimate.core.entity.Bystander;
+import com.xeonproductions.craftbookultimate.core.entity.DroppedItem;
+import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
+import com.xeonproductions.craftbookultimate.paper.adapter.Directions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitBystander;
+import com.xeonproductions.craftbookultimate.paper.ic.BukkitDroppedItem;
 import com.xeonproductions.craftbookultimate.paper.ic.LegacyBlocks;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -27,9 +31,12 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Rail;
+import org.bukkit.block.data.type.Ladder;
+import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -94,6 +101,31 @@ public record BukkitCartWorld(World world, CartRecipes recipes) implements CartW
     }
 
     @Override
+    public Set<BlockFace> climbableSidesAt(Vec3i position) {
+        if (!isLoaded(position)) {
+            return Set.of();
+        }
+        BlockData data = world.getBlockAt(position.x(), position.y(), position.z()).getBlockData();
+        if (data instanceof Ladder ladder) {
+            // A ladder's facing points away from the wall it is nailed to.
+            return sidesOf(List.of(ladder.getFacing().getOppositeFace()));
+        }
+        if (data instanceof MultipleFacing vine && data.getMaterial() == Material.VINE) {
+            return sidesOf(vine.getFaces());
+        }
+        return Set.of();
+    }
+
+    /** The horizontal sides among a set of faces, as the domain names them. */
+    private static Set<BlockFace> sidesOf(Iterable<org.bukkit.block.BlockFace> faces) {
+        Set<BlockFace> sides = new LinkedHashSet<>();
+        for (org.bukkit.block.BlockFace face : faces) {
+            Directions.toDomain(face).filter(BlockFace::isHorizontal).ifPresent(sides::add);
+        }
+        return sides;
+    }
+
+    @Override
     public int minHeight() {
         return world.getMinHeight();
     }
@@ -126,6 +158,18 @@ public record BukkitCartWorld(World world, CartRecipes recipes) implements CartW
             BukkitBystander waiting = new BukkitBystander(player);
             if (waiting.isVisible()) {
                 found.add(waiting);
+            }
+        }
+        return found;
+    }
+
+    @Override
+    public List<DroppedItem> itemsNear(Vec3d centre, double radius) {
+        List<DroppedItem> found = new ArrayList<>();
+        for (Item item : world.getNearbyEntitiesByType(
+                Item.class, new Location(world, centre.x(), centre.y(), centre.z()), radius)) {
+            if (item.isValid()) {
+                found.add(new BukkitDroppedItem(item));
             }
         }
         return found;

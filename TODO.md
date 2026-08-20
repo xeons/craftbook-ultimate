@@ -86,8 +86,8 @@ Note that `MC1421` is upstream's clock, so it cannot be taken at its own number 
 
 ## Mechanics
 
-The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 24 are
-ported, 3 are dropped by decision, and **43 are left**. The bridge, the door, the gate, the lift
+The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 31 are
+ported, 3 are dropped by decision, and **36 are left**. The bridge, the door, the gate, the lift
 and the toggled area are done, and so is the greater part of the rails. Those listed as unique to
 this fork have no upstream equivalent to compare against, so the legacy source is the only
 specification.
@@ -100,19 +100,13 @@ specification.
 commands. `CartPrint` covers `CartMessenger` as well: both claim `[Print]` in the legacy fork, so
 one implementation answers for both.
 
-Seven are **not** ported and carry no sign at all. They are tweaks to how a cart behaves
-rather than mechanisms a builder places, so each is a listener and a setting rather than anything
-on `CartDispatcher`:
+### Minecart mechanics: the habits, all off by default
 
-| Mechanic | What it does |
-| --- | --- |
-| `EmptyDecay` | Removes a cart that has stood empty for a while, counting from when its rider got out. |
-| `ExitRemover` | Removes the cart when its rider gets out, handing them the item back. |
-| `ItemPickup` | A storage cart gathers up items it runs into. |
-| `MobBlocker` | Keeps creatures from getting into a cart. |
-| `MoreRails` | Ladders and vines carry a cart vertically, and a pressure plate makes a four-way intersection. |
-| `NoCollide` | A cart does not collide with what it runs into — empty carts by default, occupied ones by setting. |
-| `RemoveEntities` | A cart removes, or merely hurts, whatever it runs into. |
+`EmptyDecay`, `ExitRemover`, `ItemPickup`, `MobBlocker`, `MoreRails`, `NoCollide` and
+`RemoveEntities` carry no sign and are built from nothing. They are together in `CartBehaviour` and
+in the one listener that asks it, and their settings are together under `carts.habits`. Every one
+is off until an operator says otherwise, since each changes every cart on the server rather than
+one place on the track.
 
 `CartWarp` is **not** ported: it teleports a cart to a CBWarp, and CBWarps is dropped by decision.
 Porting it needs a decision about what it should warp to instead.
@@ -147,7 +141,9 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 `LightSwitch`, `Marquee`, `Netherrack`, `PaintingSwitcher`, `Pipes`, `RedstoneJukebox`,
 `SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `Variables`, `XPStorer`, `DispenserRecipes`,
 and the `boat` set — `LandBoats`, `WaterPlaceOnly`, `SpeedModifiers`, and boat-going copies of
-`EmptyDecay`, `ExitRemover` and `RemoveEntities` separate from the minecart ones above.
+`EmptyDecay`, `ExitRemover` and `RemoveEntities`. Those three are separate classes from the
+minecart ones now ported, and the same habits applied to boats; whether they join `CartHabits` or
+get a section of their own is a decision for when the boats arrive.
 
 ### Dropped by decision
 
@@ -196,4 +192,7 @@ at all. Worth checking early, in roughly this order:
     swaps it in and out, and an area holding a chest keeps what was in the chest.
 19. An `[Eject]` sign sets a rider down on the platform behind it, and a `[Reverse]` sign turns
     back a cart that comes at it from the wrong side while letting the other way through.
-20. Region behaviour on an actual Folia server.
+20. Nothing under `carts.habits` does anything until it is switched on, and then: a cart climbs a
+    ladder, crosses a pressure plate, gathers a stack it can hold whole and leaves one it cannot,
+    passes through an empty cart, and decays once nobody has got back in.
+21. Region behaviour on an actual Folia server.

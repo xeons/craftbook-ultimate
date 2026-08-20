@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.paper.config;
 
+import com.xeonproductions.craftbookultimate.core.config.CartHabits;
 import com.xeonproductions.craftbookultimate.core.config.CartSettings;
 import com.xeonproductions.craftbookultimate.core.config.MechanicSettings;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
@@ -61,6 +62,19 @@ public final class ConfigFile {
     private static final String CART_BOOSTERS = "carts.boosters";
     private static final String CART_LAUNCH_SPEED = "carts.launch-speed";
     private static final String CART_WATER_BUCKETS = "carts.return-water-buckets";
+    private static final String HABIT_DECAY_AFTER = "carts.habits.decay-empty-after";
+    private static final String HABIT_DECAY_AFTER_EXIT = "carts.habits.decay-only-after-exit";
+    private static final String HABIT_REMOVE_ON_EXIT = "carts.habits.remove-on-exit";
+    private static final String HABIT_GIVE_BACK = "carts.habits.give-cart-back";
+    private static final String HABIT_PICK_UP = "carts.habits.pick-up-items";
+    private static final String HABIT_BLOCK_MOBS = "carts.habits.block-mobs";
+    private static final String HABIT_CLIMB_SPEED = "carts.habits.climb-speed";
+    private static final String HABIT_PLATE_CROSSINGS = "carts.habits.plate-crossings";
+    private static final String HABIT_THROUGH_EMPTY = "carts.habits.pass-through-empty-carts";
+    private static final String HABIT_THROUGH_FULL = "carts.habits.pass-through-full-carts";
+    private static final String HABIT_RUN_DOWN = "carts.habits.run-down-what-it-hits";
+    private static final String HABIT_RUN_DOWN_HURTS = "carts.habits.run-down-only-hurts";
+    private static final String HABIT_RUN_DOWN_CARTS = "carts.habits.run-down-other-carts";
 
     private static final String MECHANICS_DISABLED = "mechanics.disabled";
     private static final String MECHANICS_REDSTONE = "mechanics.redstone";
@@ -148,6 +162,21 @@ public final class ConfigFile {
                 setIfAbsent(yaml, CART_BLOCKS + "." + mechanic, block.asString()));
         carts.boosters().forEach((block, multiplier) ->
                 setIfAbsent(yaml, CART_BOOSTERS + "." + block.value(), multiplier));
+
+        CartHabits habits = carts.habits();
+        setIfAbsent(yaml, HABIT_DECAY_AFTER, habits.decayEmptyAfter());
+        setIfAbsent(yaml, HABIT_DECAY_AFTER_EXIT, habits.decayOnlyAfterExit());
+        setIfAbsent(yaml, HABIT_REMOVE_ON_EXIT, habits.removeOnExit());
+        setIfAbsent(yaml, HABIT_GIVE_BACK, habits.giveCartBack());
+        setIfAbsent(yaml, HABIT_PICK_UP, habits.pickUpItems());
+        setIfAbsent(yaml, HABIT_BLOCK_MOBS, habits.blockMobs());
+        setIfAbsent(yaml, HABIT_CLIMB_SPEED, habits.climbSpeed());
+        setIfAbsent(yaml, HABIT_PLATE_CROSSINGS, habits.plateIntersections());
+        setIfAbsent(yaml, HABIT_THROUGH_EMPTY, habits.passThroughEmptyCarts());
+        setIfAbsent(yaml, HABIT_THROUGH_FULL, habits.passThroughFullCarts());
+        setIfAbsent(yaml, HABIT_RUN_DOWN, habits.runDownEntities());
+        setIfAbsent(yaml, HABIT_RUN_DOWN_HURTS, habits.runDownOnlyHurts());
+        setIfAbsent(yaml, HABIT_RUN_DOWN_CARTS, habits.runDownOtherCarts());
 
         MechanicSettings mechanics = defaults.mechanics();
         setIfAbsent(yaml, MECHANICS_DISABLED, new ArrayList<>(mechanics.disabled()));
@@ -242,6 +271,69 @@ public final class ConfigFile {
                 "How much a booster block multiplies a passing cart's speed by. Above one speeds",
                 "a cart up and below one slows it down; the very large number is what sends a",
                 "cart off at its top speed."));
+
+        yaml.setComments("carts.habits", List.of(
+                "",
+                "How every cart behaves, whether or not it is standing on a mechanism. All of it",
+                "is off out of the box: a server that has never been configured runs carts",
+                "exactly as the game does. The two numbers switch their own habit off when they",
+                "are zero, since waiting no time and climbing at no speed both mean not doing it."));
+
+        yaml.setComments(HABIT_DECAY_AFTER, List.of(
+                "How many ticks a cart may stand empty before it is taken away. 0 leaves empty",
+                "carts alone; " + CartHabits.CUSTOMARY_DECAY_TICKS + " is two seconds."));
+
+        yaml.setComments(HABIT_DECAY_AFTER_EXIT, List.of(
+                "Whether only a cart somebody has got out of decays. Turning this off starts the",
+                "clock on every cart the moment it is placed, including ones nobody has touched."));
+
+        yaml.setComments(HABIT_REMOVE_ON_EXIT, List.of(
+                "",
+                "Whether a cart is taken away the moment its rider steps out, so a station is",
+                "never left with a row of abandoned carts."));
+
+        yaml.setComments(HABIT_GIVE_BACK, List.of(
+                "Whether taking it away hands the rider the cart back. Creative mode gets",
+                "nothing, having lost nothing."));
+
+        yaml.setComments(HABIT_PICK_UP, List.of(
+                "",
+                "Whether a storage cart gathers up items it runs over. A stack that will not",
+                "all fit is left where it lies rather than half taken."));
+
+        yaml.setComments(HABIT_BLOCK_MOBS, List.of(
+                "Whether creatures are kept out of carts, leaving them for people."));
+
+        yaml.setComments(HABIT_CLIMB_SPEED, List.of(
+                "",
+                "How fast a cart climbs a ladder or a vine, which it cannot do in the game",
+                "itself. 0 for a cart that cannot climb; " + CartHabits.CUSTOMARY_CLIMB_SPEED
+                        + " is a comfortable pace."));
+
+        yaml.setComments(HABIT_PLATE_CROSSINGS, List.of(
+                "Whether a pressure plate carries a cart straight across it as a crossroads,",
+                "at full speed, instead of the rail turning it."));
+
+        yaml.setComments(HABIT_THROUGH_EMPTY, List.of(
+                "",
+                "Whether a cart passes through an empty one rather than shunting it, so a siding",
+                "of spares does not block the line."));
+
+        yaml.setComments(HABIT_THROUGH_FULL, List.of(
+                "Whether a cart passes through a laden or occupied one, so goods and people can",
+                "share a track."));
+
+        yaml.setComments(HABIT_RUN_DOWN, List.of(
+                "",
+                "Whether a cart with somebody aboard hurts what it runs into. An empty cart",
+                "rolling downhill never does."));
+
+        yaml.setComments(HABIT_RUN_DOWN_HURTS, List.of(
+                "Whether running something down stops at hurting it. Nothing is removed when",
+                "this is on, including the things that cannot be hurt."));
+
+        yaml.setComments(HABIT_RUN_DOWN_CARTS, List.of(
+                "Whether an occupied cart runs down other carts as well as creatures."));
 
         yaml.setComments(CART_LAUNCH_SPEED, List.of(
                 "",
@@ -378,7 +470,26 @@ public final class ConfigFile {
                 mechanicBlocks.isEmpty() ? defaults.blocks() : mechanicBlocks,
                 boosters.isEmpty() ? defaults.boosters() : boosters,
                 yaml.getDouble(CART_LAUNCH_SPEED, defaults.launchSpeed()),
-                yaml.getBoolean(CART_WATER_BUCKETS, defaults.returnWaterBuckets()));
+                yaml.getBoolean(CART_WATER_BUCKETS, defaults.returnWaterBuckets()),
+                habits(yaml, defaults.habits()));
+    }
+
+    /** How every cart behaves, whether or not it is standing on a mechanism. */
+    private static CartHabits habits(YamlConfiguration yaml, CartHabits defaults) {
+        return new CartHabits(
+                yaml.getLong(HABIT_DECAY_AFTER, defaults.decayEmptyAfter()),
+                yaml.getBoolean(HABIT_DECAY_AFTER_EXIT, defaults.decayOnlyAfterExit()),
+                yaml.getBoolean(HABIT_REMOVE_ON_EXIT, defaults.removeOnExit()),
+                yaml.getBoolean(HABIT_GIVE_BACK, defaults.giveCartBack()),
+                yaml.getBoolean(HABIT_PICK_UP, defaults.pickUpItems()),
+                yaml.getBoolean(HABIT_BLOCK_MOBS, defaults.blockMobs()),
+                yaml.getDouble(HABIT_CLIMB_SPEED, defaults.climbSpeed()),
+                yaml.getBoolean(HABIT_PLATE_CROSSINGS, defaults.plateIntersections()),
+                yaml.getBoolean(HABIT_THROUGH_EMPTY, defaults.passThroughEmptyCarts()),
+                yaml.getBoolean(HABIT_THROUGH_FULL, defaults.passThroughFullCarts()),
+                yaml.getBoolean(HABIT_RUN_DOWN, defaults.runDownEntities()),
+                yaml.getBoolean(HABIT_RUN_DOWN_HURTS, defaults.runDownOnlyHurts()),
+                yaml.getBoolean(HABIT_RUN_DOWN_CARTS, defaults.runDownOtherCarts()));
     }
 
     /**

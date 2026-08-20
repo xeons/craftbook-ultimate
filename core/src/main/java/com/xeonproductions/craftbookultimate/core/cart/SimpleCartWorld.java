@@ -1,6 +1,8 @@
 package com.xeonproductions.craftbookultimate.core.cart;
 
 import com.xeonproductions.craftbookultimate.core.entity.Bystander;
+import com.xeonproductions.craftbookultimate.core.entity.DroppedItem;
+import com.xeonproductions.craftbookultimate.core.entity.SimpleDroppedItem;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
@@ -41,6 +43,8 @@ public final class SimpleCartWorld implements CartWorld {
     private final List<Cart> carts = new ArrayList<>();
     private final List<Bystander> people = new ArrayList<>();
     private final List<Dropped> dropped = new ArrayList<>();
+    private final Map<SimpleDroppedItem, Vec3d> lying = new LinkedHashMap<>();
+    private final Map<Vec3i, Set<BlockFace>> climbable = new HashMap<>();
     private final List<Cart> spawned = new ArrayList<>();
     private boolean everythingLoaded = true;
     private Optional<Set<String>> knownItems = Optional.empty();
@@ -80,6 +84,11 @@ public final class SimpleCartWorld implements CartWorld {
     }
 
     @Override
+    public Set<BlockFace> climbableSidesAt(Vec3i position) {
+        return climbable.getOrDefault(position, Set.of());
+    }
+
+    @Override
     public int minHeight() {
         return MIN_HEIGHT;
     }
@@ -110,6 +119,17 @@ public final class SimpleCartWorld implements CartWorld {
                 near.add(person);
             }
         }
+        return near;
+    }
+
+    @Override
+    public List<DroppedItem> itemsNear(Vec3d centre, double radius) {
+        List<DroppedItem> near = new ArrayList<>();
+        lying.forEach((item, at) -> {
+            if (item.isPresent() && at.distanceSquared(centre) <= radius * radius) {
+                near.add(item);
+            }
+        });
         return near;
     }
 
@@ -216,6 +236,23 @@ public final class SimpleCartWorld implements CartWorld {
     public SimpleCartWorld unloaded() {
         this.everythingLoaded = false;
         return this;
+    }
+
+    /** Puts a climbable block at a position, clinging to the sides named. */
+    public SimpleCartWorld withClimbable(Vec3i position, BlockFace... sides) {
+        climbable.put(position, Set.of(sides));
+        return this;
+    }
+
+    /** Leaves a stack of items lying on the ground, for a storage cart to gather up. */
+    public SimpleCartWorld withItemLying(Vec3d at, Key item, int count) {
+        lying.put(new SimpleDroppedItem(item, count), at);
+        return this;
+    }
+
+    /** Everything still lying on the ground, for a test to assert on. */
+    public List<SimpleDroppedItem> itemsLying() {
+        return lying.keySet().stream().filter(SimpleDroppedItem::isPresent).toList();
     }
 
     /** Everything that has been dropped on the ground. */

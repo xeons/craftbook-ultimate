@@ -62,7 +62,7 @@ to a hand and to redstone.**
 | Sound effect, jukebox and written tunes | Done |
 | Music from a MIDI file (`MCU700`) | Done |
 | Minecart mechanics (15 on the rails, plus the dispenser) | Done |
-| Minecart mechanics: the seven signless tweaks | Not started |
+| Minecart mechanics: the seven habits every cart has | Done |
 | Sign mechanic seam (`SignMechanic`, `MechanicWorld`, `MechanicVisit`) | Done |
 | Bridge, door and gate, with the gate's six materials | Done |
 | Lifts, including the two-way sign, buttons and jump pads | Done |
@@ -70,7 +70,7 @@ to a hand and to redstone.**
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1701 tests passing**.
+**1733 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -197,15 +197,31 @@ Three things are frozen and must not be quietly improved:
 against. A mechanic that wants to hold a cart stops it dead instead, which is what holding it
 amounted to anyway.
 
-**Not ported:** the seven signless mechanics that change how any cart behaves rather than what a
-particular place on the rails does — empty carts decaying, riders taking the cart with them,
-storage carts picking items up, creatures kept out, ladders and pressure plates carrying rails,
-carts passing through what they would otherwise hit, and carts clearing what they hit out of the
-way. Those seven are each a listener and a setting; none of them goes through `CartDispatcher`,
-which resolves a mechanism from a block and a sign.
-
-CartWarp is not ported either, and will not be: its whole purpose was teleporting a cart to a
+**Not ported:** CartWarp, and it will not be. Its whole purpose was teleporting a cart to a
 CBWarp, and CBWarps is on the dropped list, so there is nothing for it to warp to.
+
+## The habits every cart has
+
+Seven of the minecart mechanics are not mechanisms at all. Nothing is built, nothing carries a
+sign, and each one changes what every cart in the world does: empty carts decay, a rider takes the
+cart with them, a storage cart gathers up what it runs over, creatures are kept out, ladders and
+vines and pressure plates carry carts the game would not, carts pass through one another, and an
+occupied cart hurts what it hits.
+
+They live together in `core/cart/CartBehaviour.java` as decisions and in
+`paper/listener/CartHabitListener.java` as the one listener that asks, because they overlap: three
+answer the same collision, two the same dismount and two the same move. `CartDispatcher` resolves a
+mechanic from a block and a sign, so none of these goes near it.
+
+**All of it is off out of the box.** A server that has never been configured runs carts exactly as
+the game does. That differs from the mechanics, which are on by default, and the reason is that a
+mechanic does nothing until somebody builds one, while a habit changes every cart on the server the
+moment it is switched on. It also matches the legacy fork, whose `enabled-mechanics` began as a
+list of one.
+
+The settings are `carts.habits` in `config.yml`, held in `CartHabits`. Two of them are numbers
+rather than switches, and each turns its own habit off at zero: waiting no time before taking an
+empty cart away, and climbing at no speed, both mean not doing it.
 
 ## The sign mechanics
 

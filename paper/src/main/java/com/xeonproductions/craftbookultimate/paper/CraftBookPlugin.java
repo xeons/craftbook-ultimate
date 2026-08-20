@@ -31,6 +31,7 @@ import com.xeonproductions.craftbookultimate.paper.store.PasswordFile;
 import com.xeonproductions.craftbookultimate.paper.store.SharedStateFiles;
 import com.xeonproductions.craftbookultimate.paper.listener.CartListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartRedstoneListener;
+import com.xeonproductions.craftbookultimate.paper.listener.CartHabitListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartSignListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICChunkListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICRedstoneListener;
@@ -140,6 +141,8 @@ public final class CraftBookPlugin extends JavaPlugin {
                 new CartRedstoneListener(carts, chipServices.configuration()), this);
         getServer().getPluginManager().registerEvents(
                 new CartSignListener(carts, chipServices.configuration()), this);
+        getServer().getPluginManager().registerEvents(
+                new CartHabitListener(carts, chipServices.configuration(), regionSchedulers), this);
 
         MechanicDispatcher mechanics =
                 new MechanicDispatcher(chipServices.configuration(), areaVault);

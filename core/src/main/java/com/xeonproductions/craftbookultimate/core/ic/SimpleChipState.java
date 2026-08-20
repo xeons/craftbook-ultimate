@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.core.ic;
 
+import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.platform.ManualScheduler;
@@ -419,6 +420,18 @@ public final class SimpleChipState implements ChipState {
          */
         public Builder services(ChipServices services) {
             this.services = services;
+            return this;
+        }
+
+        /**
+         * Puts a particular set of settings in force.
+         *
+         * <p>Settings belong to the whole server, so this reaches every chip sharing this one's
+         * registries. Call it after {@link #services(ChipServices)} rather than before, or the
+         * set given here is the one replaced.
+         */
+        public Builder settings(Settings settings) {
+            this.services.configuration().replaceWith(settings);
             return this;
         }
 

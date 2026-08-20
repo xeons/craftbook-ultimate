@@ -3,6 +3,7 @@ package com.xeonproductions.craftbookultimate.core.ic.gate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.xeonproductions.craftbookultimate.core.entity.SimpleBystander;
+import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import com.xeonproductions.craftbookultimate.core.ic.SimpleChipState;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
@@ -149,6 +150,21 @@ class LightningChipsTest {
             LightningChips.zeusBolt(always(0)).trigger(state);
 
             assertThat(world.lightningStrikes()).hasSize(5);
+        }
+
+        @Test
+        void reachesNoFurtherThanTheSettingsAllow() {
+            for (int x = -2; x <= 2; x++) {
+                world.withBlock(BEHIND.add(x, 0, 0), "stone");
+            }
+            SimpleChipState state = chip("MC1203", "2,0,0", "")
+                    .settings(Settings.builder().maxRadius(1).build())
+                    .inputs(true, false, false, false)
+                    .build();
+
+            LightningChips.zeusBolt(always(0)).trigger(state);
+
+            assertThat(world.lightningStrikes()).hasSize(3);
         }
     }
 

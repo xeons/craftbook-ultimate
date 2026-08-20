@@ -21,10 +21,13 @@ public final class CraftBookCommands {
 
     private final CatalogueCommands catalogue;
     private final SwitchCommands switches;
+    private final ConfigCommands config;
 
-    public CraftBookCommands(CatalogueCommands catalogue, SwitchCommands switches) {
+    public CraftBookCommands(
+            CatalogueCommands catalogue, SwitchCommands switches, ConfigCommands config) {
         this.catalogue = catalogue;
         this.switches = switches;
+        this.config = config;
     }
 
     /** Registers everything against a plugin. */
@@ -33,7 +36,7 @@ public final class CraftBookCommands {
             Commands commands = event.registrar();
 
             commands.register(
-                    catalogue.command().build(),
+                    catalogue.command().then(config.reloadCommand()).build(),
                     "Reads the integrated circuit catalogue.",
                     List.of("cb"));
 

@@ -30,7 +30,7 @@ ones that show weather illusions or play music, and the mechanics have not been 
 | Self-triggering chips (per-region tick tasks) | Done |
 | Time-based chips (clock, sensors, pulse, delays) | Done |
 | Commands (Brigadier, `/craftbook` and the switch commands) | Done |
-| Configuration | Not started |
+| Configuration (`config.yml`, `/craftbook reload`) | Done |
 | Persistence | Switch passwords only |
 | World seam (`ChipWorld`, `SimpleChipWorld`) | Done |
 | World sensors (liquid, light, weather, block detector) | Done |
@@ -55,7 +55,7 @@ ones that show weather illusions or play music, and the mechanics have not been 
 | Mechanics | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1161 tests passing**.
+**1185 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -121,6 +121,24 @@ The legacy code called a place to take materials from a "block bag". The rewrite
 **stockpile**, which says what it is, and its operations are `take` and `give` rather than
 `remove` and `add`. A mechanic asks a stockpile for materials before it builds and gives them
 back when it takes the structure down.
+
+## Configuration
+
+`config.yml` in the plugin's folder, read into an immutable `Settings` value in `core`. Chips reach
+it through `ChipState#settings()`; nothing reads a file or a server from inside a chip, so a limit
+can be exercised in a plain unit test.
+
+`Configuration` is the one mutable holder saying which `Settings` is current. `/craftbook reload`
+replaces it and starts every chip again, so a change takes effect without a restart.
+
+Two rules shape what belongs there. A setting is either a limit on how far a chip may reach or a
+statement about what may run at all; nothing in the file changes what a sign *means*. And a sign
+asking for more than it is allowed gets as much as it is allowed rather than being refused, so
+narrowing a limit shortens an existing build instead of breaking it.
+
+The settings that exist are the ones the legacy fork had, at the same defaults, so a world of
+existing signs behaves the same on a server that has never been configured. Do not add a setting
+for a limit a chip has always had on its own: those numbers are part of the frozen sign grammar.
 
 ## Scope decisions
 

@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.core.ic.gate;
 
+import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.entity.Bystander;
 import com.xeonproductions.craftbookultimate.core.ic.ChipState;
 import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
@@ -34,9 +35,6 @@ public final class LightningChips {
 
     /** How far a bolt strike reaches across when its sign does not say. */
     private static final int DEFAULT_AREA_RADIUS = 1;
-
-    /** The furthest a bolt strike may reach across. */
-    private static final int MAX_AREA_RADIUS = 16;
 
     /** How far a smite reaches for things to strike when its sign does not say. */
     private static final int DEFAULT_SMITE_RANGE = 5;
@@ -171,17 +169,22 @@ public final class LightningChips {
                             ? Vec3i.ZERO
                             : parseOffset(written.substring(separator + 1)).orElse(Vec3i.ZERO);
 
+            Settings settings = state.settings();
             String[] parts = reach.split(",");
             if (parts.length >= 3) {
                 return new Area(
-                        radius(parts[0]), radius(parts[1]), radius(parts[2]), offset);
+                        radius(parts[0], settings),
+                        radius(parts[1], settings),
+                        radius(parts[2], settings),
+                        offset);
             }
-            int uniform = radius(reach);
+            int uniform = radius(reach, settings);
             return new Area(uniform, uniform, uniform, offset);
         }
 
-        private static int radius(String written) {
-            return boundedNumber(written, 0, MAX_AREA_RADIUS, DEFAULT_AREA_RADIUS);
+        /** A reach off the sign, held to what the settings allow a chip to cover. */
+        private static int radius(String written, Settings settings) {
+            return boundedNumber(written, 0, settings.maxRadius(), DEFAULT_AREA_RADIUS);
         }
 
         private static Optional<Vec3i> parseOffset(String written) {

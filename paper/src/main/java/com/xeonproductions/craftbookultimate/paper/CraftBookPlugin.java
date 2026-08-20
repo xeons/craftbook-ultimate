@@ -1,11 +1,14 @@
 package com.xeonproductions.craftbookultimate.paper;
 
+import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.paper.command.CatalogueCommands;
+import com.xeonproductions.craftbookultimate.paper.command.ConfigCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
 import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
+import com.xeonproductions.craftbookultimate.paper.config.ConfigFile;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitRoster;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.store.FireworkFiles;
@@ -17,7 +20,9 @@ import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -46,6 +51,7 @@ public final class CraftBookPlugin extends JavaPlugin {
     private @Nullable ICManager icManager;
     private @Nullable PasswordFile passwordFile;
     private @Nullable FireworkFiles fireworkFiles;
+    private @Nullable ConfigFile configFile;
     private @Nullable ChipServices services;
 
     /**
@@ -66,6 +72,11 @@ public final class CraftBookPlugin extends JavaPlugin {
         this.services = chipServices;
         this.passwordFile = new PasswordFile(getDataPath());
         this.fireworkFiles = new FireworkFiles(getDataPath());
+        this.configFile = new ConfigFile(getDataPath(), getServer(), this::reportSetting);
+
+        // Before anything reads a setting, and before any chip is picked up, so a world or a
+        // chip the settings exclude is never started only to be stopped again.
+        loadSettings();
 
         registerPermissions();
         loadPasswords();
@@ -134,7 +145,63 @@ public final class CraftBookPlugin extends JavaPlugin {
                 this::runOffThread,
                 this::savePasswords);
 
-        new CraftBookCommands(new CatalogueCommands(icRegistry), switchCommands).registerOn(this);
+        new CraftBookCommands(
+                        new CatalogueCommands(icRegistry),
+                        switchCommands,
+                        new ConfigCommands(this::rereadSettings))
+                .registerOn(this);
+    }
+
+    /**
+     * Reads the settings file, putting whatever it says in force.
+     *
+     * <p>A file that cannot be read leaves whatever was already in force alone, so a typo made
+     * while the server is running does not take every chip down with it.
+     */
+    private boolean loadSettings() {
+        if (configFile == null || services == null) {
+            return false;
+        }
+        try {
+            services.configuration().replaceWith(configFile.load());
+            return true;
+        } catch (IOException e) {
+            getComponentLogger().error(
+                    Component.text("Could not read " + configFile.path()
+                            + "; carrying on with the settings already in force"), e);
+            return false;
+        }
+    }
+
+    /**
+     * Rereads the settings and starts every chip again under them.
+     *
+     * <p>Taking the chips down and picking them up again is what makes a change take effect: a
+     * chip a setting has just switched off has to stop, and one it has just switched on has to
+     * start. The signs themselves are never touched.
+     *
+     * <p>The exchange happens chunk by chunk on the region owning each chunk. Every chip that is
+     * loaded is in a chunk that is loaded, so going through the chunks reaches all of them without
+     * this thread stopping a chip belonging to another.
+     */
+    private Component rereadSettings() {
+        if (!loadSettings() || icManager == null || services == null) {
+            return Component.text("Could not read the settings; nothing has changed.",
+                    NamedTextColor.RED);
+        }
+
+        adoptAlreadyLoadedChunks(icManager);
+
+        Settings settings = services.configuration().settings();
+        if (!settings.enabled()) {
+            return Component.text("Settings reread. Chips are switched off.", NamedTextColor.YELLOW);
+        }
+        return Component.text("Settings reread.", NamedTextColor.YELLOW);
+    }
+
+    /** Passes a complaint about an entry in the settings file on to the console. */
+    private void reportSetting(String complaint) {
+        getComponentLogger().warn(Component.text(complaint));
     }
 
     /**
@@ -195,26 +262,38 @@ public final class CraftBookPlugin extends JavaPlugin {
     }
 
     /**
-     * Picks up chips in chunks that were already loaded when the plugin enabled.
+     * Starts the chips in every chunk that is already loaded, having stopped whatever was running
+     * in it.
      *
-     * <p>On a reload the chunk load events have long since fired, so without this the circuitry
-     * around every online player would stay dead until its chunk cycled.
+     * <p>Used when the plugin enables, where the chunk load events have long since fired and
+     * without this the circuitry around every online player would stay dead until its chunk
+     * cycled, and again when the settings are reread, where a chip may have to stop or start
+     * because of what they now say.
+     *
+     * <p>A chunk's signs are read and its chips exchanged in one piece of work on the region that
+     * owns the chunk, so nothing here reads or writes a block belonging to another thread, and a
+     * chip is never running under the old settings while another is running under the new.
      */
     private void adoptAlreadyLoadedChunks(ICManager manager) {
         for (World world : getServer().getWorlds()) {
+            UUID id = world.getUID();
             for (Chunk chunk : world.getLoadedChunks()) {
-                List<Block> signs = new ArrayList<>();
-                for (BlockState state : chunk.getTileEntities(false)) {
-                    if (state instanceof Sign) {
-                        signs.add(state.getBlock());
+                int chunkX = chunk.getX();
+                int chunkZ = chunk.getZ();
+                schedulers().at(chunk.getBlock(0, 0, 0).getLocation()).runLater(() -> {
+                    if (!chunk.isLoaded()) {
+                        return;
                     }
-                }
-                if (!signs.isEmpty()) {
-                    // Each chunk is adopted on the region that owns it, which is a requirement on
-                    // a regionised server and harmless on a plain one.
-                    schedulers().at(chunk.getBlock(0, 0, 0).getLocation())
-                            .runLater(() -> manager.loadAll(signs), 1);
-                }
+                    manager.unloadChunk(id, chunkX, chunkZ);
+
+                    List<Block> signs = new ArrayList<>();
+                    for (BlockState state : chunk.getTileEntities(false)) {
+                        if (state instanceof Sign) {
+                            signs.add(state.getBlock());
+                        }
+                    }
+                    manager.loadAll(signs);
+                }, 1);
             }
         }
     }

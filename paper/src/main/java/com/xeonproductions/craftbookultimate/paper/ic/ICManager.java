@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.paper.ic;
 
+import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
 import com.xeonproductions.craftbookultimate.core.ic.ICLine;
 import com.xeonproductions.craftbookultimate.core.ic.ICMode;
@@ -98,6 +99,10 @@ public final class ICManager {
      * Works out which chip a sign describes, without starting it.
      *
      * <p>Used both to load a chip and to check whether a sign would produce one.
+     *
+     * <p>A sign in a world the settings exclude, or naming a chip they switch off, describes
+     * nothing. The sign itself is untouched, so putting the setting back brings the chip straight
+     * back to life.
      */
     public Optional<ICInstance> describe(Block block) {
         Optional<Sign> sign = Signs.at(block);
@@ -106,8 +111,14 @@ public final class ICManager {
             return Optional.empty();
         }
 
+        Settings settings = services.configuration().settings();
+        if (!settings.allowsWorld(block.getWorld().getName())) {
+            return Optional.empty();
+        }
+
         String identifier = Signs.read(sign.get()).text(IDENTIFIER_LINE);
         return resolve(identifier)
+                .filter(resolution -> settings.allowsChip(resolution.definition().allModels()))
                 .map(resolution -> new ICInstance(
                         block.getWorld(),
                         Positions.toDomain(block),

@@ -740,3 +740,44 @@ and a zapper set to clear them leaves it standing.
 **Rewrite:** the question goes to the game, which knows what it counts as hostile and what it
 counts as an animal, so a mob added by a later version is classified without anything here
 changing.
+
+## Configuration
+
+### 59. The harvester's height limit set its width
+
+`RangeLimitations.maxHeight` is written as
+
+```java
+if (Math.abs(target.getHeight()) > max) {
+    return RelativeRange.builder().from(target).width(max).build();
+}
+```
+
+An area too tall therefore had its *width* replaced, and kept every bit of the height that
+tripped the check. The one chip that used it is the harvester, which asks for
+`maxHeight(maximumLength)`, so a sign asking to gather a hundred blocks upward gathered a hundred
+blocks upward and lost its width instead.
+
+**Rewrite:** each of a harvested area's three sides is held against the limit that belongs to it,
+and holding one never alters another.
+
+### 60. The offset limiter returned the larger of the two numbers
+
+`RangeLimitations.limit` reads
+
+```java
+final double local_limit = Math.max(Math.abs(i), max);
+return sign * local_limit;
+```
+
+`Math.max` of the value and the limit is the value whenever the value is the bigger one, which is
+the only case the method is called in. So `maxOffsetInSingleDirection` detected an offset beyond
+its limit, built a new range, and put the offending offset straight back. The chest collector asks
+for a limit of eight and the light sensor for twenty; neither ever got one.
+
+The comment above it says the code exists to stop a bridge being built with a width of minus
+sixteen, which the plain `Math.min` it replaced would have done correctly for the positive case
+and which the surrounding builder handles for the negative one.
+
+**Rewrite:** an offset beyond what a chip may reach is refused, and the chips that take one check
+each axis directly rather than through a shared helper that has to guess at the sign.

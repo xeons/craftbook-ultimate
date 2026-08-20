@@ -2,6 +2,7 @@ package com.xeonproductions.craftbookultimate.core.ic.gate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
 import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import com.xeonproductions.craftbookultimate.core.ic.SimpleChipState;
@@ -12,6 +13,7 @@ import com.xeonproductions.craftbookultimate.core.stock.Stockpiles;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import com.xeonproductions.craftbookultimate.core.world.SimpleChipWorld;
 import java.util.Map;
+import java.util.Set;
 import net.kyori.adventure.key.Key;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -656,6 +658,110 @@ class BlockPlacersTest {
 
             assertThat(world.blockAt(TARGET)).isEqualTo(STONE);
             assertThat(stockpile.isEmpty()).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("respecting the settings")
+    class RespectingTheSettings {
+
+        private static final Key DIRT = Blocks.key("dirt");
+
+        @Test
+        void buildsNoFurtherThanTheSettingsAllow() {
+            SimpleChipWorld world = new SimpleChipWorld();
+            SimpleChipState state = chip(world, SimpleStockpile.empty().with(STONE, 64), "stone", "1:9")
+                    .settings(Settings.builder().maxLength(4).build())
+                    .inputs(true, false, false, false)
+                    .build();
+
+            BlockPlacers.bridge(false).trigger(state);
+
+            assertThat(world.blockAt(inArea(5, 0, 0))).isEqualTo(STONE);
+            assertThat(world.blockAt(inArea(6, 0, 0))).isEqualTo(Blocks.AIR_KEY);
+        }
+
+        @Test
+        void buildsNoWiderThanTheSettingsAllow() {
+            SimpleChipWorld world = new SimpleChipWorld();
+            SimpleChipState state = chip(world, SimpleStockpile.empty().with(STONE, 64), "stone", "9:1")
+                    .settings(Settings.builder().maxWidth(3).build())
+                    .inputs(true, false, false, false)
+                    .build();
+
+            BlockPlacers.bridge(false).trigger(state);
+
+            assertThat(world.blockAt(inArea(2, 1, 0))).isEqualTo(STONE);
+            assertThat(world.blockAt(inArea(2, 2, 0))).isEqualTo(Blocks.AIR_KEY);
+        }
+
+        @Test
+        void placesNothingTheSettingsDoNotAllow() {
+            SimpleChipWorld world = new SimpleChipWorld();
+            SimpleChipState state = chip(world, SimpleStockpile.empty().with(STONE, 64), "stone", "1:3")
+                    .settings(Settings.builder().placeableBlocks(Set.of(DIRT)).build())
+                    .inputs(true, false, false, false)
+                    .build();
+
+            BlockPlacers.bridge(false).trigger(state);
+
+            assertThat(world.blockAt(inArea(2, 0, 0))).isEqualTo(Blocks.AIR_KEY);
+        }
+
+        @Test
+        void stillTakesAwayABlockTheSettingsNoLongerAllow() {
+            // A block struck off the list leaves the bridges already made of it able to retract,
+            // rather than stuck out with no way of bringing them in.
+            SimpleChipWorld world = new SimpleChipWorld().withBlock(inArea(2, 0, 0), STONE);
+            SimpleStockpile stockpile = SimpleStockpile.empty();
+            SimpleChipState state = chip(world, stockpile, "stone", "1:3")
+                    .settings(Settings.builder().placeableBlocks(Set.of(DIRT)).build())
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.bridge(false).trigger(state);
+
+            assertThat(world.blockAt(inArea(2, 0, 0))).isEqualTo(Blocks.AIR_KEY);
+            assertThat(stockpile.count(STONE)).isEqualTo(1);
+        }
+
+        @Test
+        void harvestsNoFurtherThanTheSettingsAllow() {
+            Key wheat = Blocks.key("wheat");
+            SimpleChipWorld world = new SimpleChipWorld()
+                    .withBlock(inArea(2, 0, 1), wheat)
+                    .withBlock(inArea(3, 0, 1), wheat)
+                    .withBlock(inArea(4, 0, 1), wheat);
+            SimpleChipState state = SimpleChipState.forLayout(PinLayout.AISO)
+                    .at(SIGN, BlockFace.SOUTH)
+                    .world(world)
+                    .stockpile(SimpleStockpile.empty())
+                    .sign("HARVESTER", "[MCX213]", "wheat", "1:3:1")
+                    .settings(Settings.builder().maxLength(2).build())
+                    .inputs(false, false, false, false)
+                    .build();
+
+            BlockPlacers.harvester().trigger(state);
+
+            assertThat(world.blockAt(inArea(2, 0, 1))).isEqualTo(Blocks.AIR_KEY);
+            assertThat(world.blockAt(inArea(4, 0, 1))).isEqualTo(wheat);
+        }
+
+        @Test
+        void aFlexSetPlacesNothingTheSettingsDoNotAllow() {
+            SimpleChipWorld world = new SimpleChipWorld();
+            SimpleChipState state = SimpleChipState.forLayout(PinLayout.AISO)
+                    .at(SIGN, BlockFace.SOUTH)
+                    .world(world)
+                    .stockpile(SimpleStockpile.empty().with(STONE, 4))
+                    .sign("FLEX SET", "[MCX206]", "Y+1:stone", "")
+                    .settings(Settings.builder().placeableBlocks(Set.of(DIRT)).build())
+                    .inputs(true, false, false, false)
+                    .build();
+
+            BlockPlacers.flexSet().trigger(state);
+
+            assertThat(world.blockAt(new Vec3i(0, 65, -1))).isEqualTo(Blocks.AIR_KEY);
         }
     }
 }

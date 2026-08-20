@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.paper.listener;
 
+import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICLine;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
@@ -70,6 +71,16 @@ public final class ICSignListener implements Listener {
 
         ICDefinition definition = resolved.get().definition();
         Player player = event.getPlayer();
+        Settings settings = manager.services().configuration().settings();
+
+        if (!settings.allowsWorld(event.getBlock().getWorld().getName())
+                || !settings.allowsChip(definition.allModels())) {
+            player.sendMessage(Component.text(
+                    "The " + definition.name() + " chip is switched off here.",
+                    NamedTextColor.RED));
+            event.setCancelled(true);
+            return;
+        }
 
         if (!player.hasPermission(definition.permission())) {
             player.sendMessage(Component.text(

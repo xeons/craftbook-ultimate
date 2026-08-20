@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.core.ic.gate;
 
+import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.entity.DroppedItem;
 import com.xeonproductions.craftbookultimate.core.farm.Plantables;
 import com.xeonproductions.craftbookultimate.core.ic.ChipState;
@@ -42,9 +43,6 @@ public final class Farming {
 
     /** How far past its own area an area planter reaches for items. */
     private static final int AREA_PLANTER_EXTRA_REACH = 3;
-
-    /** The furthest an area planter's field may reach along either side. */
-    private static final int MAX_FIELD_SIDE = 32;
 
     /** How long a ticking area planter waits between passes over its field. */
     private static final int AREA_PLANTER_INTERVAL_TICKS = 20;
@@ -268,7 +266,11 @@ public final class Farming {
          */
         private record Field(int width, int length, int height) {
 
-            /** Reads {@code width:length[:height]} off the sign. */
+            /**
+             * Reads {@code width:length[:height]} off the sign.
+             *
+             * <p>A field larger than the settings allow is sown at the size they allow.
+             */
             static Optional<Field> on(ChipState state) {
                 String[] parts = state.sign().trimmedText(AREA_LINE).split(":");
                 if (parts.length < 2) {
@@ -280,10 +282,15 @@ public final class Farming {
                     int length = Integer.parseInt(parts[1].trim());
                     int height = parts.length > 2 ? Integer.parseInt(parts[2].trim()) : 1;
 
-                    if (width < 1 || length < 1 || width > MAX_FIELD_SIDE || length > MAX_FIELD_SIDE) {
+                    if (width < 1 || length < 1) {
                         return Optional.empty();
                     }
-                    return Optional.of(new Field(width, length, height));
+
+                    Settings settings = state.settings();
+                    return Optional.of(new Field(
+                            settings.limitPlanterWidth(width),
+                            settings.limitPlanterWidth(length),
+                            height));
                 } catch (NumberFormatException e) {
                     return Optional.empty();
                 }

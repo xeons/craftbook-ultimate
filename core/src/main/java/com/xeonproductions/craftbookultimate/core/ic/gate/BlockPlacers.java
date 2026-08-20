@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.core.ic.gate;
 
+import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ChipState;
 import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
@@ -35,6 +36,14 @@ import org.jspecify.annotations.NullMarked;
  * contains the block it would place. That stops one being built over somebody's structure and
  * used to take it apart. Once the area is clear the chip authorises itself and works from then
  * on. A forcing chip skips the check, which is why it needs elevated permission.
+ *
+ * <h2>What may be built, and how big</h2>
+ *
+ * <p>Only the blocks the settings allow are placed. Taking a block away is never refused, so a
+ * block struck off the list leaves the structures already made of it able to retract rather than
+ * stuck out. An area larger than the settings permit is built at the size they permit rather than
+ * refused outright, so raising or lowering a limit changes how far an existing sign reaches
+ * without breaking it.
  */
 @NullMarked
 public final class BlockPlacers {
@@ -166,7 +175,9 @@ public final class BlockPlacers {
             }
 
             if (state.isAnyInputActive()) {
-                place(state, area, block.get());
+                if (state.settings().mayPlace(block.get())) {
+                    place(state, area, block.get());
+                }
             } else {
                 clear(state, area, block.get());
             }
@@ -235,7 +246,11 @@ public final class BlockPlacers {
             }
         }
 
-        /** Reads the two configured dimensions and the optional vertical offset. */
+        /**
+         * Reads the two configured dimensions and the optional vertical offset.
+         *
+         * <p>A sign asking for more than the settings allow gets as much as they allow.
+         */
         private Optional<Dimensions> readDimensions(ChipState state) {
             String[] parts = state.sign().trimmedText(DIMENSIONS_LINE).split(":");
             if (parts.length < 2) {
@@ -251,9 +266,13 @@ public final class BlockPlacers {
                     return Optional.empty();
                 }
 
+                Settings settings = state.settings();
+                int width = settings.limitWidth(across);
+                int span = settings.limitLength(along);
+
                 return Optional.of(shape == Shape.BRIDGE
-                        ? new Dimensions(across, along, 1, verticalOffset)
-                        : new Dimensions(across, 1, along, verticalOffset));
+                        ? new Dimensions(width, span, 1, verticalOffset)
+                        : new Dimensions(width, 1, span, verticalOffset));
             } catch (NumberFormatException e) {
                 return Optional.empty();
             }
@@ -349,9 +368,6 @@ public final class BlockPlacers {
      */
     private static final class Harvester implements ICLogic {
 
-        /** The furthest the area may reach along any one side. */
-        private static final int MAX_SIDE = 64;
-
         @Override
         public void trigger(ChipState state) {
             if (state.isAnyInputActive()) {
@@ -442,11 +458,16 @@ public final class BlockPlacers {
                 int height = Integer.parseInt(parts[2].trim());
                 int verticalOffset = offset.isBlank() ? 1 : Integer.parseInt(offset.trim());
 
-                if (width < 1 || length < 1 || height < 1
-                        || width > MAX_SIDE || length > MAX_SIDE || height > MAX_SIDE) {
+                if (width < 1 || length < 1 || height < 1) {
                     return Optional.empty();
                 }
-                return Optional.of(new Dimensions(width, length, height, verticalOffset));
+
+                Settings settings = state.settings();
+                return Optional.of(new Dimensions(
+                        settings.limitWidth(width),
+                        settings.limitLength(length),
+                        settings.limitLength(height),
+                        verticalOffset));
             } catch (NumberFormatException e) {
                 return Optional.empty();
             }
@@ -551,7 +572,7 @@ public final class BlockPlacers {
          */
         private void place(ChipState state, Vec3i target, Key block) {
             ChipWorld world = state.world();
-            if (world.blockAt(target).equals(block)) {
+            if (world.blockAt(target).equals(block) || !state.settings().mayPlace(block)) {
                 return;
             }
             if (!paying) {

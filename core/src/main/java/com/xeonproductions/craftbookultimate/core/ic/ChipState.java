@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.core.ic;
 
+import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.control.Switchboard;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
@@ -152,6 +153,16 @@ public interface ChipState {
      * <p>Only the chips that act at a distance need these; see {@link ChipServices}.
      */
     ChipServices services();
+
+    /**
+     * The settings in force.
+     *
+     * <p>Read afresh on every run rather than kept, so an operator rereading the configuration
+     * changes what a chip does the next time it runs.
+     */
+    default Settings settings() {
+        return services().configuration().settings();
+    }
 
     /** What every wireless band is currently carrying. */
     default Radio radio() {

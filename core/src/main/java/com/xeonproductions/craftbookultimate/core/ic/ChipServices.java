@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.core.ic;
 
+import com.xeonproductions.craftbookultimate.core.config.Configuration;
 import com.xeonproductions.craftbookultimate.core.control.PasswordStore;
 import com.xeonproductions.craftbookultimate.core.control.Switchboard;
 import com.xeonproductions.craftbookultimate.core.effect.FireworkShows;
@@ -10,7 +11,8 @@ import com.xeonproductions.craftbookultimate.core.transport.Destinations;
 import org.jspecify.annotations.NullMarked;
 
 /**
- * The registries chips use to reach one another, and the people typing commands at them.
+ * The registries chips use to reach one another, the people typing commands at them, and the
+ * settings they all run under.
  *
  * <p>Everything else a chip sees belongs to its own corner of the world. These are shared by every
  * chip on the server, because the whole point of a wireless band, a named destination or a
@@ -30,6 +32,7 @@ import org.jspecify.annotations.NullMarked;
  * @param passwords the passwords guarding those switches
  * @param shows the firework displays the server has scripts for
  * @param roster who is on the server
+ * @param configuration the settings an operator has put in force
  */
 @NullMarked
 public record ChipServices(
@@ -39,7 +42,8 @@ public record ChipServices(
         Switchboard guardedSwitchboard,
         PasswordStore passwords,
         FireworkShows shows,
-        Roster roster) {
+        Roster roster,
+        Configuration configuration) {
 
     /** A fresh set, with nothing transmitting, no destinations claimed and no switches known. */
     public static ChipServices create() {
@@ -55,6 +59,7 @@ public record ChipServices(
                 new Switchboard(),
                 new PasswordStore(),
                 new FireworkShows(),
-                roster);
+                roster,
+                new Configuration());
     }
 }

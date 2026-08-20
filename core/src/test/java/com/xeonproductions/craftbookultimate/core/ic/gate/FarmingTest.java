@@ -2,6 +2,7 @@ package com.xeonproductions.craftbookultimate.core.ic.gate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.entity.SimpleDroppedItem;
 import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import com.xeonproductions.craftbookultimate.core.ic.SelfTriggeringICLogic;
@@ -336,6 +337,21 @@ class FarmingTest {
             assertThat(world.blockAt(new Vec3i(-1, 65, -1))).isEqualTo(WHEAT);
             assertThat(world.blockAt(new Vec3i(0, 65, -1))).isEqualTo(WHEAT);
             assertThat(world.blockAt(new Vec3i(1, 65, -1))).isEqualTo(WHEAT);
+        }
+
+        @Test
+        void sowsNoFurtherThanTheSettingsAllow() {
+            SimpleChipWorld world = fieldOfThree()
+                    .withDroppedItem(SIGN, SimpleDroppedItem.of("wheat_seeds", 8));
+            SimpleChipState state = chip(world, "wheat_seeds", "1:3")
+                    .settings(Settings.builder().maxPlanterWidth(2).build())
+                    .inputs(false, false, false, false)
+                    .build();
+
+            tickUntilItSows(Farming.areaPlanter(), state);
+
+            assertThat(world.blockAt(plot(2))).isEqualTo(WHEAT);
+            assertThat(world.blockAt(plot(3))).isEqualTo(Blocks.AIR_KEY);
         }
     }
 

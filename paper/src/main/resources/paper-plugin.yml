@@ -13,6 +13,9 @@ permissions:
   craftbook.command:
     description: Read the integrated circuit catalogue.
     default: true
+  craftbook.reload:
+    description: Reread the settings file and start every chip again under it.
+    default: op
   craftbook.switch.list:
     description: List the switches that command controlled chips are following.
     default: op

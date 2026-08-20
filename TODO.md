@@ -104,7 +104,7 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 | --- | --- |
 | Audience seam | Sending Adventure components to players near a chip. Blocks the 9 messaging ICs, and the warning a destination should give when its name is already in use. |
 | Persistence | Only the switch passwords are saved, in `switch-passwords.txt`. Everything else a chip remembers is kept on its own sign or lost when its chunk unloads. The firework display scripts in `fireworks/` are read, never written. |
-| Configuration | Nothing is configurable. The legacy code had per-mechanic config with an enable flag. |
+| Configuration | `config.yml` carries the settings the chips read. Each mechanic will want its own section as it arrives, and the mechanics also need the legacy enable flag. |
 | Commands | `/craftbook` reads the catalogue and the switch commands drive `MCX120` and `MCX121`, all through Brigadier. The per-mechanic commands come with their mechanics. |
 | Permissions | Every chip's permission is registered under `craftbook.ic.safe.*` or `craftbook.ic.restricted.*` and checked on creation. Nothing yet checks anything at run time. |
 | Documentation generator | The legacy code generated its own IC documentation. |
@@ -127,4 +127,6 @@ at all. Worth checking early, in roughly this order:
 10. A potion area doses whoever walks through it without stripping what they had drunk.
 11. A firework script in `fireworks/` plays, pauses and stops when it should.
 12. A sensor under a floor reports whoever walks over it, and ignores a vanished player.
-13. Region behaviour on an actual Folia server.
+13. `config.yml` is written on first run, a narrowed limit shortens a bridge, and
+    `/craftbook reload` picks up a change without a restart.
+14. Region behaviour on an actual Folia server.

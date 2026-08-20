@@ -4,6 +4,7 @@ import com.xeonproductions.craftbookultimate.core.config.Configuration;
 import com.xeonproductions.craftbookultimate.core.config.PipeSettings;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.pipe.PipeNetwork;
+import com.xeonproductions.craftbookultimate.core.pipe.PipeNetworks;
 import com.xeonproductions.craftbookultimate.core.pipe.PipeStyle;
 import com.xeonproductions.craftbookultimate.core.pipe.Pipes;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
@@ -68,7 +69,7 @@ public final class PipeDispatcher {
         BukkitPipeWorld seen = new BukkitPipeWorld(world);
         Vec3i at = Positions.toDomain(input);
 
-        PipeNetwork network = networks.from(seen, at, settings);
+        PipeNetwork network = networks.from(seen, world.getUID(), at, settings);
         if (!network.reachesAnywhere()) {
             return false;
         }

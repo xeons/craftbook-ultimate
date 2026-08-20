@@ -19,6 +19,8 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
+import org.bukkit.event.world.WorldUnloadEvent;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -58,6 +60,25 @@ public final class PipeListener implements Listener {
         if (dispatcher.isInput(block)) {
             dispatcher.run(block);
         }
+    }
+
+    /**
+     * Forgets every pipe reaching into a chunk as it goes away.
+     *
+     * <p>What is kept is an answer rather than a picture of the world, so letting one go costs a
+     * walk if that pipe is ever powered again and nothing at all if it is not. Without this a pipe
+     * nobody visits again would hold its share of the index until the server stopped.
+     */
+    @EventHandler
+    public void onChunkUnload(ChunkUnloadEvent event) {
+        dispatcher.networks().forgetChunk(
+                event.getWorld().getUID(), event.getChunk().getX(), event.getChunk().getZ());
+    }
+
+    /** Forgets every pipe in a world as it goes away. */
+    @EventHandler
+    public void onWorldUnload(WorldUnloadEvent event) {
+        dispatcher.networks().forgetWorld(event.getWorld().getUID());
     }
 
     /** Forgets what was known about any pipe a placed block might belong to. */

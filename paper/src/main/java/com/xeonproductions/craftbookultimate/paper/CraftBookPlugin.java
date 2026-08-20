@@ -14,7 +14,7 @@ import com.xeonproductions.craftbookultimate.paper.area.StructureVault;
 import com.xeonproductions.craftbookultimate.paper.cart.CartDispatcher;
 import com.xeonproductions.craftbookultimate.paper.cart.CartRecipes;
 import com.xeonproductions.craftbookultimate.paper.pipe.PipeDispatcher;
-import com.xeonproductions.craftbookultimate.paper.pipe.PipeNetworks;
+import com.xeonproductions.craftbookultimate.core.pipe.PipeNetworks;
 import com.xeonproductions.craftbookultimate.paper.command.AreaCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CartCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CatalogueCommands;

@@ -256,6 +256,16 @@ be discarded cannot drift, which is what made the legacy version's live graph go
 also what makes it safe on a regionised server — a pipe is a line of touching blocks and so belongs
 to one region, and another region interfering can only ever cost a walk.
 
+Two indexes point back at the answers so that letting one go is a lookup rather than a search: one
+from each block to the pipes that mention it, one from each chunk to the same. A block changing
+anywhere costs two lookups and, where nothing is indexed there, nothing else. The first index
+carries a block's neighbours as well as the block itself, because a pane placed against the end of a
+run lengthens it and nothing already inside the run has changed to say so.
+
+The second index is what keeps the memory bounded: an answer is let go as its chunk unloads, and a
+world's answers go with the world, so what is held is what is loaded rather than everything ever
+powered.
+
 Whole stacks travel. The domain decides where a stack goes and never looks at more of it than what
 sort of thing it is, so the server moves the stack itself and everything done to it — its name, its
 enchantments, its damage — survives the journey.

@@ -1216,3 +1216,221 @@ to bury a server, from a sign anybody with the permission could build.
 **Rewrite:** a file over a megabyte is not read, a song holds at most thirty thousand notes, and at
 most eight sound on any one tick. The whole song is walked by a single repeating task rather than
 by one task per note.
+
+## The area mechanics and the lift
+
+### 93. A bridge's width was held to the length limit, not the width limit
+
+`Bridge.countWidth` counts sideways but stops on
+
+```java
+for (; i < maximumLength.getValue(); i++)
+```
+
+which is the sixteen-block length limit rather than the five-block width one. `maximum-width` was
+in the configuration file, was documented, and did nothing at all for a bridge: a landing twelve
+blocks across made a bridge twelve blocks across.
+
+**Rewrite:** both mechanics count width against the width limit and length against the length
+limit, and both read the limits the building chips already use rather than carrying their own.
+
+### 94. A door could be one block wider than it was allowed to be
+
+`Door.countLength` runs `while (dist <= max)` and increments inside the loop, so a frame wide
+enough returned `maximumWidth + 1` rather than `maximumWidth`. The panel was a block wider to each
+side than the setting said.
+
+**Rewrite:** the count is bounded by the limit itself, so the widest allowed is the widest built.
+
+### 95. Redstone toggled a bridge and a door rather than driving them
+
+`SimpleArea.RedstoneListener` works out whether power arrived or left and passes that in as
+`forceState`, but neither `Bridge` nor `Door` uses it to decide anything. Both look at what is
+already in the span:
+
+```java
+filling = alreadyFilledBlocks == 0;   // Bridge
+filling = emptyBlocks != 0;           // Door
+```
+
+so each edge of the signal toggled whatever state the structure happened to be in. Work one by hand
+while the lever is on and it is inside out from then on: lever on retracts it, lever off puts it
+out. `Gate` in the same fork does use `forceState`, which is what the other two were meant to do.
+
+**Rewrite:** power arriving shuts a mechanic and power leaving opens it, for all three. A lever and
+the thing it drives always agree, whoever last touched it by hand.
+
+### 96. A bridge and a door disagreed about a half-built structure
+
+The two lines quoted above are opposite rules. Given a span with one block in it and the rest
+empty, a bridge empties the one and a door fills the rest. They are the same mechanic stood on end,
+built from the same base class, and a builder learning one learned the wrong thing about the other.
+
+**Rewrite:** one rule for both. Any gap at all means the next use fills it; only a structure that is
+already whole comes down.
+
+### 97. A door built as much of itself as it could afford
+
+`Door` asks for what it needs, takes what there is, and lays that many blocks:
+
+```java
+int failedToTake = blockBag.remove(BlockPlacingIC.getPredicate(blockBagItem), requiredItems);
+requiredItems -= failedToTake;
+...
+fillEmpty(world, min, max, baseBlock.getBlock(), requiredItems / blockBagItem.getQuantity());
+```
+
+A chest one block short left a doorway with a hole in it and a chest with nothing in it. `Bridge`
+beside it checks `bag.has(...)` first and refuses outright, which is the right way round: a bridge
+with a hole in it is worse than a bridge that did not move.
+
+**Rewrite:** both take everything they need before they lay anything, and neither takes anything at
+all if it cannot take all of it.
+
+### 98. A door with nowhere to store its blocks threw instead of saying so
+
+Every other complaint in the file is guarded by `human instanceof CommandSource`. This one is not:
+
+```java
+if (blockBag == null) {
+    ((CommandSource) human).sendMessage(Text.of(TextColors.RED, "You have no where to put the blocks!"));
+```
+
+The redstone path passes `cause.first(Player.class).orElse(null)`, so a door with no chest near it
+and a lever wired to it threw a `NullPointerException` out of the redstone listener on every change
+of the signal.
+
+**Rewrite:** whoever set a mechanic off is optional throughout, and a mechanic driven by redstone
+simply has nobody to tell.
+
+### 99. Button lifts worked even when they had been switched off
+
+```java
+if (allowButtonLifts.getValue() &&
+        signLocation.getBlockType() == BlockTypes.STONE_BUTTON || signLocation.getBlockType() == BlockTypes.WOODEN_BUTTON) {
+```
+
+`&&` binds tighter than `||`, so this reads as *(button lifts allowed and it is a stone button) or
+it is a wooden button*. Turning `allow-button-lifts` off left every wooden button working. The same
+expression appears again in `findDestination`, with the same effect on which floors could be
+reached.
+
+**Rewrite:** the setting is checked once, on its own, and every kind of button obeys it.
+
+### 100. A lift looked for headroom above the sign rather than above the rider
+
+The lift measures the landing in the rider's own column, then makes an exception for a sign hung at
+head height:
+
+```java
+if (foundFree == 1 && checkBlock(orginalDestination.getRelative(Direction.UP))) {
+```
+
+`orginalDestination` is the far sign's own block, so the exception asks about the block above the
+sign while everything around it asks about the block above the rider. Standing anywhere but
+directly in the sign's column, a rider was let out into a solid block, or refused a landing that
+had room.
+
+**Rewrite:** every part of the measurement is taken in the column the rider is actually standing in.
+
+### 101. A lift would not go below y=0
+
+```java
+if (destination.getY() == 0) {
+    break;
+}
+```
+
+Written when zero was the bottom of the world. Since 1.18 it is the middle of one, so a lift in a
+deep build reported no floor rather than finding the floor forty blocks further down.
+
+**Rewrite:** the world says where its floor is.
+
+### 102. A button lift could only reach floors that also had a button
+
+`findDestination` scans the column of whatever was clicked, and where that is a button it hops two
+blocks behind each button it finds to reach the sign. A floor with a sign but no button is
+invisible to it, so a shaft called by buttons had to have a button at every floor even where nobody
+could arrive at one.
+
+**Rewrite:** the floors are looked for in the sign's own column, whatever was touched to start the
+journey. A button is a way of reaching a sign, not a floor in its own right.
+
+### 103. Holding crouch dropped a rider through the whole building
+
+Crouching on a `[Lift UpDown]` pad is checked on the move event, which fires many times a second,
+and the rider lands on the next floor's pad still crouching. Nothing stopped it repeating, so a
+single press went down as many floors as the shaft had.
+
+**Rewrite:** a rider carried by jumping or crouching is not carried again for half a second, which
+is long enough to let go and short enough not to be noticed by anybody using the lift normally.
+
+### 104. A gate's search followed fences out of the area its sign could see
+
+`Gate.searchColumn` recurses into its neighbours, and their neighbours, with nothing bounding it to
+the box the sign searched:
+
+```java
+for (Direction dir : BlockUtil.getDirectHorizontalFaces()) {
+    Location<World> sideBlock = temp.getRelative(dir);
+    Location<World> aboveBlock = sideBlock.getRelative(Direction.UP);
+    ...
+    state = searchColumn(aboveBlock, columns, state, exclude);
+```
+
+A gate built into a long fence line took the whole fence line with it, at whatever distance, and
+paid for it out of the nearest chest. The `search-radius` setting bounded where a gate could be
+found and not how far it then went.
+
+**Rewrite:** the run of gate is followed only within the box the sign reaches. What the setting
+limits is the whole of the gate, not merely where it starts.
+
+### 105. Two gates one above the other were treated as one gate
+
+```java
+public boolean equals(Object o) {
+    return o instanceof GateColumn && ((GateColumn) o).topBlock.getX() == topBlock.getX()
+            && ((GateColumn) o).topBlock.getZ() == topBlock.getZ();
+}
+```
+
+A column is identified by where it stands and not by what it hangs from, so a portcullis over a
+doorway and another over the balcony above it were the same column. Whichever was found first was
+worked and the other was quietly skipped.
+
+**Rewrite:** a column is where it stands and the block it hangs by, so two gates stacked in one
+place are two gates.
+
+### 106. Only the plain gate could be made clickable
+
+`Gate` reads a trailing `C` off any gate name:
+
+```java
+boolean clickable = line2.endsWith("c");
+```
+
+but `getValidSigns` lists `[Gate]C` and no other, and a sign not on that list is refused as it is
+written. `[GlassGate]C` and the rest were parsed for by code that could never be reached.
+
+**Rewrite:** every gate sign has a clickable form. Accepting more than the old list did cannot break
+a sign somebody has already built.
+
+### 107. Clicking a gate's fence with no chest nearby threw
+
+```java
+BlockBag bag = getBlockBag(searchLocation);
+
+if (bag == null) {
+
+}
+
+for (Map.Entry<Set<GateColumn>, BlockState> gateEntry : ...) {
+    toggleColumns(gateEntry.getValue(), searchLocation, human, gateEntry.getKey(), null, bag);
+```
+
+The check is there, the body of it is empty, and the null goes straight on into `toggleColumn`,
+which calls `bag.has(...)`. The path through the sign has a real check and a real message; the path
+through the fence has the shape of one.
+
+**Rewrite:** there is always a stockpile. Where no chest is near, it is one that holds nothing, and
+a gate asking it for a block is told no in the ordinary way.

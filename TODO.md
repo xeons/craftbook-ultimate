@@ -32,9 +32,10 @@ come after everything above.
 
 ## Mechanics
 
-The minecart ones are done. The remaining ~58 live under `src/main/java/`, each marked with
-`@Module`. Those below are unique to this fork and have no upstream equivalent to compare against,
-so the legacy source is the only specification.
+The minecart ones are done, and so are the bridge, the door, the gate and the lift. The remaining
+~54 live under `src/main/java/`, each marked with `@Module`. Those below are unique to this fork
+and have no upstream equivalent to compare against, so the legacy source is the only
+specification.
 
 ### Minecart mechanics: done
 
@@ -44,6 +45,16 @@ so the legacy source is the only specification.
 
 `CartWarp` is **not** ported: it teleports a cart to a CBWarp, and CBWarps is dropped by decision.
 Porting it needs a decision about what it should warp to instead.
+
+### Sign mechanics: done
+
+`Bridge`, `Door`, `Gate` and `Elevator`, on the seam in `core/mechanic/` and the dispatcher in
+`paper/mechanic/`. Every sign name either fork carries is accepted, the gate's six materials and
+its small and clickable forms included.
+
+`ComplexArea` is the one left in the `area` package. It is a different mechanic from the other
+three — it saves and restores a region rather than filling a box — and needs the self-contained
+storage format decided on in `CLAUDE.md`, since there is no WorldEdit to lean on.
 
 ### Unique to this fork
 
@@ -60,10 +71,10 @@ Porting it needs a decision about what it should warp to instead.
 Compare both sources for these. Where they differ, this fork's behaviour is the one to keep.
 
 `Ammeter`, `BetterPhysics`, `BetterPlants`, `Bookshelf`, `BounceBlocks`, `Chairs`, `CommandSigns`,
-`CookingPot`, `Elevator`, `GlowStone`, `HeadDrops`, `HiddenSwitch`, `JackOLantern`, `LightStone`,
+`CookingPot`, `GlowStone`, `HeadDrops`, `HiddenSwitch`, `JackOLantern`, `LightStone`,
 `LightSwitch`, `Marquee`, `Netherrack`, `PaintingSwitcher`, `Pipes`, `RedstoneJukebox`,
-`SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `Variables`, `XPStorer`, the `area` mechanics
-(`Bridge`, `Door`, `Gate`, `ComplexArea`), the `boat` set, `DispenserRecipes`.
+`SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `Variables`, `XPStorer`, `ComplexArea`, the
+`boat` set, `DispenserRecipes`.
 
 ### Dropped by decision
 
@@ -74,9 +85,9 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 | Piece | Why it is needed |
 | --- | --- |
 | Persistence | The switch passwords, the switch positions and the wireless bands are saved. What a chip keeps on its own sign is saved with the world. What remains unsaved is deliberate: a destination republishes itself when it loads, and a cart's rider says again where they are going. The scripts in `fireworks/`, `midi/` and `playlist/` are read, never written. |
-| Configuration | `config.yml` carries the settings the chips read. Each mechanic will want its own section as it arrives, and the mechanics also need the legacy enable flag. |
+| Configuration | `config.yml` carries the settings the chips read, the minecart mechanics read, and the sign mechanics read. Each further mechanic will want its own entries as it arrives. |
 | Commands | `/craftbook` reads the catalogue and the switch commands drive `MCX120` and `MCX121`, all through Brigadier. The per-mechanic commands come with their mechanics. |
-| Permissions | Every chip's permission is registered under `craftbook.ic.safe.*` or `craftbook.ic.restricted.*` and checked on creation. Nothing yet checks anything at run time. |
+| Permissions | Every chip's permission is registered under `craftbook.ic.safe.*` or `craftbook.ic.restricted.*` and checked on creation. The sign mechanics register a pair each, `craftbook.<name>` to build and `craftbook.<name>.use` to work, and both are checked. Nothing checks a chip at run time. |
 | Documentation generator | The legacy code generated its own IC documentation. |
 
 ## Verification
@@ -103,4 +114,8 @@ at all. Worth checking early, in roughly this order:
     names a vanished player in the log.
 15. A melody plays a MIDI file dropped in `midi/` through a note block, works down a playlist,
     and `/craftbook music songs` lists what a sign can name.
-16. Region behaviour on an actual Folia server.
+16. A bridge and a door driven by a lever agree with the lever, and a gate drops from its lintel
+    and winds back up when clicked on its own fence.
+17. A lift carries somebody between floors by sign, by button and by jumping on a pad, and names
+    the floor they arrive at.
+18. Region behaviour on an actual Folia server.

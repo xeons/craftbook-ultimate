@@ -6,6 +6,8 @@ import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
+import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanic;
+import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanics;
 import com.xeonproductions.craftbookultimate.paper.cart.CartDispatcher;
 import com.xeonproductions.craftbookultimate.paper.cart.CartRecipes;
 import com.xeonproductions.craftbookultimate.paper.command.CartCommands;
@@ -29,6 +31,11 @@ import com.xeonproductions.craftbookultimate.paper.listener.CartSignListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICChunkListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICRedstoneListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICSignListener;
+import com.xeonproductions.craftbookultimate.paper.listener.LiftMoveListener;
+import com.xeonproductions.craftbookultimate.paper.listener.MechanicInteractListener;
+import com.xeonproductions.craftbookultimate.paper.listener.MechanicRedstoneListener;
+import com.xeonproductions.craftbookultimate.paper.listener.MechanicSignListener;
+import com.xeonproductions.craftbookultimate.paper.mechanic.MechanicDispatcher;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -123,11 +130,19 @@ public final class CraftBookPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new CartSignListener(carts, chipServices.configuration()), this);
 
+        MechanicDispatcher mechanics = new MechanicDispatcher(chipServices.configuration());
+        getServer().getPluginManager().registerEvents(new MechanicInteractListener(mechanics), this);
+        getServer().getPluginManager().registerEvents(new MechanicRedstoneListener(mechanics), this);
+        getServer().getPluginManager().registerEvents(new LiftMoveListener(mechanics), this);
+        getServer().getPluginManager().registerEvents(
+                new MechanicSignListener(chipServices.configuration()), this);
+
         adoptAlreadyLoadedChunks(manager);
 
         getComponentLogger().info(Component.text(
                 "Enabled with " + icRegistry.size() + " integrated circuits and "
-                        + CartMechanics.all().size() + " minecart mechanics"
+                        + CartMechanics.all().size() + " minecart mechanics, "
+                        + SignMechanics.all().size() + " sign mechanics"
                         + (isFolia() ? ", running regionised" : "")));
     }
 
@@ -153,6 +168,16 @@ public final class CraftBookPlugin extends JavaPlugin {
         Permission safe = wildcard(manager, "craftbook.ic.safe.*");
         Permission restricted = wildcard(manager, "craftbook.ic.restricted.*");
 
+        for (SignMechanic mechanic : SignMechanics.all()) {
+            declare(manager, mechanic.buildPermission(),
+                    "Make a " + mechanic.name() + ".", PermissionDefault.TRUE);
+            declare(manager, mechanic.usePermission(),
+                    "Work a " + mechanic.name() + " somebody has made.", PermissionDefault.TRUE);
+        }
+        declare(manager, MechanicSignListener.ADMIN_PERMISSION,
+                "Make a mechanic that supplies itself rather than drawing on nearby chests.",
+                PermissionDefault.OP);
+
         for (ICDefinition definition : icRegistry.definitions()) {
             Permission node = new Permission(
                     definition.permission(),
@@ -160,6 +185,14 @@ public final class CraftBookPlugin extends JavaPlugin {
                     definition.restricted() ? PermissionDefault.OP : PermissionDefault.TRUE);
             manager.addPermission(node);
             node.addParent(definition.restricted() ? restricted : safe, true);
+        }
+    }
+
+    /** Declares a permission, leaving one the server already knows about alone. */
+    private static void declare(
+            PluginManager manager, String name, String description, PermissionDefault byDefault) {
+        if (manager.getPermission(name) == null) {
+            manager.addPermission(new Permission(name, description, byDefault));
         }
     }
 

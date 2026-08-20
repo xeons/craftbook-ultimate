@@ -1,6 +1,7 @@
 package com.xeonproductions.craftbookultimate.paper.config;
 
 import com.xeonproductions.craftbookultimate.core.config.CartSettings;
+import com.xeonproductions.craftbookultimate.core.config.MechanicSettings;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.paper.ic.LegacyBlocks;
 import java.io.IOException;
@@ -60,6 +61,15 @@ public final class ConfigFile {
     private static final String CART_BOOSTERS = "carts.boosters";
     private static final String CART_LAUNCH_SPEED = "carts.launch-speed";
     private static final String CART_WATER_BUCKETS = "carts.return-water-buckets";
+
+    private static final String MECHANICS_DISABLED = "mechanics.disabled";
+    private static final String MECHANICS_REDSTONE = "mechanics.redstone";
+    private static final String GATE_BLOCKS = "mechanics.gate-blocks";
+    private static final String GATE_RADIUS = "mechanics.gate-radius";
+    private static final String GATE_CLICKING = "mechanics.gate-clicking";
+    private static final String LIFT_JUMPING = "mechanics.lift-jumping";
+    private static final String LIFT_BUTTONS = "mechanics.lift-buttons";
+    private static final String LIFT_TOLERANCE = "mechanics.lift-tolerance";
 
     private final Path file;
     private final Server server;
@@ -136,6 +146,16 @@ public final class ConfigFile {
                 setIfAbsent(yaml, CART_BLOCKS + "." + mechanic, block.asString()));
         carts.boosters().forEach((block, multiplier) ->
                 setIfAbsent(yaml, CART_BOOSTERS + "." + block.value(), multiplier));
+
+        MechanicSettings mechanics = defaults.mechanics();
+        setIfAbsent(yaml, MECHANICS_DISABLED, new ArrayList<>(mechanics.disabled()));
+        setIfAbsent(yaml, MECHANICS_REDSTONE, mechanics.redstone());
+        setIfAbsent(yaml, GATE_BLOCKS, names(mechanics.gateBlocks()));
+        setIfAbsent(yaml, GATE_RADIUS, mechanics.gateRadius());
+        setIfAbsent(yaml, GATE_CLICKING, mechanics.gateClicking());
+        setIfAbsent(yaml, LIFT_JUMPING, mechanics.liftJumping());
+        setIfAbsent(yaml, LIFT_BUTTONS, mechanics.liftButtons());
+        setIfAbsent(yaml, LIFT_TOLERANCE, mechanics.liftTolerance());
     }
 
     private static void setIfAbsent(YamlConfiguration yaml, String path, Object value) {
@@ -227,6 +247,50 @@ public final class ConfigFile {
         yaml.setComments(CART_WATER_BUCKETS, List.of(
                 "Whether crafting in a cart gives a water bucket back full rather than empty.",
                 "Vanilla gives back an empty one; this is a kindness to anybody crafting in bulk."));
+
+        yaml.setComments("mechanics", List.of(
+                "",
+                "The sign mechanics: the bridges, doors, gates and lifts. How wide a bridge or a",
+                "door may be, how far it may run and what it may be made of come from the ics",
+                "section above, because those are the same limits."));
+
+        yaml.setComments(MECHANICS_DISABLED, List.of(
+                "Mechanics that never run, by name: Bridge, Door, Gate or Elevator.",
+                "The signs are left alone, not removed."));
+
+        yaml.setComments(MECHANICS_REDSTONE, List.of(
+                "",
+                "Whether redstone arriving beside a sign works the mechanic on it.",
+                "Power arriving shuts it and power leaving opens it, so a mechanic on a lever",
+                "always agrees with the lever."));
+
+        yaml.setComments(GATE_BLOCKS, List.of(
+                "",
+                "What a gate may be made of. An entry is a block name, a tag written with a",
+                "leading # such as #minecraft:fences, or a name from before the flattening.",
+                "The glass, iron and nether gate signs each take only their own material out of",
+                "this list; the plain sign takes any of it."));
+
+        yaml.setComments(GATE_RADIUS, List.of(
+                "",
+                "How far around its sign a gate looks for its own material. The D forms of each",
+                "gate sign ignore this and look barely past themselves, which is how two gates",
+                "standing side by side are kept from catching one another."));
+
+        yaml.setComments(GATE_CLICKING, List.of(
+                "Whether a gate whose sign ends in C answers to a hand on its own fence."));
+
+        yaml.setComments(LIFT_JUMPING, List.of(
+                "",
+                "Whether jumping and crouching work a [Lift UpDown] sign fixed to the block",
+                "somebody is standing on."));
+
+        yaml.setComments(LIFT_BUTTONS, List.of(
+                "Whether a button two blocks in front of a lift's sign works it."));
+
+        yaml.setComments(LIFT_TOLERANCE, List.of(
+                "How far a lift will drop somebody below the far sign to find them a floor.",
+                "Beyond this it says there is no floor rather than dropping them down a shaft."));
     }
 
     /** Turns what the file says into the settings the chips read. */
@@ -242,7 +306,22 @@ public final class ConfigFile {
                 .maxPlanterWidth(yaml.getInt(MAX_PLANTER_WIDTH, defaults.maxPlanterWidth()))
                 .placeableBlocks(blocks(yaml.getStringList(PLACEABLE_BLOCKS)))
                 .carts(carts(yaml, defaults.carts()))
+                .mechanics(mechanics(yaml, defaults.mechanics()))
                 .build();
+    }
+
+    /** Reads what an operator has said about the sign mechanics. */
+    private MechanicSettings mechanics(YamlConfiguration yaml, MechanicSettings defaults) {
+        Set<Key> gateBlocks = blocks(yaml.getStringList(GATE_BLOCKS));
+        return new MechanicSettings(
+                Set.copyOf(yaml.getStringList(MECHANICS_DISABLED)),
+                yaml.getBoolean(MECHANICS_REDSTONE, defaults.redstone()),
+                gateBlocks.isEmpty() ? defaults.gateBlocks() : gateBlocks,
+                yaml.getInt(GATE_RADIUS, defaults.gateRadius()),
+                yaml.getBoolean(GATE_CLICKING, defaults.gateClicking()),
+                yaml.getBoolean(LIFT_JUMPING, defaults.liftJumping()),
+                yaml.getBoolean(LIFT_BUTTONS, defaults.liftButtons()),
+                yaml.getInt(LIFT_TOLERANCE, defaults.liftTolerance()));
     }
 
     /** Reads what an operator has said about the minecart mechanics. */

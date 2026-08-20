@@ -11,8 +11,10 @@ drives wireless bands, moves people between named pads, follows switches thrown 
 spawns, shoots at, hurts, doses and senses what stands near it, speaks to whoever is near, to one
 player anywhere, to the whole server or to the log, shows people weather the world is not having,
 and plays a sound, a record, a tune written on its own sign or a MIDI file out of the plugin's
-folder. The extra fork's whole IC catalogue is done; the mechanics other than the minecart ones
-have not been started.**
+folder. The extra fork's whole IC catalogue is done. Beyond the chips, the minecart mechanics all
+run, and the first of the sign mechanics with them: a bridge runs out across a gap, a door fills a
+doorway, a gate drops from its lintel and a lift carries people between floors, each answering to a
+hand and to redstone.**
 
 | Area | State |
 | --- | --- |
@@ -59,10 +61,13 @@ have not been started.**
 | Sound effect, jukebox and written tunes | Done |
 | Music from a MIDI file (`MCU700`) | Done |
 | Minecart mechanics (13 on the rails, plus the dispenser) | Done |
-| Mechanics other than the minecart ones | Not started |
+| Sign mechanic seam (`SignMechanic`, `MechanicWorld`, `MechanicVisit`) | Done |
+| Bridge, door and gate, with the gate's six materials | Done |
+| Lifts, including the two-way sign, buttons and jump pads | Done |
+| Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1529 tests passing**.
+**1627 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -191,6 +196,39 @@ amounted to anyway.
 
 **Not ported:** CartWarp, whose whole purpose was teleporting a cart to a CBWarp. CBWarps is on
 the dropped list, so there is nothing for it to warp to.
+
+## The sign mechanics
+
+A sign mechanic is a sign and the blocks around it. Unlike a chip it holds nothing between one use
+and the next — the state of a bridge is whether its blocks are there — and unlike a cart mechanic
+it has no block underneath saying what it is. The name in brackets on the second line is the whole
+of the declaration.
+
+`core/mechanic/` holds the seam: `SignMechanic` is the contract, `MechanicWorld` is the world as
+one of them sees it, `MechanicVisit` carries everything one is given, and `Actor` is whoever set it
+off — absent when redstone did. `paper/mechanic/` binds them and `MechanicDispatcher` is the single
+entry point, in the same way `CartDispatcher` is for the rails. Do not give a mechanic its own
+listener.
+
+Four are built. Bridge, Door and Gate all put blocks up and take them down, paying into and out of
+the chests near their sign, or out of nothing at all where the first line reads `ADMIN` and the
+builder had the permission for it. Elevator builds nothing and carries people instead.
+
+Three things set one off, and all three come through the dispatcher: a hand on its own sign, a hand
+on something standing in for that sign — a button in front of a lift, a fence a clickable gate is
+made of — and redstone arriving beside it. Redstone drives rather than toggles: power arriving
+shuts a mechanic and power leaving opens it, so a lever and the thing it drives always agree.
+
+The sign names are frozen along with everything else on a sign. They are `[Bridge]` and
+`[Bridge End]`; `[Door Up]`, `[Door Down]` and `[Door]`; `[Lift Up]`, `[Lift Down]`, `[Lift]` and
+`[Lift UpDown]`; and the gate's eight — `[Gate]`, `[DGate]`, and the glass, iron and nether forms
+of each — every one of which may also carry a trailing `C` for a gate that answers to a hand on its
+own fence.
+
+Bridges and doors take their limits from the settings the building chips already use, because they
+are the same limits: `ics.max-width`, `ics.max-length` and `ics.placeable-blocks`. The `mechanics`
+section carries only what is peculiar to these — what a gate may be made of, how far it looks, and
+how the lifts are worked.
 
 ## Folia and regions
 

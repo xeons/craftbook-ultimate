@@ -30,13 +30,20 @@ decision covers all of them.
 ### Upstream-only ICs
 
 Upstream registers 131 model numbers to this fork's 143, and 55 of those are shared. Of the 76 it
-has that this fork never did, four are dropped by decision and **26 are chips already registered
-here under the extra fork's number**, so the real gap is 46. Adding any of them is an optional
+has that this fork never did, four are dropped by decision and **27 are chips already registered
+here under the extra fork's number**, so the real gap is 45. Adding any of them is an optional
 addition rather than a compatibility obligation, and comes after everything above.
 
 #### Already here under another number
 
-Should one of these ever be wanted as an alias, the extra fork's number stays primary.
+Should one of these ever be wanted as an alias, the extra fork's number stays primary. Two of the
+pairings are easy to miss because the two forks named the same chip after different things:
+`MCX203` reads as a chest mechanic and is upstream's ranged collector, and `MCX295` is filed under
+redstone rather than sensing and is upstream's power sensor.
+
+Where the two differ, this fork's is the richer: `MCX203` also picks which kind of container to
+fill, which upstream's cannot. `MCX295` reads only direct power where upstream's reads indirect
+power as well, so that one number is still worth having if the indirect reading is ever wanted.
 
 | Upstream | Here | Upstream | Here |
 | --- | --- | --- | --- |
@@ -44,7 +51,7 @@ Should one of these ever be wanted as an alias, the extra fork's number stays pr
 | `MC1113` tele-in | `MCU113` Destination | `MC1234` planter | `MCX216` Planter |
 | `MC1204` trap | `MCX132` Hit Mob Above | `MC1236` fake weather | `MCX235` False Weather |
 | `MC1208` mult set | `MCX206` Flex Set | `MC1239` harvester | `MCX213` Harvester |
-| `MC1209` collector | `MCX203` Chest Collector | `MC1263` sense block | `MCX205` Block Detector |
+| `MC1214` range coll | `MCX203` Chest Collector | `MC1263` sense block | `MCX205` Block Detector |
 | `MC1210` emitter | `MCX250` Particle | `MC1264` sense item | `MCX138` Item Near |
 | `MC1211` set bridge | `MCX207` / `MCX209` Bridge | `MC1270` melody | `MCU700` Melody |
 | `MC1212` set door | `MCX208` / `MCX210` Door | `MC1271` sns entity | `MCX119` Mob Near |
@@ -53,6 +60,7 @@ Should one of these ever be wanted as an alias, the extra fork's number stays pr
 | `MC1216` set b chest | `MC1206` Set Below, on a stockpile | `MC1275` tune | `MCU705` Tune |
 | `MC1217` pot induce | `MCX146` Potion Area | `MC1279` player trap | `MCX131` Hit Player Above |
 | `MC1227` avd spawner | `MCX200` Entity Spawner | `MC1422` monostable | `MCU440` Monoflop |
+| `MC1266` sense power | `MCX295` Trigger Reader | | |
 
 #### Where the two forks disagree about a number
 
@@ -74,12 +82,12 @@ Note that `MC1421` is upstream's clock, so it cannot be taken at its own number 
 
 | Group | Models |
 | --- | --- |
-| Containers and logistics | `MC1214` range coll, `MC1219` auto craft, `MC1229` sorter, `MC1233` item fan, `MC1242` stocker, `MC1243` distributer, `MC1245` cont stkr, `MC1268` sns cntns, `MC1269` sns p cntns |
+| Containers and logistics | `MC1209` collector — not the ranged one, this picks up only what lies on its own sign and hands it to a `Pipes` network — `MC1219` auto craft, `MC1229` sorter, `MC1233` item fan, `MC1242` stocker, `MC1243` distributer, `MC1245` cont stkr, `MC1268` sns cntns, `MC1269` sns p cntns |
 | Terrain and liquids | `MC1220` / `MC1221` block breakers, `MC1222` liq flood, `MC1223` terraform, `MC1225` pump, `MC1226` spigot, `MC1238` irrigate, `MC1248` driller |
 | Timing | `MC1421` clock, `MC2100` / `MC2101` / `MC2110` / `MC2111` delayers, `MC2500` / `MC2501` / `MC2510` / `MC2511` pulsers |
 | Weapons | `MC1218` block launch, `MC1224` time bomb, `MC1228` ent cannon, `MC1251` shoot fires, `MC1252` flame thrower, `MC1278` sentry gun |
 | Farming and animals | `MC1235` cultivator, `MC1244` animal harv, `MC1246` xp spawner, `MC1280` animal brd |
-| Sensors | `MC1265` inv sns itm, `MC1266` sense power, `MC1267` sense move |
+| Sensors | `MC1265` inv sns itm, `MC1267` sense move |
 | World control | `MC1232` time set, `MC1237` fake time |
 | Radio | `MC1276` radio station, `MC1277` radio player |
 | Variables | `VAR100` num mod, `VAR170` at least, `VAR200` item count. These read the `Variables` mechanic, which is itself unported. |

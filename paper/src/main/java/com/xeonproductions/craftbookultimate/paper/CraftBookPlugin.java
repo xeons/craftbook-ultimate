@@ -13,6 +13,8 @@ import com.xeonproductions.craftbookultimate.paper.area.Selections;
 import com.xeonproductions.craftbookultimate.paper.area.StructureVault;
 import com.xeonproductions.craftbookultimate.paper.cart.CartDispatcher;
 import com.xeonproductions.craftbookultimate.paper.cart.CartRecipes;
+import com.xeonproductions.craftbookultimate.paper.pipe.PipeDispatcher;
+import com.xeonproductions.craftbookultimate.paper.pipe.PipeNetworks;
 import com.xeonproductions.craftbookultimate.paper.command.AreaCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CartCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CatalogueCommands;
@@ -32,6 +34,7 @@ import com.xeonproductions.craftbookultimate.paper.store.SharedStateFiles;
 import com.xeonproductions.craftbookultimate.paper.listener.CartListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartRedstoneListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartHabitListener;
+import com.xeonproductions.craftbookultimate.paper.listener.PipeListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartSignListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICChunkListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICRedstoneListener;
@@ -82,6 +85,7 @@ public final class CraftBookPlugin extends JavaPlugin {
     private @Nullable ConfigFile configFile;
     private @Nullable ChipServices services;
     private @Nullable CartDispatcher cartDispatcher;
+    private final PipeNetworks pipeNetworks = new PipeNetworks();
     private @Nullable StructureVault areas;
     private final Selections selections = new Selections();
 
@@ -143,6 +147,11 @@ public final class CraftBookPlugin extends JavaPlugin {
                 new CartSignListener(carts, chipServices.configuration()), this);
         getServer().getPluginManager().registerEvents(
                 new CartHabitListener(carts, chipServices.configuration(), regionSchedulers), this);
+        getServer().getPluginManager().registerEvents(
+                new PipeListener(
+                        new PipeDispatcher(chipServices.configuration(), pipeNetworks),
+                        chipServices.configuration()),
+                this);
 
         MechanicDispatcher mechanics =
                 new MechanicDispatcher(chipServices.configuration(), areaVault);
@@ -194,6 +203,8 @@ public final class CraftBookPlugin extends JavaPlugin {
                 "Make a mechanic that supplies itself rather than drawing on nearby chests.",
                 PermissionDefault.OP);
         declareAreaPermissions(manager);
+        declare(manager, PipeListener.BUILD,
+                "Write a filter on a pipe's sign.", PermissionDefault.TRUE);
 
         for (ICDefinition definition : icRegistry.definitions()) {
             Permission node = new Permission(
@@ -329,6 +340,9 @@ public final class CraftBookPlugin extends JavaPlugin {
         }
 
         adoptAlreadyLoadedChunks(icManager);
+        // A narrowed limit shortens a pipe, so what was worked out under the old one is no longer
+        // the answer.
+        pipeNetworks.forgetEverything();
 
         Settings settings = services.configuration().settings();
         if (!settings.enabled()) {

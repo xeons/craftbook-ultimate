@@ -94,8 +94,8 @@ Note that `MC1421` is upstream's clock, so it cannot be taken at its own number 
 
 ## Mechanics
 
-The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 31 are
-ported, 3 are dropped by decision, and **36 are left**. The bridge, the door, the gate, the lift
+The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 33 are
+ported, 3 are dropped by decision, and **34 are left**. The bridge, the door, the gate, the lift
 and the toggled area are done, and so is the greater part of the rails. Those listed as unique to
 this fork have no upstream equivalent to compare against, so the legacy source is the only
 specification.
@@ -130,11 +130,22 @@ The toggled area keeps its blocks in the game's own structure format through
 own selection commands since there is no world editor to borrow one from. The whole `area` package
 is done.
 
+### Pipes: done
+
+`Pipes` and `MegaPipes` are one mechanic. Both grammars are accepted — a sticky piston at the head
+of a run of glass, and a piston with an `[Extractor]` sign at the head of a run of panes — and
+`PipeStyle`, chosen by the block a run starts from, decides how the blocks along it are read. The
+filter `MegaPipes` never built is finished, on the `[Pipe]` sign's third and fourth lines.
+
+`MegaPipes` was left half-written in the fork: debug output through its extraction path, an empty
+`MegaPipesFilter`, `MegaPipesSource` and `ChestSource` stubbed out, `registerSource` never called,
+and the only source that worked hardcoded into `ExtractorMultiBlock`. What was worth keeping was its
+shape rather than its code, and the shape is what was kept.
+
 ### Unique to this fork
 
 | Mechanic | What it does |
 | --- | --- |
-| `MegaPipes` | Item routing with filters, sources and destinations. Larger than the plain `Pipes`. |
 | `Footprints` | Cosmetic particles where players walk. |
 | `BannerCopier`, `BookCopier`, `MapCopier` | Duplicate a held item onto blanks. Kept despite vanilla equivalents. |
 | `PageReader` | Reads a book's pages aloud. |
@@ -146,7 +157,7 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 
 `Ammeter`, `BetterPhysics`, `BetterPlants`, `Bookshelf`, `BounceBlocks`, `Chairs`, `CommandSigns`,
 `CookingPot`, `GlowStone`, `HeadDrops`, `HiddenSwitch`, `JackOLantern`, `LightStone`,
-`LightSwitch`, `Marquee`, `Netherrack`, `PaintingSwitcher`, `Pipes`, `RedstoneJukebox`,
+`LightSwitch`, `Marquee`, `Netherrack`, `PaintingSwitcher`, `RedstoneJukebox`,
 `SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `Variables`, `XPStorer`, `DispenserRecipes`,
 and the `boat` set — `LandBoats`, `WaterPlaceOnly`, `SpeedModifiers`, and boat-going copies of
 `EmptyDecay`, `ExitRemover` and `RemoveEntities`. Those three are separate classes from the
@@ -203,4 +214,8 @@ at all. Worth checking early, in roughly this order:
 20. Nothing under `carts.habits` does anything until it is switched on, and then: a cart climbs a
     ladder, crosses a pressure plate, gathers a stack it can hold whole and leaves one it cannot,
     passes through an empty cart, and decays once nobody has got back in.
-21. Region behaviour on an actual Folia server.
+21. A powered sticky piston empties a chest along a run of glass into another; a stained run keeps
+    to its own colour; a `[Pipe]` sign sorts by what its third line names; an `[Extractor]` fills
+    whatever its panes touch; a named and enchanted tool comes out of the far end unchanged; and
+    breaking one block of a pipe is enough for the next pulse to follow the new shape.
+22. Region behaviour on an actual Folia server.

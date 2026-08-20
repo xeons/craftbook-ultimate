@@ -29,6 +29,7 @@ import org.jspecify.annotations.NullMarked;
  * @param placeableBlocks what a building chip may place, or empty for anything at all
  * @param carts what an operator has said about the minecart mechanics
  * @param mechanics what an operator has said about the sign mechanics
+ * @param pipes what an operator has said about the pipes
  */
 @NullMarked
 public record Settings(
@@ -41,7 +42,8 @@ public record Settings(
         int maxPlanterWidth,
         Set<Key> placeableBlocks,
         CartSettings carts,
-        MechanicSettings mechanics) {
+        MechanicSettings mechanics,
+        PipeSettings pipes) {
 
     /**
      * The settings in force when nobody has said otherwise.
@@ -79,7 +81,8 @@ public record Settings(
                 .maxPlanterWidth(maxPlanterWidth)
                 .placeableBlocks(placeableBlocks)
                 .carts(carts)
-                .mechanics(mechanics);
+                .mechanics(mechanics)
+                .pipes(pipes);
     }
 
     /**
@@ -165,6 +168,7 @@ public record Settings(
         private Set<Key> placeableBlocks = DefaultBlocks.PLACEABLE;
         private CartSettings carts = CartSettings.DEFAULTS;
         private MechanicSettings mechanics = MechanicSettings.DEFAULTS;
+        private PipeSettings pipes = PipeSettings.DEFAULTS;
 
         private Builder() {}
 
@@ -222,6 +226,12 @@ public record Settings(
             return this;
         }
 
+        /** What an operator has said about the pipes. */
+        public Builder pipes(PipeSettings pipes) {
+            this.pipes = pipes;
+            return this;
+        }
+
         /** What an operator has said about the sign mechanics. */
         public Builder mechanics(MechanicSettings mechanics) {
             this.mechanics = mechanics;
@@ -244,7 +254,8 @@ public record Settings(
                     maxPlanterWidth,
                     placeableBlocks,
                     carts,
-                    mechanics);
+                    mechanics,
+                    pipes);
         }
     }
 }

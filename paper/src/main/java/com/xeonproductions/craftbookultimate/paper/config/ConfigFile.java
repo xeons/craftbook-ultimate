@@ -2,6 +2,7 @@ package com.xeonproductions.craftbookultimate.paper.config;
 
 import com.xeonproductions.craftbookultimate.core.config.CartHabits;
 import com.xeonproductions.craftbookultimate.core.config.CartSettings;
+import com.xeonproductions.craftbookultimate.core.config.PipeSettings;
 import com.xeonproductions.craftbookultimate.core.config.MechanicSettings;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.paper.ic.LegacyBlocks;
@@ -75,6 +76,9 @@ public final class ConfigFile {
     private static final String HABIT_RUN_DOWN = "carts.habits.run-down-what-it-hits";
     private static final String HABIT_RUN_DOWN_HURTS = "carts.habits.run-down-only-hurts";
     private static final String HABIT_RUN_DOWN_CARTS = "carts.habits.run-down-other-carts";
+    private static final String PIPES_ENABLED = "pipes.enabled";
+    private static final String PIPES_MAX_LENGTH = "pipes.max-length";
+    private static final String PIPES_STACK_PER_PULL = "pipes.stack-per-pull";
 
     private static final String MECHANICS_DISABLED = "mechanics.disabled";
     private static final String MECHANICS_REDSTONE = "mechanics.redstone";
@@ -177,6 +181,11 @@ public final class ConfigFile {
         setIfAbsent(yaml, HABIT_RUN_DOWN, habits.runDownEntities());
         setIfAbsent(yaml, HABIT_RUN_DOWN_HURTS, habits.runDownOnlyHurts());
         setIfAbsent(yaml, HABIT_RUN_DOWN_CARTS, habits.runDownOtherCarts());
+
+        PipeSettings pipes = defaults.pipes();
+        setIfAbsent(yaml, PIPES_ENABLED, pipes.enabled());
+        setIfAbsent(yaml, PIPES_MAX_LENGTH, pipes.maxLength());
+        setIfAbsent(yaml, PIPES_STACK_PER_PULL, pipes.stackPerPull());
 
         MechanicSettings mechanics = defaults.mechanics();
         setIfAbsent(yaml, MECHANICS_DISABLED, new ArrayList<>(mechanics.disabled()));
@@ -344,6 +353,30 @@ public final class ConfigFile {
                 "Whether crafting in a cart gives a water bucket back full rather than empty.",
                 "Vanilla gives back an empty one; this is a kindness to anybody crafting in bulk."));
 
+        yaml.setComments("pipes", List.of(
+                "",
+                "The pipes: a run of glass or panes that carries items from one container to",
+                "another when the block at its head is powered. Both ways of building one work.",
+                "A sticky piston starts a run of glass, which branches wherever it touches more",
+                "glass, goes straight over a pane, keeps to its own colour where it is stained,",
+                "and hands what reaches it to whatever a plain piston points at. A piston with an",
+                "[Extractor] sign starts a run of panes instead, which spreads at every pane and",
+                "fills any container it touches.",
+                "",
+                "A sign named [Pipe] or [Extractor] may name what a way out will take on its third",
+                "line and what it will refuse on its fourth, separated by commas."));
+
+        yaml.setComments(PIPES_ENABLED, List.of(
+                "Whether pipes carry anything. The blocks stay where they are either way."));
+
+        yaml.setComments(PIPES_MAX_LENGTH, List.of(
+                "How many blocks of pipe are followed before the search gives up. A pipe past",
+                "this carries items as far as the limit reaches rather than refusing to work."));
+
+        yaml.setComments(PIPES_STACK_PER_PULL, List.of(
+                "Whether one pulse moves a single stack. Turning this off empties as much of the",
+                "container as the pipe can find room for, which is faster and far more work."));
+
         yaml.setComments("mechanics", List.of(
                 "",
                 "The sign mechanics: the bridges, doors, gates and lifts. How wide a bridge or a",
@@ -412,6 +445,7 @@ public final class ConfigFile {
                 .maxPlanterWidth(yaml.getInt(MAX_PLANTER_WIDTH, defaults.maxPlanterWidth()))
                 .placeableBlocks(blocks(yaml.getStringList(PLACEABLE_BLOCKS)))
                 .carts(carts(yaml, defaults.carts()))
+                .pipes(pipes(yaml, defaults.pipes()))
                 .mechanics(mechanics(yaml, defaults.mechanics()))
                 .build();
     }
@@ -472,6 +506,14 @@ public final class ConfigFile {
                 yaml.getDouble(CART_LAUNCH_SPEED, defaults.launchSpeed()),
                 yaml.getBoolean(CART_WATER_BUCKETS, defaults.returnWaterBuckets()),
                 habits(yaml, defaults.habits()));
+    }
+
+    /** What an operator has said about the pipes. */
+    private static PipeSettings pipes(YamlConfiguration yaml, PipeSettings defaults) {
+        return new PipeSettings(
+                yaml.getBoolean(PIPES_ENABLED, defaults.enabled()),
+                yaml.getInt(PIPES_MAX_LENGTH, defaults.maxLength()),
+                yaml.getBoolean(PIPES_STACK_PER_PULL, defaults.stackPerPull()));
     }
 
     /** How every cart behaves, whether or not it is standing on a mechanism. */

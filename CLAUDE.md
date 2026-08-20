@@ -63,6 +63,7 @@ to a hand and to redstone.**
 | Music from a MIDI file (`MCU700`) | Done |
 | Minecart mechanics (15 on the rails, plus the dispenser) | Done |
 | Minecart mechanics: the seven habits every cart has | Done |
+| Pipes, both grammars on one engine | Done |
 | Sign mechanic seam (`SignMechanic`, `MechanicWorld`, `MechanicVisit`) | Done |
 | Bridge, door and gate, with the gate's six materials | Done |
 | Lifts, including the two-way sign, buttons and jump pads | Done |
@@ -70,7 +71,7 @@ to a hand and to redstone.**
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1733 tests passing**.
+**1762 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -222,6 +223,42 @@ list of one.
 The settings are `carts.habits` in `config.yml`, held in `CartHabits`. Two of them are numbers
 rather than switches, and each turns its own habit off at zero: waiting no time before taking an
 empty cart away, and climbing at no speed, both mean not doing it.
+
+## The pipes
+
+The fork carried two ways of moving items along a run of blocks. `Pipes` was its port of upstream's:
+glass carries, panes let a run cross itself, stained glass keeps to its own colour, and a piston at
+the end fills whatever it points at. `MegaPipes` was a fresh attempt at the same thing built for
+scale, where panes are the pipe, a piston with an `[Extractor]` sign is the head, and any container
+the run touches is somewhere items may go.
+
+Both are built in the world, so both grammars are accepted, and there is one implementation under
+them. What differs is in `PipeStyle`, which is chosen by the block a run **starts** from and then
+decides how every block along that run is read. That matters because the two disagree about two
+blocks: a pane carries items in one and merely keeps them going straight in the other, and a piston
+starts a run in one and ends it in the other. Reading the meaning off the input rather than off the
+block means a single pane can be part of a pane pipe and a crossing in a glass pipe without the two
+ever contradicting each other.
+
+`core/pipe/` holds the seam (`PipeWorld`), the two grammars (`PipeStyle`), the filter (`PipeFilter`)
+and the tracer (`Pipes`); `paper/pipe/` binds them and `PipeDispatcher` is the single entry point.
+
+**Nearest first.** A pipe is followed outward a step at a time, so the closest way out is tried
+first. Neither of the mechanics this replaces chose that way — both followed one branch to its end
+before looking at the next, so which chest received a stack depended on the order the glass had been
+placed in.
+
+**What is remembered is an answer, not a picture.** Following a pipe reads every block of it, and a
+pipe is asked to carry something every time it is powered, so `PipeNetworks` keeps what each one was
+found to reach. Nothing is kept up to date as a pipe is built or broken: a block changing throws
+away every answer that mentioned it, and the next pulse works it out again. A cache that can always
+be discarded cannot drift, which is what made the legacy version's live graph go wrong, and it is
+also what makes it safe on a regionised server — a pipe is a line of touching blocks and so belongs
+to one region, and another region interfering can only ever cost a walk.
+
+Whole stacks travel. The domain decides where a stack goes and never looks at more of it than what
+sort of thing it is, so the server moves the stack itself and everything done to it — its name, its
+enchantments, its damage — survives the journey.
 
 ## The sign mechanics
 

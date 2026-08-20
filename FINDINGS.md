@@ -1684,3 +1684,89 @@ fires, so it cannot simply be dropped.
 **Rewrite:** the cart is taken away only if it is still empty when the wait is over. A cart
 somebody is sitting in is left alone, which leaves one cart behind rather than dropping a player on
 the platform.
+
+## The pipes
+
+### 121. A pipe that could not deliver everything lost what it was carrying
+
+`Pipes` hands a stack to a container and keeps whatever comes back:
+
+```java
+InventoryTransactionResult result = inventory.get().offer(itemStack);
+if (!result.getRejectedItems().isEmpty()) {
+    for (ItemStackSnapshot snapshot : result.getRejectedItems()) {
+        itemStack = snapshot.createStack();
+    }
+}
+```
+
+The loop assigns each rejected stack over the one before it, so where more than one came back only
+the last survives and the rest are gone. It happens exactly when a pipe is under load — a chest
+with two part-filled slots of different things is the ordinary case — and it destroys items rather
+than failing to move them.
+
+**Rewrite:** what a container will not take is carried on to the next way out, and what nothing
+will take stays where it was. Nothing is offered anywhere until there is somewhere to offer it to,
+so there is never a leftover with nowhere to go.
+
+### 122. The only limit on how far a pipe ran was catching a stack overflow
+
+```java
+try {
+    itemStack = doPipeIteration(location, itemStack, direction, traversed);
+} catch (StackOverflowError e) {
+    CraftBookPlugin.spongeInst().getLogger()
+            .error("Pipe overflow. Please report this issue to the developers with images of setup.");
+}
+```
+
+Following a pipe recursed once per block with no bound, and the bound that existed in practice was
+the thread's stack running out. An `Error` caught and carried on from leaves the run half done: some
+of the stack delivered, the rest lost with the frame it was held in. The message asks the builder to
+report it, which says plainly that nobody meant this to be the limit.
+
+**Rewrite:** following a pipe is a queue rather than a recursion, and how far it goes is a setting.
+A pipe past its limit carries as far as the limit reaches and says it was cut short.
+
+### 123. A pipe read a property it had not checked was there
+
+```java
+PoweredProperty poweredProperty = source.getLocation().getProperty(PoweredProperty.class).orElse(null);
+if (poweredProperty.getValue() != null && poweredProperty.getValue())
+```
+
+The `orElse(null)` is written as though the absence had been thought about, and then the next line
+dereferences it. Every block update beside a sticky piston went through here, so anything without
+that property threw.
+
+**Rewrite:** the pipe runs on the edge where power arrives, which the server reports directly, and
+nothing has to ask a block what it is carrying.
+
+### 124. A pipe network was remembered until the server stopped, and crashed when it was wrong
+
+`MegaPipes` keeps every network it has ever built in a set, loads more whenever a chunk loads, and
+then:
+
+```java
+@Listener
+public void onChunkUnload(UnloadChunkEvent e) {
+}
+```
+
+Nothing is ever released. A world explored is a set that only grows, and every pipe run walks it
+looking for the one that contains a position.
+
+Where the remembered shape and the world disagreed, it did not recover:
+
+```java
+if (destination == null) {
+    throw new IllegalStateException("No destination at " + dest + " when there should have been");
+}
+```
+
+which is thrown from inside the extractor's own tick.
+
+**Rewrite:** what a pipe reaches is remembered as an answer that may be thrown away rather than as a
+picture of the world that must be kept true. A block changing forgets every answer that mentioned
+it and the next pulse works it out again, so there is nothing to drift, nothing to reconcile, and
+nothing that has to be right for the server to keep running.

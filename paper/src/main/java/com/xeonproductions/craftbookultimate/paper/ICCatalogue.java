@@ -155,6 +155,14 @@ public final class ICCatalogue {
                 .logic(Music::soundEffect)
                 .build());
 
+        registry.register(ICDefinition.builder("MCU700", "MELODY")
+                .name("Melody")
+                .description("Plays a MIDI file through an adjacent note block.")
+                .layout(PinLayout.UISO)
+                .restricted()
+                .logic(() -> Music.melody(ThreadLocalRandom.current()))
+                .build());
+
         registry.register(ICDefinition.builder("MCU705", "TUNE")
                 .name("Tune")
                 .description("Plays a tune written on the sign, through an adjacent note block.")

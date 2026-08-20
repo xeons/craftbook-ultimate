@@ -6,6 +6,7 @@ import com.xeonproductions.craftbookultimate.core.illusion.Illusions;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.message.Announcer;
+import com.xeonproductions.craftbookultimate.core.music.Songs;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.radio.Radio;
@@ -185,6 +186,11 @@ public interface ChipState {
      */
     default Illusions illusions() {
         return services().illusions();
+    }
+
+    /** The music the server has files for. */
+    default Songs songs() {
+        return services().songs();
     }
 
     /** What every wireless band is currently carrying. */

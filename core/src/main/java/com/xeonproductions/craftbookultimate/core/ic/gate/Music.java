@@ -5,13 +5,18 @@ import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.music.NoteInstrument;
+import com.xeonproductions.craftbookultimate.core.music.Playlist;
+import com.xeonproductions.craftbookultimate.core.music.Song;
 import com.xeonproductions.craftbookultimate.core.music.Tunes;
+import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.random.RandomGenerator;
 import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The chips that make a noise.
@@ -59,6 +64,18 @@ public final class Music {
 
     /** The block a tune is played through. */
     private static final Key NOTE_BLOCK = Blocks.key("note_block");
+
+    /** What a melody's sign writes after a source name to mean a playlist rather than a song. */
+    private static final String PLAYLIST_EXTENSION = "p";
+
+    /** What separates a source name from its extension. */
+    private static final char EXTENSION_SEPARATOR = '.';
+
+    /** Written on a melody's fourth line to have it start again at the end. */
+    private static final String LOOP_FLAG = "loop";
+
+    /** Written there to have a playlist pick its next song at random. */
+    private static final String RANDOM_FLAG = "random";
 
     /** The six blocks touching the one the sign hangs on. */
     private static final List<Vec3i> AROUND = List.of(
@@ -155,6 +172,27 @@ public final class Music {
         return new TuneChip();
     }
 
+    /**
+     * Plays a MIDI file through a note block.
+     *
+     * <p>Line 3 names it. A plain name is a song, a name with {@code .p} after it is a playlist,
+     * and anything after a colon is the speed the sign asks to play at. Files live in the plugin's
+     * own folder and are read when the server starts, so a sign names a song rather than a path
+     * and can never reach outside that folder.
+     *
+     * <p>Line 4 carries flags, separated by colons. {@code loop} starts again at the end, and
+     * {@code random} makes a playlist pick its next song rather than working down the list.
+     * Without {@code loop} a playlist stops when it reaches the end.
+     *
+     * <p>A note block has to be touching the block the sign hangs on, and the music comes from the
+     * note block. The output stays high while something is playing.
+     *
+     * @param random where a playlist gets its shuffling from
+     */
+    public static ICLogic melody(RandomGenerator random) {
+        return new MelodyChip(random);
+    }
+
     /** Whichever of the blocks touching the sign's support is of a kind, if any is. */
     private static Optional<Vec3i> blockAround(ChipState state, Key kind) {
         for (Vec3i offset : AROUND) {
@@ -228,6 +266,197 @@ public final class Music {
             state.setMainOutput(true);
             endsAt = tune.lengthInTicks();
             state.scheduler().runLater(() -> state.setMainOutput(false), endsAt);
+        }
+    }
+
+    /**
+     * What a melody's sign asks for.
+     *
+     * @param source the song or playlist named
+     * @param isPlaylist whether that name is a playlist rather than a song
+     * @param loop whether to start again at the end
+     * @param shuffle whether a playlist picks its next song rather than working down the list
+     */
+    private record MelodySettings(String source, boolean isPlaylist, boolean loop, boolean shuffle) {
+
+        /** Nothing playable, which is what a sign naming no music comes to. */
+        static final MelodySettings NOTHING = new MelodySettings("", false, false, false);
+
+        /**
+         * Reads a melody's sign.
+         *
+         * <p>The speed written after a colon is read off and discarded. It has never had any
+         * bearing on how the music plays and giving it one now would change how every sign that
+         * carries it sounds.
+         */
+        static MelodySettings on(ChipState state) {
+            String named = state.sign().trimmedText(SUBJECT_LINE);
+
+            int speed = named.indexOf(FIELD_SEPARATOR);
+            if (speed >= 0) {
+                named = named.substring(0, speed);
+            }
+
+            boolean isPlaylist = false;
+            int extension = named.indexOf(EXTENSION_SEPARATOR);
+            if (extension >= 0) {
+                isPlaylist = named.substring(extension + 1).equalsIgnoreCase(PLAYLIST_EXTENSION);
+                named = named.substring(0, extension);
+            }
+            if (named.isEmpty()) {
+                return NOTHING;
+            }
+
+            boolean loop = false;
+            boolean shuffle = false;
+            String flags = state.sign().trimmedText(DETAIL_LINE).toLowerCase(Locale.ROOT);
+            for (String flag : flags.split(FIELD_SEPARATOR)) {
+                loop |= flag.trim().equals(LOOP_FLAG);
+                shuffle |= flag.trim().equals(RANDOM_FLAG);
+            }
+            return new MelodySettings(named, isPlaylist, loop, shuffle);
+        }
+
+        /** Whether the sign names any music at all. */
+        boolean namesNothing() {
+            return source.isEmpty();
+        }
+    }
+
+    /** Plays a song a tick at a time, and works out what to play next when one ends. */
+    private static final class MelodyChip implements ICLogic {
+
+        private final RandomGenerator random;
+
+        /** The task walking the song, or null while nothing is playing. */
+        private Scheduler.@Nullable Task playing;
+
+        /** How far down a playlist this chip has got. */
+        private int placeInPlaylist;
+
+        MelodyChip(RandomGenerator random) {
+            this.random = random;
+        }
+
+        @Override
+        public void trigger(ChipState state) {
+            if (!state.isAnyInputActive()) {
+                stop(state);
+                return;
+            }
+            if (playing != null) {
+                return;
+            }
+
+            MelodySettings settings = MelodySettings.on(state);
+            if (settings.namesNothing()) {
+                return;
+            }
+            placeInPlaylist = 0;
+            start(state, settings);
+        }
+
+        @Override
+        public void unload(ChipState state) {
+            stop(state);
+        }
+
+        /**
+         * Starts whatever should play now.
+         *
+         * <p>The song is walked by one task rather than by a task per note. A few minutes of music
+         * is a few thousand notes, and asking the server to remember that many pieces of pending
+         * work is not something a redstone pulse should be able to do.
+         */
+        private void start(ChipState state, MelodySettings settings) {
+            Optional<Vec3i> noteBlock = blockAround(state, NOTE_BLOCK);
+            Optional<Song> song = nextSong(state, settings);
+            if (noteBlock.isEmpty() || song.isEmpty() || song.get().isEmpty()) {
+                stop(state);
+                return;
+            }
+
+            Vec3d at = Vec3d.middleOf(noteBlock.get());
+            List<Song.Note> notes = song.get().notes();
+            long[] tick = {0};
+            int[] next = {0};
+
+            state.setMainOutput(true);
+            playing = state.scheduler()
+                    .runRepeating(
+                            () -> {
+                                while (next[0] < notes.size() && notes.get(next[0]).tick() <= tick[0]) {
+                                    Song.Note note = notes.get(next[0]++);
+                                    state.world()
+                                            .playSound(
+                                                    at,
+                                                    note.instrument().sound(),
+                                                    note.volume(),
+                                                    note.pitch());
+                                }
+                                if (next[0] >= notes.size()) {
+                                    finished(state, settings);
+                                    return;
+                                }
+                                tick[0]++;
+                            },
+                            1,
+                            1);
+        }
+
+        /**
+         * What happens when a song runs out.
+         *
+         * <p>A playlist moves on, and stops at the end unless it was asked to loop or to shuffle.
+         * A single song starts again if it was asked to loop and stops otherwise.
+         */
+        private void finished(ChipState state, MelodySettings settings) {
+            stop(state);
+            if (!state.isAnyInputActive()) {
+                return;
+            }
+
+            if (!settings.isPlaylist()) {
+                if (settings.loop()) {
+                    start(state, settings);
+                }
+                return;
+            }
+
+            placeInPlaylist++;
+            Optional<Playlist> playlist = state.songs().findPlaylist(settings.source());
+            if (playlist.isPresent()
+                    && !settings.loop()
+                    && !settings.shuffle()
+                    && placeInPlaylist >= playlist.get().size()) {
+                return;
+            }
+            start(state, settings);
+        }
+
+        /** The song to play now. */
+        private Optional<Song> nextSong(ChipState state, MelodySettings settings) {
+            if (!settings.isPlaylist()) {
+                return state.songs().findSong(settings.source());
+            }
+
+            Optional<Playlist> playlist = state.songs().findPlaylist(settings.source());
+            if (playlist.isEmpty() || playlist.get().isEmpty()) {
+                return Optional.empty();
+            }
+
+            Playlist list = playlist.get();
+            int place = settings.shuffle() ? list.anyIndex(random) : placeInPlaylist;
+            return state.songs().findSong(list.at(place));
+        }
+
+        /** Stops whatever is playing and drops the output. */
+        private void stop(ChipState state) {
+            if (playing != null) {
+                playing.cancel();
+                playing = null;
+            }
+            state.setMainOutput(false);
         }
     }
 }

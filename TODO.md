@@ -5,27 +5,12 @@ are in `CLAUDE.md`; bugs found in the legacy code are in `FINDINGS.md`.
 
 ## Integrated circuits
 
-**113 chips are registered, under 142 model numbers.** 1 of the extra fork's remains, plus 4
-dropped by decision.
+**114 chips are registered, under 143 model numbers.** The extra fork's catalogue is complete;
+4 model numbers were dropped by decision.
 
-The legacy class named in each row is the one to read for behaviour, under
-`src/main/java/com/minecraftonline/` or `src/main/java/com/sk89q/craftbook/sponge/mechanics/ics/chips/`.
-Look every model number and shorthand up in `ICManager` before registering it; do not invent them.
-
-### Music from a file
-
-The one chip left. It plays a MIDI file through a note block, with playlists, a loop
-and a random flag, and it needs a MIDI reader, a store for the files under the plugin's
-folder in the shape `fireworks/` already uses, and the two commands that list what is there.
-
-`NoteInstrument` already carries what the playback needs: every voice a note block has and
-the two-octave window each one covers. Choosing the voice by how high the note is turns a
-single instrument's two octaves into roughly six across the set, which is what makes a MIDI
-file worth playing at all.
-
-| Model | Shorthand | Name | Legacy class | Layout |
-| --- | --- | --- | --- | --- |
-| `MCU700` | MELODY | Melody | `Melody` | UISO |
+Nothing from this fork's catalogue is left to port. Anything added from here comes from upstream,
+and the rule still holds: look every model number and shorthand up in the legacy `ICManager` before
+registering it, and do not invent them.
 
 ### Dropped by decision
 
@@ -88,7 +73,7 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 
 | Piece | Why it is needed |
 | --- | --- |
-| Persistence | Only the switch passwords are saved, in `switch-passwords.txt`. Everything else a chip remembers is kept on its own sign or lost when its chunk unloads. The firework display scripts in `fireworks/` are read, never written. |
+| Persistence | Only the switch passwords are saved, in `switch-passwords.txt`. Everything else a chip remembers is kept on its own sign or lost when its chunk unloads. The scripts in `fireworks/`, `midi/` and `playlist/` are read, never written. |
 | Configuration | `config.yml` carries the settings the chips read. Each mechanic will want its own section as it arrives, and the mechanics also need the legacy enable flag. |
 | Commands | `/craftbook` reads the catalogue and the switch commands drive `MCX120` and `MCX121`, all through Brigadier. The per-mechanic commands come with their mechanics. |
 | Permissions | Every chip's permission is registered under `craftbook.ic.safe.*` or `craftbook.ic.restricted.*` and checked on creation. Nothing yet checks anything at run time. |
@@ -116,4 +101,6 @@ at all. Worth checking early, in roughly this order:
     `/craftbook reload` picks up a change without a restart.
 14. A message nearby reads a script out of a book, waits where the book says to, and never
     names a vanished player in the log.
-15. Region behaviour on an actual Folia server.
+15. A melody plays a MIDI file dropped in `midi/` through a note block, works down a playlist,
+    and `/craftbook music songs` lists what a sign can name.
+16. Region behaviour on an actual Folia server.

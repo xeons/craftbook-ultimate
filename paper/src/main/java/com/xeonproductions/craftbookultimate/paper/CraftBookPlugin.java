@@ -12,6 +12,7 @@ import com.xeonproductions.craftbookultimate.paper.command.CartCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CatalogueCommands;
 import com.xeonproductions.craftbookultimate.paper.command.ConfigCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
+import com.xeonproductions.craftbookultimate.paper.command.MusicCommands;
 import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
 import com.xeonproductions.craftbookultimate.paper.config.ConfigFile;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitAnnouncer;
@@ -19,6 +20,7 @@ import com.xeonproductions.craftbookultimate.paper.ic.BukkitIllusions;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitRoster;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.store.FireworkFiles;
+import com.xeonproductions.craftbookultimate.paper.store.MidiFiles;
 import com.xeonproductions.craftbookultimate.paper.store.PasswordFile;
 import com.xeonproductions.craftbookultimate.paper.listener.CartListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartRedstoneListener;
@@ -61,6 +63,7 @@ public final class CraftBookPlugin extends JavaPlugin {
     private @Nullable ICManager icManager;
     private @Nullable PasswordFile passwordFile;
     private @Nullable FireworkFiles fireworkFiles;
+    private @Nullable MidiFiles midiFiles;
     private @Nullable ConfigFile configFile;
     private @Nullable ChipServices services;
     private @Nullable CartDispatcher cartDispatcher;
@@ -86,6 +89,7 @@ public final class CraftBookPlugin extends JavaPlugin {
         this.services = chipServices;
         this.passwordFile = new PasswordFile(getDataPath());
         this.fireworkFiles = new FireworkFiles(getDataPath());
+        this.midiFiles = new MidiFiles(getDataPath());
         this.configFile = new ConfigFile(getDataPath(), getServer(), this::reportSetting);
 
         // Before anything reads a setting, and before any chip is picked up, so a world or a
@@ -102,6 +106,7 @@ public final class CraftBookPlugin extends JavaPlugin {
         registerPermissions();
         loadPasswords();
         loadFireworkShows();
+        loadSongs();
         registerCommands(chipServices);
 
         getServer().getPluginManager().registerEvents(new ICSignListener(manager, regionSchedulers), this);
@@ -177,7 +182,8 @@ public final class CraftBookPlugin extends JavaPlugin {
                         new CatalogueCommands(icRegistry),
                         switchCommands,
                         new ConfigCommands(this::rereadSettings),
-                        new CartCommands(cartCommandsTarget()))
+                        new CartCommands(cartCommandsTarget()),
+                        new MusicCommands(chipServices.songs()))
                 .registerOn(this);
     }
 
@@ -282,6 +288,23 @@ public final class CraftBookPlugin extends JavaPlugin {
             getComponentLogger().error(
                     Component.text("Could not read " + fireworkFiles.path() + "; no firework "
                             + "display will play until it is fixed"), e);
+        }
+    }
+
+    /** Reads the music an operator has left in the plugin's folder. */
+    private void loadSongs() {
+        if (midiFiles == null || services == null) {
+            return;
+        }
+        try {
+            int read = midiFiles.load(services.songs());
+            if (read > 0) {
+                getComponentLogger().info(Component.text("Read " + read + " songs and playlists"));
+            }
+        } catch (IOException e) {
+            getComponentLogger().error(
+                    Component.text("Could not read " + midiFiles.midiPath() + "; no melody will "
+                            + "play until it is fixed"), e);
         }
     }
 

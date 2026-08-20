@@ -10,6 +10,7 @@ import com.xeonproductions.craftbookultimate.core.illusion.Illusions;
 import com.xeonproductions.craftbookultimate.core.illusion.SimpleIllusions;
 import com.xeonproductions.craftbookultimate.core.message.Announcer;
 import com.xeonproductions.craftbookultimate.core.message.SimpleAnnouncer;
+import com.xeonproductions.craftbookultimate.core.music.Songs;
 import com.xeonproductions.craftbookultimate.core.radio.Radio;
 import com.xeonproductions.craftbookultimate.core.transport.Destinations;
 import org.jspecify.annotations.NullMarked;
@@ -35,6 +36,7 @@ import org.jspecify.annotations.NullMarked;
  * @param guardedSwitchboard the switches that take a password
  * @param passwords the passwords guarding those switches
  * @param shows the firework displays the server has scripts for
+ * @param songs the music the server has files for
  * @param roster who is on the server
  * @param announcer how a chip speaks to the server rather than to a place
  * @param illusions how a chip shows somebody something other than what is there
@@ -48,6 +50,7 @@ public record ChipServices(
         Switchboard guardedSwitchboard,
         PasswordStore passwords,
         FireworkShows shows,
+        Songs songs,
         Roster roster,
         Announcer announcer,
         Illusions illusions,
@@ -80,6 +83,7 @@ public record ChipServices(
                 new Switchboard(),
                 new PasswordStore(),
                 new FireworkShows(),
+                new Songs(),
                 roster,
                 announcer,
                 illusions,

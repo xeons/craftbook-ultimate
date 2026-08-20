@@ -16,6 +16,9 @@ permissions:
   craftbook.reload:
     description: Reread the settings file and start every chip again under it.
     default: op
+  craftbook.music.list:
+    description: List the songs and playlists a melody chip can name.
+    default: true
   craftbook.switch.list:
     description: List the switches that command controlled chips are following.
     default: op

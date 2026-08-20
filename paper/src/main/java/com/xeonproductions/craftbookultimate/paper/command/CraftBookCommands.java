@@ -23,16 +23,19 @@ public final class CraftBookCommands {
     private final SwitchCommands switches;
     private final ConfigCommands config;
     private final CartCommands carts;
+    private final MusicCommands music;
 
     public CraftBookCommands(
             CatalogueCommands catalogue,
             SwitchCommands switches,
             ConfigCommands config,
-            CartCommands carts) {
+            CartCommands carts,
+            MusicCommands music) {
         this.catalogue = catalogue;
         this.switches = switches;
         this.config = config;
         this.carts = carts;
+        this.music = music;
     }
 
     /** Registers everything against a plugin. */
@@ -41,7 +44,10 @@ public final class CraftBookCommands {
             Commands commands = event.registrar();
 
             commands.register(
-                    catalogue.command().then(config.reloadCommand()).build(),
+                    catalogue.command()
+                            .then(config.reloadCommand())
+                            .then(music.musicCommand())
+                            .build(),
                     "Reads the integrated circuit catalogue.",
                     List.of("cb"));
 

@@ -1135,3 +1135,84 @@ field reflection happened to hand over last — not stable between runs, let alo
 **Rewrite:** the shorthand is worked out from the sounds the server actually has, and where two
 share one the first in the server's own order answers to it. A sound can also be named in full,
 which is unambiguous and is the better way to write a new sign.
+
+## Music from a file
+
+### 87. The last song on a playlist was never played
+
+`Melody.playPlaylist` picks a song, advances past it, and then decides whether to carry on:
+
+```java
+selected = playlistEntries.get(playlistIndex);
+playlistIndex++;
+
+if (playlistIndex >= playlistEntries.size()) {
+    if (loop) {
+        playlistIndex = 0;
+    } else {
+        playlistIndex = 0;
+        stopSong();
+        return;
+    }
+}
+playMidiFile(noteBlockLocation, selected);
+```
+
+On the run that selects the last entry, the index goes past the end and, without `loop`, the
+method returns before reaching `playMidiFile`. The song it had just chosen was dropped, so a
+playlist of five songs played four and a playlist of one played nothing at all.
+
+**Rewrite:** the song is played first and the place in the list moves on afterwards, so every
+entry on a playlist is heard once before it stops.
+
+### 88. The playback speed on the sign did nothing
+
+`parseLine3` reads a number after the colon, checks it is between zero and ten, refuses the sign if
+it is not, and stores it in a field. Nothing else in the class ever reads that field. A builder
+could be told their sign was invalid over a number that had no effect either way.
+
+**Rewrite:** the number is still read off the line, so existing signs go on being accepted, and it
+still does nothing. Giving it a meaning now would change how every sign carrying it sounds, and
+there is nothing in the old code to say what it was supposed to mean.
+
+### 89. The playlist file was read from disk every time a song ended
+
+`playPlaylist` opens with `loadPlaylist(playlistFile)`, which does `Files.readAllLines`. That runs
+on the server thread from inside the playback monitor, so every song change on every melody chip
+in the world stopped the server to read a file that had almost certainly not changed.
+
+**Rewrite:** playlists are read once at startup, alongside the songs, and held in the same registry
+the firework displays use.
+
+### 90. There was up to a second of silence between songs
+
+The monitor that notices a song has finished runs on `intervalTicks(20)`, so the gap before the
+next one started was whatever was left of that second. Nothing was wrong with the music; it simply
+waited.
+
+**Rewrite:** the next song starts on the tick the last note of the previous one sounds.
+
+### 91. The commands listed a different folder from the one the chip read
+
+`Melody` resolves its files against `CraftBookAPI.inst().getWorkingDirectory()`, while the two
+commands beside it hard-code
+
+```java
+Paths.get("config", "craftbook", "midi")
+```
+
+relative to whatever the process was started in. On any server where those two were not the same
+place, the commands listed music no chip could play and hid music every chip could.
+
+**Rewrite:** both the chip and the commands read the one registry, which is filled from the plugin's
+own folder, so what the commands list is exactly what a sign can name.
+
+### 92. Nothing bounded what a MIDI file could ask the server to do
+
+A file was handed to the sequencer whatever its size, and every note in it became a scheduled
+event. A long file with dense chords is an ordinary thing to find on the internet and was enough
+to bury a server, from a sign anybody with the permission could build.
+
+**Rewrite:** a file over a megabyte is not read, a song holds at most thirty thousand notes, and at
+most eight sound on any one tick. The whole song is walked by a single repeating task rather than
+by one task per note.

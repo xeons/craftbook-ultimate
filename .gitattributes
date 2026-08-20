@@ -1,0 +1,8 @@
+# Line endings are LF in the repository and LF on disk, whatever platform
+# the checkout happens on. Only the Windows batch script needs CRLF to run.
+* text=auto eol=lf
+
+*.bat eol=crlf
+*.jar binary
+
+*.java diff=java

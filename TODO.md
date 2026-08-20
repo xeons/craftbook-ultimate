@@ -23,25 +23,104 @@ Not to be implemented.
 | `MC5000` | Perlstone 3ISO Programmable Logic Chip |
 | `MCX144` | CBWarp Area |
 
+Upstream spells three of these differently and carries a fourth: its ROM pair is `MC3300` set and
+`MC3301` get, the other way round from here, and its Perlstone is `MC5000` and `MC5001`. The
+decision covers all of them.
+
 ### Upstream-only ICs
 
-Around 70 further model numbers exist in `E:\Code\CraftBook` that never existed in this fork,
-covering the automatic crafter, container sorters and stockers, ranged collectors, the sentry
-gun and others. They are optional additions rather than a compatibility obligation, so they
-come after everything above.
+Upstream registers 131 model numbers to this fork's 143, and 55 of those are shared. Of the 76 it
+has that this fork never did, four are dropped by decision and **26 are chips already registered
+here under the extra fork's number**, so the real gap is 46. Adding any of them is an optional
+addition rather than a compatibility obligation, and comes after everything above.
+
+#### Already here under another number
+
+Should one of these ever be wanted as an alias, the extra fork's number stays primary.
+
+| Upstream | Here | Upstream | Here |
+| --- | --- | --- | --- |
+| `MC1112` tele-out | `MCX112` Transporter | `MC1231` t control | `MC3231` Time Control Advanced |
+| `MC1113` tele-in | `MCU113` Destination | `MC1234` planter | `MCX216` Planter |
+| `MC1204` trap | `MCX132` Hit Mob Above | `MC1236` fake weather | `MCX235` False Weather |
+| `MC1208` mult set | `MCX206` Flex Set | `MC1239` harvester | `MCX213` Harvester |
+| `MC1209` collector | `MCX203` Chest Collector | `MC1263` sense block | `MCX205` Block Detector |
+| `MC1210` emitter | `MCX250` Particle | `MC1264` sense item | `MCX138` Item Near |
+| `MC1211` set bridge | `MCX207` / `MCX209` Bridge | `MC1270` melody | `MCU700` Melody |
+| `MC1212` set door | `MCX208` / `MCX210` Door | `MC1271` sns entity | `MCX119` Mob Near |
+| `MC1213` sound | `MCX251` Sound Effect | `MC1272` sns player | `MCX118` Player Near |
+| `MC1215` set a chest | `MC1205` Set Above, on a stockpile | `MC1273` jukebox | `MCU706` Jukebox |
+| `MC1216` set b chest | `MC1206` Set Below, on a stockpile | `MC1275` tune | `MCU705` Tune |
+| `MC1217` pot induce | `MCX146` Potion Area | `MC1279` player trap | `MCX131` Hit Player Above |
+| `MC1227` avd spawner | `MCX200` Entity Spawner | `MC1422` monostable | `MCU440` Monoflop |
+
+#### Where the two forks disagree about a number
+
+Four numbers name different chips in the two catalogues. The sign format is frozen, so this fork's
+reading wins; the consequence is that upstream's chip has no number left to be registered under,
+and needs one chosen before it can be ported at all.
+
+| Model | Upstream | Here |
+| --- | --- | --- |
+| `MC1025` | Server time modulus, off the real clock | World time modulus |
+| `MC1250` | Fire shooter | Fireworks |
+| `MC1420` | Clock divider | Clock |
+| `MC1500` | Ranged output | Player online |
+
+Note that `MC1421` is upstream's clock, so it cannot be taken at its own number either while
+`MC1420` here means one.
+
+#### Genuinely absent
+
+| Group | Models |
+| --- | --- |
+| Containers and logistics | `MC1214` range coll, `MC1219` auto craft, `MC1229` sorter, `MC1233` item fan, `MC1242` stocker, `MC1243` distributer, `MC1245` cont stkr, `MC1268` sns cntns, `MC1269` sns p cntns |
+| Terrain and liquids | `MC1220` / `MC1221` block breakers, `MC1222` liq flood, `MC1223` terraform, `MC1225` pump, `MC1226` spigot, `MC1238` irrigate, `MC1248` driller |
+| Timing | `MC1421` clock, `MC2100` / `MC2101` / `MC2110` / `MC2111` delayers, `MC2500` / `MC2501` / `MC2510` / `MC2511` pulsers |
+| Weapons | `MC1218` block launch, `MC1224` time bomb, `MC1228` ent cannon, `MC1251` shoot fires, `MC1252` flame thrower, `MC1278` sentry gun |
+| Farming and animals | `MC1235` cultivator, `MC1244` animal harv, `MC1246` xp spawner, `MC1280` animal brd |
+| Sensors | `MC1265` inv sns itm, `MC1266` sense power, `MC1267` sense move |
+| World control | `MC1232` time set, `MC1237` fake time |
+| Radio | `MC1276` radio station, `MC1277` radio player |
+| Variables | `VAR100` num mod, `VAR170` at least, `VAR200` item count. These read the `Variables` mechanic, which is itself unported. |
 
 ## Mechanics
 
-The minecart ones are done, and so are the bridge, the door, the gate, the lift and the toggled
-area. The remaining ~53 live under `src/main/java/`, each marked with `@Module`. Those below are unique to this fork
-and have no upstream equivalent to compare against, so the legacy source is the only
+The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 22 are
+ported, 3 are dropped by decision, and **45 are left**. The bridge, the door, the gate, the lift
+and the toggled area are done, and so is the greater part of the rails. Those listed as unique to
+this fork have no upstream equivalent to compare against, so the legacy source is the only
 specification.
 
-### Minecart mechanics: done
+### Minecart mechanics: most of the rails
 
 `Station`, `StationClear`, `CartSort`, `CartLift`, `CartLaunch`, `CartDelay`, `CartLoad`,
 `CartDirection`, `CartBooster`, `CartCollect`, `CartDeposit`, `CartCraft`, `CartPrint` and
-`CartDispenser`, with the `/station`, `/cbgo` and `/cbrecipes` commands.
+`CartDispenser`, with the `/station`, `/cbgo` and `/cbrecipes` commands. `CartPrint` covers
+`CartMessenger` as well: both claim `[Print]` in the legacy fork, so one implementation answers
+for both.
+
+Two more are **not** ported. Both take a sign or go without one, in the way `CartBooster` and
+`CartDirection` already do, and both would want a name on `CartSignRules`:
+
+| Mechanic | Sign | What it does |
+| --- | --- | --- |
+| `CartEjector` | `[Eject]` | Puts the riders out. With a sign they land one block above the rail behind it, and the third line is a `CartFilter` saying which carts to empty; without one they are simply set down where they are. |
+| `CartReverser` | `[Reverse]` | Turns the cart around. With a sign it only reverses a cart not already heading the way the sign faces, so it works as a one-way; without one it reverses whatever crosses it. |
+
+Seven more are **not** ported and carry no sign at all. They are tweaks to how a cart behaves
+rather than mechanisms a builder places, so each is a listener and a setting rather than anything
+on `CartDispatcher`:
+
+| Mechanic | What it does |
+| --- | --- |
+| `EmptyDecay` | Removes a cart that has stood empty for a while, counting from when its rider got out. |
+| `ExitRemover` | Removes the cart when its rider gets out, handing them the item back. |
+| `ItemPickup` | A storage cart gathers up items it runs into. |
+| `MobBlocker` | Keeps creatures from getting into a cart. |
+| `MoreRails` | Ladders and vines carry a cart vertically, and a pressure plate makes a four-way intersection. |
+| `NoCollide` | A cart does not collide with what it runs into — empty carts by default, occupied ones by setting. |
+| `RemoveEntities` | A cart removes, or merely hurts, whatever it runs into. |
 
 `CartWarp` is **not** ported: it teleports a cart to a CBWarp, and CBWarps is dropped by decision.
 Porting it needs a decision about what it should warp to instead.
@@ -74,8 +153,9 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 `Ammeter`, `BetterPhysics`, `BetterPlants`, `Bookshelf`, `BounceBlocks`, `Chairs`, `CommandSigns`,
 `CookingPot`, `GlowStone`, `HeadDrops`, `HiddenSwitch`, `JackOLantern`, `LightStone`,
 `LightSwitch`, `Marquee`, `Netherrack`, `PaintingSwitcher`, `Pipes`, `RedstoneJukebox`,
-`SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `Variables`, `XPStorer`, the `boat` set,
-`DispenserRecipes`.
+`SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `Variables`, `XPStorer`, `DispenserRecipes`,
+and the `boat` set — `LandBoats`, `WaterPlaceOnly`, `SpeedModifiers`, and boat-going copies of
+`EmptyDecay`, `ExitRemover` and `RemoveEntities` separate from the minecart ones above.
 
 ### Dropped by decision
 

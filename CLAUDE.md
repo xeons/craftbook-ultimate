@@ -10,8 +10,8 @@ working chip that responds to redstone and to the passage of time, places and sw
 drives wireless bands, moves people between named pads, follows switches thrown by command,
 spawns, shoots at, hurts, doses and senses what stands near it, and speaks to whoever is near, to
 one player anywhere, to the whole server or to the log, and shows people weather the world is not
-having. The chips that play music, and the mechanics other than the minecart ones, have not been
-started.**
+having, plays a sound, a record or a tune written on its own sign. The chip that plays a MIDI
+file, and the mechanics other than the minecart ones, have not been started.**
 
 | Area | State |
 | --- | --- |
@@ -26,7 +26,7 @@ started.**
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (110 chips) | Done |
+| IC catalogue wiring (113 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
@@ -55,11 +55,13 @@ started.**
 | Sensing people, creatures and items | Done |
 | Messaging, logging and the two marquees | Done |
 | Weather illusions (false and hidden rain) | Done |
+| Sound effect, jukebox and written tunes | Done |
+| Music from a MIDI file (`MCU700`) | Not started |
 | Minecart mechanics (13 on the rails, plus the dispenser) | Done |
 | Mechanics other than the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1405 tests passing**.
+**1468 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 

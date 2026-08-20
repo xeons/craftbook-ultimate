@@ -11,6 +11,7 @@ import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -59,6 +60,8 @@ public final class SimpleChipWorld implements ChipWorld {
     private final List<Vec3i> strikes = new ArrayList<>();
     private final List<Particle> particles = new ArrayList<>();
     private final List<Sound> sounds = new ArrayList<>();
+    private final List<Key> stoppedSounds = new ArrayList<>();
+    private final Set<String> knownSounds = new LinkedHashSet<>();
 
     private BlockFace acceptedFacing = BlockFace.NORTH;
     private int minHeight = DEFAULT_MIN_HEIGHT;
@@ -215,6 +218,12 @@ public final class SimpleChipWorld implements ChipWorld {
     @Override
     public boolean playSound(Vec3d at, Key sound, float volume, float pitch) {
         sounds.add(new Sound(at, sound, volume, pitch));
+        return true;
+    }
+
+    @Override
+    public boolean stopSound(Key sound) {
+        stoppedSounds.add(sound);
         return true;
     }
 
@@ -476,6 +485,31 @@ public final class SimpleChipWorld implements ChipWorld {
     /** Every sound a chip has played, in the order it did. */
     public List<Sound> sounds() {
         return List.copyOf(sounds);
+    }
+
+    /** Every sound something has asked to stop, in order. */
+    public List<Key> stoppedSounds() {
+        return List.copyOf(stoppedSounds);
+    }
+
+    /**
+     * Restricts which sounds this world knows about.
+     *
+     * <p>A world told nothing recognises any well-formed name, which is what most tests want. One
+     * told a list recognises only those, so a test can prove that a mistyped sound is refused.
+     */
+    public SimpleChipWorld knowingOnlySounds(String... names) {
+        knownSounds.addAll(List.of(names));
+        return this;
+    }
+
+    @Override
+    public Optional<Key> resolveSound(String written) {
+        Optional<Key> found = ChipWorld.super.resolveSound(written);
+        if (knownSounds.isEmpty()) {
+            return found;
+        }
+        return found.filter(key -> knownSounds.contains(key.value()));
     }
 
     /** A stack of items and where it is lying. */

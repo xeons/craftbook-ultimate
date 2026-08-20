@@ -1054,3 +1054,84 @@ could have taken it away now gone. Relogging was the fix.
 
 **Rewrite:** each chip remembers exactly who it has fooled and puts those people back when it
 stops being driven, when the real weather catches up with the illusion, and when it unloads.
+
+## Sound and music
+
+### 80. A tune's rests did nothing at all
+
+`Tune.playNotes` handles a rest with
+
+```java
+if (pitchStr.charAt(0) == '-' && delay < 0) {
+    delay = delay + Integer.parseInt(pitchStr.substring(1));
+    return;
+}
+```
+
+`delay` starts at zero and the only other thing done to it is setting it back to zero, so
+`delay < 0` is never true. Every rest fell through to being read as a note, failed to match the
+note table, and did nothing. A tune written with gaps in it played as an unbroken run.
+
+**Rewrite:** a rest holds back everything after it by as many ticks as it says, so a tune plays at
+the spacing it was written with.
+
+### 81. A tune's notes before its first instrument were silent
+
+`currentInstrument` starts null and `playNotes` only sounds a note when it is not. Nothing says an
+instrument number has to come first, so a tune that opened with a note simply lost every note up
+to the first number.
+
+**Rewrite:** a tune with no instrument named yet plays on a harp, which is what a note block does
+standing on nothing in particular.
+
+### 82. A tune stopped dead at an instrument number nothing answered to
+
+```java
+currentInstrument = INSTRUMENT_MAP.get(notes[i++]);
+if (currentInstrument == null) {
+    return;
+}
+```
+
+The map held 0 to 10, and the notation matches two digits, so `11` and up abandoned the rest of
+the tune rather than being ignored.
+
+**Rewrite:** an unknown number leaves the voice as it was and the tune plays on — and 11 upwards
+are no longer unknown, since they now name the voices Minecraft has gained since.
+
+### 83. A tune's output went high and low within the same run
+
+`playTune` raises the output, schedules every note, and lowers the output again before returning,
+all synchronously. Nothing could ever observe it raised.
+
+**Rewrite:** the output stays high until the last note has sounded.
+
+### 84. Only the last note of a tune could be cancelled
+
+`delayTask` is overwritten by each scheduled note, so `unload` cancelled one note out of however
+many were still to come. A tune whose chunk unloaded went on playing.
+
+**Rewrite:** the notes are scheduled on the chip's own scheduler, which stops when the chip does.
+
+### 85. A jukebox played the record somewhere other than the jukebox
+
+`Jukebox.onTrigger` insists on a jukebox touching the sign's support and then plays the record at
+
+```java
+Location<World> location = getBlock().add(0, 1, 0);
+```
+
+which is the block above the sign. The jukebox was a requirement that had no bearing on where the
+music came from.
+
+**Rewrite:** the record plays at the jukebox, which is the thing the builder put there for it.
+
+### 86. The sound effect shorthand was built from whatever order reflection returned
+
+`SoundEffect` builds its abbreviations by reflecting over `SoundTypes` and calling
+`HashMap.put`, so where two sounds shortened to the same six letters the winner was whichever
+field reflection happened to hand over last — not stable between runs, let alone between versions.
+
+**Rewrite:** the shorthand is worked out from the sounds the server actually has, and where two
+share one the first in the server's own order answers to it. A sound can also be named in full,
+which is unambiguous and is the better way to write a new sign.

@@ -19,6 +19,7 @@ import com.xeonproductions.craftbookultimate.core.ic.gate.Spawners;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Latches;
 import com.xeonproductions.craftbookultimate.core.ic.gate.LogicGates;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Messages;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Music;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensors;
@@ -72,6 +73,7 @@ public final class ICCatalogue {
         registerSensing(registry);
         registerMessages(registry);
         registerWeatherIllusions(registry);
+        registerMusic(registry);
 
         return registry;
     }
@@ -142,6 +144,31 @@ public final class ICCatalogue {
                 .description("Outputs high while a named player is logged in.")
                 .selfTriggeringModel("MC0500")
                 .logic(Sensing::playerOnline)
+                .build());
+    }
+
+    private static void registerMusic(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MCX251", "SOUND EFFECT")
+                .name("Sound Effect")
+                .description("Plays one sound, named in full or by its shorthand.")
+                .restricted()
+                .logic(Music::soundEffect)
+                .build());
+
+        registry.register(ICDefinition.builder("MCU705", "TUNE")
+                .name("Tune")
+                .description("Plays a tune written on the sign, through an adjacent note block.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .logic(Music::tune)
+                .build());
+
+        registry.register(ICDefinition.builder("MCU706", "JUKEBOX")
+                .name("Jukebox")
+                .description("Plays a record through an adjacent jukebox.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .logic(Music::jukebox)
                 .build());
     }
 

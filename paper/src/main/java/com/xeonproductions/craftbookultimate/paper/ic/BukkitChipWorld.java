@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.sound.SoundStop;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
@@ -340,6 +341,26 @@ public record BukkitChipWorld(World world) implements ChipWorld {
         world.playSound(
                 Sound.sound(sound, Sound.Source.MASTER, volume, pitch), at.x(), at.y(), at.z());
         return true;
+    }
+
+    @Override
+    public boolean stopSound(Key sound) {
+        world.stopSound(SoundStop.named(sound));
+        return true;
+    }
+
+    /**
+     * Works out which sound a sign means.
+     *
+     * <p>A name written out in full is looked up as it stands. Anything else is taken for the
+     * shorthand the sound effect chip has always used, and matched against the same shorthand
+     * worked out from every sound the server has.
+     */
+    @Override
+    public Optional<Key> resolveSound(String written) {
+        Optional<Key> named = ChipWorld.super.resolveSound(written)
+                .filter(key -> Registry.SOUND_EVENT.get(key) != null);
+        return named.isPresent() ? named : Sounds.byShorthand(written);
     }
 
     @Override

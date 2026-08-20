@@ -5,21 +5,27 @@ are in `CLAUDE.md`; bugs found in the legacy code are in `FINDINGS.md`.
 
 ## Integrated circuits
 
-**110 chips are registered, under 139 model numbers.** 4 of the extra fork's remain, plus 4
+**113 chips are registered, under 142 model numbers.** 1 of the extra fork's remains, plus 4
 dropped by decision.
 
 The legacy class named in each row is the one to read for behaviour, under
 `src/main/java/com/minecraftonline/` or `src/main/java/com/sk89q/craftbook/sponge/mechanics/ics/chips/`.
 Look every model number and shorthand up in `ICManager` before registering it; do not invent them.
 
-### Sound and music
+### Music from a file
+
+The one chip left. It plays a MIDI file through a note block, with playlists, a loop
+and a random flag, and it needs a MIDI reader, a store for the files under the plugin's
+folder in the shape `fireworks/` already uses, and the two commands that list what is there.
+
+`NoteInstrument` already carries what the playback needs: every voice a note block has and
+the two-octave window each one covers. Choosing the voice by how high the note is turns a
+single instrument's two octaves into roughly six across the set, which is what makes a MIDI
+file worth playing at all.
 
 | Model | Shorthand | Name | Legacy class | Layout |
 | --- | --- | --- | --- | --- |
 | `MCU700` | MELODY | Melody | `Melody` | UISO |
-| `MCU705` | TUNE | Tune | `Tune` | AISO |
-| `MCU706` | JUKEBOX | Jukebox | `Jukebox` | AISO |
-| `MCX251` | SOUND EFFECT | Sound Effect | `SoundEffect` | 3ISO |
 
 ### Dropped by decision
 

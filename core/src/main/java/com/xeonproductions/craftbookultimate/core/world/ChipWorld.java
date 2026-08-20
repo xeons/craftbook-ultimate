@@ -8,9 +8,11 @@ import com.xeonproductions.craftbookultimate.core.entity.Traveller;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import net.kyori.adventure.key.InvalidKeyException;
 import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
 
@@ -189,6 +191,16 @@ public interface ChipWorld {
     boolean playSound(Vec3d at, Key sound, float volume, float pitch);
 
     /**
+     * Stops a sound wherever it is playing in this world.
+     *
+     * <p>Only for the sounds long enough to be worth stopping, which in practice means the music
+     * a record plays. A sound that has already finished, or was never started, is left alone.
+     *
+     * @return true if the request was made
+     */
+    boolean stopSound(Key sound);
+
+    /**
      * The pages of the first book in the container at a position.
      *
      * <p>A book is a way of giving a chip more configuration than four sign lines hold, and of
@@ -300,6 +312,34 @@ public interface ChipWorld {
      */
     default Optional<Key> resolveItem(String written) {
         return BlockReference.parse(written).flatMap(BlockReference::asKey);
+    }
+
+    /**
+     * Works out which sound a sign means.
+     *
+     * <p>A sound may be named in full, as {@code block.note_block.harp}, or by the shorthand the
+     * sound effect chip has always taken: the first two letters of each part of its name run
+     * together, so {@code entity.creeper.primed} is written {@code ENCRPR}. The shorthand is not
+     * unique, and where two sounds share one the first in the server's own order answers to it.
+     *
+     * <p>A world backed by a real server knows what sounds exist; this default understands a name
+     * written out in full and nothing else.
+     *
+     * @param written the text as it appears on the sign
+     * @return the sound, or empty if the text names nothing that exists
+     */
+    default Optional<Key> resolveSound(String written) {
+        String cleaned = written.trim().toLowerCase(Locale.ROOT);
+        if (cleaned.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(cleaned.indexOf(Key.DEFAULT_SEPARATOR) < 0
+                    ? Blocks.key(cleaned)
+                    : Key.key(cleaned));
+        } catch (InvalidKeyException e) {
+            return Optional.empty();
+        }
     }
 
     /**

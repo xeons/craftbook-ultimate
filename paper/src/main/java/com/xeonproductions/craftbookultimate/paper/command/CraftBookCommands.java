@@ -22,12 +22,17 @@ public final class CraftBookCommands {
     private final CatalogueCommands catalogue;
     private final SwitchCommands switches;
     private final ConfigCommands config;
+    private final CartCommands carts;
 
     public CraftBookCommands(
-            CatalogueCommands catalogue, SwitchCommands switches, ConfigCommands config) {
+            CatalogueCommands catalogue,
+            SwitchCommands switches,
+            ConfigCommands config,
+            CartCommands carts) {
         this.catalogue = catalogue;
         this.switches = switches;
         this.config = config;
+        this.carts = carts;
     }
 
     /** Registers everything against a plugin. */
@@ -63,6 +68,21 @@ public final class CraftBookCommands {
             commands.register(
                     switches.passwordCommand().build(),
                     "Sets and changes the passwords on guarded switches.",
+                    List.of());
+
+            commands.register(
+                    carts.destinationCommand().build(),
+                    "Says where you are going, so the junctions route you there.",
+                    List.of("st"));
+
+            commands.register(
+                    carts.goCommand().build(),
+                    "Goes the way you are facing, from a junction that has stopped to ask.",
+                    List.of());
+
+            commands.register(
+                    carts.recipesCommand().build(),
+                    "Looks up what a recipe is called on a cart crafter's sign.",
                     List.of());
         });
     }

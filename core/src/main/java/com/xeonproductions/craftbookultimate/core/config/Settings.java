@@ -27,6 +27,7 @@ import org.jspecify.annotations.NullMarked;
  * @param maxLength the furthest a bridge, door, or harvested area may run from its sign
  * @param maxPlanterWidth the largest field an area planter may sow, along either side
  * @param placeableBlocks what a building chip may place, or empty for anything at all
+ * @param carts what an operator has said about the minecart mechanics
  */
 @NullMarked
 public record Settings(
@@ -37,7 +38,8 @@ public record Settings(
         int maxWidth,
         int maxLength,
         int maxPlanterWidth,
-        Set<Key> placeableBlocks) {
+        Set<Key> placeableBlocks,
+        CartSettings carts) {
 
     /**
      * The settings in force when nobody has said otherwise.
@@ -73,7 +75,8 @@ public record Settings(
                 .maxWidth(maxWidth)
                 .maxLength(maxLength)
                 .maxPlanterWidth(maxPlanterWidth)
-                .placeableBlocks(placeableBlocks);
+                .placeableBlocks(placeableBlocks)
+                .carts(carts);
     }
 
     /**
@@ -157,6 +160,7 @@ public record Settings(
         private int maxLength = 16;
         private int maxPlanterWidth = 4;
         private Set<Key> placeableBlocks = DefaultBlocks.PLACEABLE;
+        private CartSettings carts = CartSettings.DEFAULTS;
 
         private Builder() {}
 
@@ -208,6 +212,12 @@ public record Settings(
             return this;
         }
 
+        /** What an operator has said about the minecart mechanics. */
+        public Builder carts(CartSettings carts) {
+            this.carts = carts;
+            return this;
+        }
+
         /** Lets a building chip place anything. */
         public Builder placeAnything() {
             return placeableBlocks(Set.of());
@@ -222,7 +232,8 @@ public record Settings(
                     maxWidth,
                     maxLength,
                     maxPlanterWidth,
-                    placeableBlocks);
+                    placeableBlocks,
+                    carts);
         }
     }
 }

@@ -4,10 +4,13 @@ import com.xeonproductions.craftbookultimate.core.entity.Bystander;
 import com.xeonproductions.craftbookultimate.core.entity.ItemView;
 import com.xeonproductions.craftbookultimate.core.entity.PotionDose;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
+import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
+import com.xeonproductions.craftbookultimate.paper.stock.ContainerStockpile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.UUID;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -122,7 +125,7 @@ public record BukkitBystander(Entity entity) implements Bystander {
      *
      * @return the stack, or empty if there is nothing there
      */
-    static Optional<ItemView> viewOf(ItemStack stack) {
+    public static Optional<ItemView> viewOf(ItemStack stack) {
         if (stack.isEmpty()) {
             return Optional.empty();
         }
@@ -180,6 +183,28 @@ public record BukkitBystander(Entity entity) implements Bystander {
             return Optional.empty();
         }
         return Optional.of(item.getItemStack().getType().getKey());
+    }
+
+    @Override
+    public boolean tell(Component message) {
+        if (!(entity instanceof Player player)) {
+            return false;
+        }
+        player.sendMessage(message);
+        return true;
+    }
+
+    @Override
+    public Optional<Stockpile> inventory() {
+        if (!(entity instanceof Player player)) {
+            return Optional.empty();
+        }
+        return Optional.of(new ContainerStockpile(player.getInventory()));
+    }
+
+    @Override
+    public Optional<UUID> uniqueId() {
+        return Optional.of(entity.getUniqueId());
     }
 
     @Override

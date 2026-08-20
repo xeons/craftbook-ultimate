@@ -1,12 +1,18 @@
 package com.xeonproductions.craftbookultimate.core.entity;
 
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
+import com.xeonproductions.craftbookultimate.core.stock.SimpleStockpile;
+import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -31,8 +37,11 @@ public final class SimpleBystander implements Bystander {
     private boolean visible = true;
     private boolean tamed;
     private final Set<String> groups = new LinkedHashSet<>();
+    private Optional<Stockpile> inventory = Optional.empty();
+    private Optional<UUID> uniqueId = Optional.empty();
     private final List<Bystander> riders = new ArrayList<>();
     private final List<PotionDose> doses = new ArrayList<>();
+    private final List<Component> messages = new ArrayList<>();
     private double damageTaken;
     private boolean present = true;
 
@@ -127,6 +136,25 @@ public final class SimpleBystander implements Bystander {
     }
 
     @Override
+    public boolean tell(Component message) {
+        if (!player) {
+            return false;
+        }
+        messages.add(message);
+        return true;
+    }
+
+    @Override
+    public Optional<Stockpile> inventory() {
+        return inventory;
+    }
+
+    @Override
+    public Optional<UUID> uniqueId() {
+        return uniqueId;
+    }
+
+    @Override
     public List<Bystander> riders() {
         return List.copyOf(riders);
     }
@@ -179,6 +207,11 @@ public final class SimpleBystander implements Bystander {
     public SimpleBystander asPlayer(String name) {
         this.player = true;
         this.name = name;
+        if (uniqueId.isEmpty()) {
+            // Worked out from the name so that a test can ask where this player said they were
+            // going without having to keep hold of an id it never chose.
+            this.uniqueId = Optional.of(idFor(name));
+        }
         return this;
     }
 
@@ -212,6 +245,23 @@ public final class SimpleBystander implements Bystander {
         return this;
     }
 
+    /** The unique id a player of this name is given here. */
+    public static UUID idFor(String name) {
+        return UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** Gives a player a pack, with whatever is in it. */
+    public SimpleBystander carryingPack(SimpleStockpile inventory) {
+        this.inventory = Optional.of(inventory);
+        return this;
+    }
+
+    /** Gives it the unique id the server would know it by. */
+    public SimpleBystander withUniqueId(UUID uniqueId) {
+        this.uniqueId = Optional.of(uniqueId);
+        return this;
+    }
+
     /** Hides it, as spectating or vanishing would. */
     public SimpleBystander hidden() {
         this.visible = false;
@@ -234,6 +284,16 @@ public final class SimpleBystander implements Bystander {
     public SimpleBystander carrying(Bystander rider) {
         riders.add(rider);
         return this;
+    }
+
+    /** Everything that has been said to it. */
+    public List<Component> messages() {
+        return List.copyOf(messages);
+    }
+
+    /** Everything that has been said to it, as plain text. */
+    public List<String> plainMessages() {
+        return messages.stream().map(PlainTextComponentSerializer.plainText()::serialize).toList();
     }
 
     /** How much damage a chip has dealt it. */

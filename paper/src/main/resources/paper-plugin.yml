@@ -25,3 +25,42 @@ permissions:
   craftbook.ic.restricted.*:
     description: Build any chip, including those that act beyond their own surroundings.
     default: op
+  craftbook.cart.station.use:
+    description: Say where you are going, so the junctions route you there.
+    default: true
+  craftbook.cart.go:
+    description: Pick a direction at a junction that has stopped to ask.
+    default: true
+  craftbook.cart.recipes:
+    description: Look up what a recipe is called on a cart crafter's sign.
+    default: true
+  craftbook.cart.station:
+    description: Make a station.
+    default: true
+  craftbook.cart.sort:
+    description: Make a junction that sorts carts.
+    default: true
+  craftbook.cart.cartlift:
+    description: Make a lift that carries carts between floors.
+    default: true
+  craftbook.cart.launch:
+    description: Make a launcher that holds a cart until somebody gets in.
+    default: true
+  craftbook.cart.delay:
+    description: Make a delay that holds a cart for a while.
+    default: true
+  craftbook.cart.print:
+    description: Make a sign that is read aloud to whoever rides past.
+    default: true
+  craftbook.cart.collect:
+    description: Make a bay that empties a passing cart into the chests beside it.
+    default: true
+  craftbook.cart.deposit:
+    description: Make a bay that fills a passing cart from the chests beside it.
+    default: true
+  craftbook.cart.craft:
+    description: Make a crafter that crafts inside a passing cart.
+    default: op
+  craftbook.cart.dispenser:
+    description: Make a chest that hands carts out and takes them back.
+    default: true

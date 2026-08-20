@@ -69,9 +69,18 @@ gun and others. They are optional additions rather than a compatibility obligati
 come after everything above.
 ## Mechanics
 
-None are started. All ~74 live under `src/main/java/`, each marked with `@Module`. Those below are
-unique to this fork and have no upstream equivalent to compare against, so the legacy source is the
-only specification.
+The minecart ones are done. The remaining ~58 live under `src/main/java/`, each marked with
+`@Module`. Those below are unique to this fork and have no upstream equivalent to compare against,
+so the legacy source is the only specification.
+
+### Minecart mechanics: done
+
+`Station`, `StationClear`, `CartSort`, `CartLift`, `CartLaunch`, `CartDelay`, `CartLoad`,
+`CartDirection`, `CartBooster`, `CartCollect`, `CartDeposit`, `CartCraft`, `CartPrint` and
+`CartDispenser`, with the `/station`, `/cbgo` and `/cbrecipes` commands.
+
+`CartWarp` is **not** ported: it teleports a cart to a CBWarp, and CBWarps is dropped by decision.
+Porting it needs a decision about what it should warp to instead.
 
 ### Unique to this fork
 
@@ -82,7 +91,6 @@ only specification.
 | `BannerCopier`, `BookCopier`, `MapCopier` | Duplicate a held item onto blanks. Kept despite vanilla equivalents. |
 | `PageReader` | Reads a book's pages aloud. |
 | `LightNetherrack` | Netherrack lit by redstone. |
-| `CartCraft`, `CartDelay`, `CartDirection`, `CartLaunch`, `CartLoad`, `CartPrint`, `CartWarp`, `CartCollect`, `StationClear` | Minecart mechanics with no upstream counterpart. |
 
 ### Shared with upstream
 
@@ -92,7 +100,7 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 `CookingPot`, `Elevator`, `GlowStone`, `HeadDrops`, `HiddenSwitch`, `JackOLantern`, `LightStone`,
 `LightSwitch`, `Marquee`, `Netherrack`, `PaintingSwitcher`, `Pipes`, `RedstoneJukebox`,
 `SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `Variables`, `XPStorer`, the `area` mechanics
-(`Bridge`, `Door`, `Gate`, `ComplexArea`), the `boat` and `minecart` sets, `DispenserRecipes`.
+(`Bridge`, `Door`, `Gate`, `ComplexArea`), the `boat` set, `DispenserRecipes`.
 
 ### Dropped by decision
 
@@ -102,7 +110,7 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 
 | Piece | Why it is needed |
 | --- | --- |
-| Audience seam | Sending Adventure components to players near a chip. Blocks the 9 messaging ICs, and the warning a destination should give when its name is already in use. |
+| Audience seam | `Bystander#tell` says something to one person, which is what the cart mechanics needed. The 9 messaging ICs want a wider one: everybody within a radius, rather than one entity at a time. |
 | Persistence | Only the switch passwords are saved, in `switch-passwords.txt`. Everything else a chip remembers is kept on its own sign or lost when its chunk unloads. The firework display scripts in `fireworks/` are read, never written. |
 | Configuration | `config.yml` carries the settings the chips read. Each mechanic will want its own section as it arrives, and the mechanics also need the legacy enable flag. |
 | Commands | `/craftbook` reads the catalogue and the switch commands drive `MCX120` and `MCX121`, all through Brigadier. The per-mechanic commands come with their mechanics. |

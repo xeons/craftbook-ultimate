@@ -1,9 +1,14 @@
 package com.xeonproductions.craftbookultimate.paper;
 
+import com.xeonproductions.craftbookultimate.core.cart.Stations;
+import com.xeonproductions.craftbookultimate.core.cart.mechanic.CartMechanics;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
+import com.xeonproductions.craftbookultimate.paper.cart.CartDispatcher;
+import com.xeonproductions.craftbookultimate.paper.cart.CartRecipes;
+import com.xeonproductions.craftbookultimate.paper.command.CartCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CatalogueCommands;
 import com.xeonproductions.craftbookultimate.paper.command.ConfigCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
@@ -13,6 +18,9 @@ import com.xeonproductions.craftbookultimate.paper.ic.BukkitRoster;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.store.FireworkFiles;
 import com.xeonproductions.craftbookultimate.paper.store.PasswordFile;
+import com.xeonproductions.craftbookultimate.paper.listener.CartListener;
+import com.xeonproductions.craftbookultimate.paper.listener.CartRedstoneListener;
+import com.xeonproductions.craftbookultimate.paper.listener.CartSignListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICChunkListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICRedstoneListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICSignListener;
@@ -53,6 +61,7 @@ public final class CraftBookPlugin extends JavaPlugin {
     private @Nullable FireworkFiles fireworkFiles;
     private @Nullable ConfigFile configFile;
     private @Nullable ChipServices services;
+    private @Nullable CartDispatcher cartDispatcher;
 
     /**
      * @param icRegistry the chip catalogue, built during bootstrap
@@ -78,6 +87,13 @@ public final class CraftBookPlugin extends JavaPlugin {
         // chip the settings exclude is never started only to be stopped again.
         loadSettings();
 
+        CartDispatcher carts = new CartDispatcher(
+                chipServices.configuration(),
+                new Stations(),
+                regionSchedulers,
+                CartRecipes.readFrom(getServer()));
+        this.cartDispatcher = carts;
+
         registerPermissions();
         loadPasswords();
         loadFireworkShows();
@@ -86,11 +102,18 @@ public final class CraftBookPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ICSignListener(manager, regionSchedulers), this);
         getServer().getPluginManager().registerEvents(new ICRedstoneListener(manager), this);
         getServer().getPluginManager().registerEvents(new ICChunkListener(manager), this);
+        getServer().getPluginManager().registerEvents(
+                new CartListener(carts, chipServices.configuration()), this);
+        getServer().getPluginManager().registerEvents(
+                new CartRedstoneListener(carts, chipServices.configuration()), this);
+        getServer().getPluginManager().registerEvents(
+                new CartSignListener(carts, chipServices.configuration()), this);
 
         adoptAlreadyLoadedChunks(manager);
 
         getComponentLogger().info(Component.text(
-                "Enabled with " + icRegistry.size() + " integrated circuits"
+                "Enabled with " + icRegistry.size() + " integrated circuits and "
+                        + CartMechanics.all().size() + " minecart mechanics"
                         + (isFolia() ? ", running regionised" : "")));
     }
 
@@ -148,8 +171,17 @@ public final class CraftBookPlugin extends JavaPlugin {
         new CraftBookCommands(
                         new CatalogueCommands(icRegistry),
                         switchCommands,
-                        new ConfigCommands(this::rereadSettings))
+                        new ConfigCommands(this::rereadSettings),
+                        new CartCommands(cartCommandsTarget()))
                 .registerOn(this);
+    }
+
+    /** The cart mechanics, which the commands drive. */
+    private CartDispatcher cartCommandsTarget() {
+        if (cartDispatcher == null) {
+            throw new IllegalStateException("The cart mechanics are not available until enabled");
+        }
+        return cartDispatcher;
     }
 
     /**

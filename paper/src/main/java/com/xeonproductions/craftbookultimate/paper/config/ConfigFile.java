@@ -1,13 +1,16 @@
 package com.xeonproductions.craftbookultimate.paper.config;
 
+import com.xeonproductions.craftbookultimate.core.config.CartSettings;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.paper.ic.LegacyBlocks;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
@@ -17,6 +20,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
 import org.bukkit.Tag;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jspecify.annotations.NullMarked;
@@ -50,6 +54,12 @@ public final class ConfigFile {
     private static final String MAX_LENGTH = "ics.max-length";
     private static final String MAX_PLANTER_WIDTH = "ics.max-planter-width";
     private static final String PLACEABLE_BLOCKS = "ics.placeable-blocks";
+
+    private static final String CARTS_DISABLED = "carts.disabled";
+    private static final String CART_BLOCKS = "carts.blocks";
+    private static final String CART_BOOSTERS = "carts.boosters";
+    private static final String CART_LAUNCH_SPEED = "carts.launch-speed";
+    private static final String CART_WATER_BUCKETS = "carts.return-water-buckets";
 
     private final Path file;
     private final Server server;
@@ -117,6 +127,15 @@ public final class ConfigFile {
         setIfAbsent(yaml, MAX_LENGTH, defaults.maxLength());
         setIfAbsent(yaml, MAX_PLANTER_WIDTH, defaults.maxPlanterWidth());
         setIfAbsent(yaml, PLACEABLE_BLOCKS, names(defaults.placeableBlocks()));
+
+        CartSettings carts = defaults.carts();
+        setIfAbsent(yaml, CARTS_DISABLED, new ArrayList<>(carts.disabled()));
+        setIfAbsent(yaml, CART_LAUNCH_SPEED, carts.launchSpeed());
+        setIfAbsent(yaml, CART_WATER_BUCKETS, carts.returnWaterBuckets());
+        carts.blocks().forEach((mechanic, block) ->
+                setIfAbsent(yaml, CART_BLOCKS + "." + mechanic, block.asString()));
+        carts.boosters().forEach((block, multiplier) ->
+                setIfAbsent(yaml, CART_BOOSTERS + "." + block.value(), multiplier));
     }
 
     private static void setIfAbsent(YamlConfiguration yaml, String path, Object value) {
@@ -180,6 +199,34 @@ public final class ConfigFile {
                 "An entry is a block name, a tag written with a leading # such as",
                 "#minecraft:planks, or a name from before the flattening such as 35:14.",
                 "An empty list allows any block at all."));
+
+        yaml.setComments("carts", List.of(
+                "",
+                "The minecart mechanics: a block under a piece of rail that a cart rolls over."));
+
+        yaml.setComments(CARTS_DISABLED, List.of(
+                "Mechanics that never run, by name, such as Craft. The signs are left alone."));
+
+        yaml.setComments(CART_BLOCKS, List.of(
+                "",
+                "Which block builds which mechanic. Two mechanics may share a block, in which",
+                "case their signs tell them apart. The message sign has no block of its own and",
+                "works wherever it is hung."));
+
+        yaml.setComments(CART_BOOSTERS, List.of(
+                "",
+                "How much a booster block multiplies a passing cart's speed by. Above one speeds",
+                "a cart up and below one slows it down; the very large number is what sends a",
+                "cart off at its top speed."));
+
+        yaml.setComments(CART_LAUNCH_SPEED, List.of(
+                "",
+                "How fast a mechanic that launches a cart launches it: a delay letting one go, a",
+                "launcher somebody has climbed into, or a dispenser told to push."));
+
+        yaml.setComments(CART_WATER_BUCKETS, List.of(
+                "Whether crafting in a cart gives a water bucket back full rather than empty.",
+                "Vanilla gives back an empty one; this is a kindness to anybody crafting in bulk."));
     }
 
     /** Turns what the file says into the settings the chips read. */
@@ -194,7 +241,49 @@ public final class ConfigFile {
                 .maxLength(yaml.getInt(MAX_LENGTH, defaults.maxLength()))
                 .maxPlanterWidth(yaml.getInt(MAX_PLANTER_WIDTH, defaults.maxPlanterWidth()))
                 .placeableBlocks(blocks(yaml.getStringList(PLACEABLE_BLOCKS)))
+                .carts(carts(yaml, defaults.carts()))
                 .build();
+    }
+
+    /** Reads what an operator has said about the minecart mechanics. */
+    private CartSettings carts(YamlConfiguration yaml, CartSettings defaults) {
+        Map<String, Key> mechanicBlocks = new LinkedHashMap<>();
+        ConfigurationSection blocks = yaml.getConfigurationSection(CART_BLOCKS);
+        if (blocks != null) {
+            for (String mechanic : blocks.getKeys(false)) {
+                String written = blocks.getString(mechanic, "");
+                if (written == null || written.isBlank()) {
+                    continue;
+                }
+                Optional<Key> block = LegacyBlocks.resolve(written);
+                if (block.isEmpty()) {
+                    report.accept("No block called " + written
+                            + ", so the " + mechanic + " cart mechanic cannot be built");
+                    continue;
+                }
+                mechanicBlocks.put(mechanic, block.get());
+            }
+        }
+
+        Map<Key, Double> boosters = new LinkedHashMap<>();
+        ConfigurationSection boosting = yaml.getConfigurationSection(CART_BOOSTERS);
+        if (boosting != null) {
+            for (String written : boosting.getKeys(false)) {
+                Optional<Key> block = LegacyBlocks.resolve(written);
+                if (block.isEmpty()) {
+                    report.accept("No block called " + written + ", so it boosts nothing");
+                    continue;
+                }
+                boosters.put(block.get(), boosting.getDouble(written, 1));
+            }
+        }
+
+        return new CartSettings(
+                Set.copyOf(yaml.getStringList(CARTS_DISABLED)),
+                mechanicBlocks.isEmpty() ? defaults.blocks() : mechanicBlocks,
+                boosters.isEmpty() ? defaults.boosters() : boosters,
+                yaml.getDouble(CART_LAUNCH_SPEED, defaults.launchSpeed()),
+                yaml.getBoolean(CART_WATER_BUCKETS, defaults.returnWaterBuckets()));
     }
 
     /**

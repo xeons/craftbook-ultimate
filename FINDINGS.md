@@ -781,3 +781,71 @@ and which the surrounding builder handles for the negative one.
 
 **Rewrite:** an offset beyond what a chip may reach is refused, and the chips that take one check
 each axis directly rather than through a shared helper that has to guess at the sign.
+
+## The minecart mechanics
+
+### 61. The station matcher matched everything after a wildcard
+
+`CartSorting.matchGlobStation` walks the destination and the pattern together, and where the
+pattern holds a `*` it looks at the character after it:
+
+```java
+final char nextChar = globChars[globCharPos + 1];
+if (nextChar == stationChars[i + 1]) {
+    globCharPos++;
+}
+else {
+    return true;
+}
+```
+
+The `else` gives up and reports a match. A pattern only matches after a wildcard if what follows
+the wildcard happens to sit immediately after it in the destination, and if it does not, everything
+matches. `#north*gate` therefore claimed `northeastpier` and every other destination beginning
+`north`, so a junction meant to pick out one branch took every cart that reached it.
+
+The tail has the same shape: after the destination runs out, `globCharPos == globChars.length - 1`
+reports a match whatever that last character is, so `#north` also claimed `nort`.
+
+**Rewrite:** an ordinary wildcard match, where `*` stands for any run of characters and everything
+else has to be there.
+
+### 62. The held-item filter read an item out of an empty hand
+
+`CartSorting.isHeld` fetches the rider's held item as an `Optional` and then, for any filter but
+`none`, reads it without checking:
+
+```java
+Optional<ItemStack> helditem = rider.getItemInHand(HandTypes.MAIN_HAND);
+...
+if (helditem.get().getType() == itemStack.getType()
+```
+
+A rider with empty hands rolling over a junction filtered on `held:` threw
+`NoSuchElementException` out of the movement listener, taking the rest of that event's mechanics
+with it.
+
+**Rewrite:** empty hands are an answer rather than an absence, so `held:stone` is false for
+somebody holding nothing and `held:none` is true.
+
+### 63. The launcher was gated by the loader's permission
+
+`CartLaunch` declares its creation permission as
+
+```java
+new SpongePermissionNode("craftbook.cartload", ...)
+```
+
+which is the node `CartLoad` declares as well. Anybody granted the right to build a loader could
+build a launcher, and anybody granted the right to build a launcher by its own name could not.
+
+**Rewrite:** every cart mechanic's permission is derived from its own name, so the two cannot drift
+apart again.
+
+### 64. A delay would hold a cart for as long as its sign said
+
+`CartDelay` parses its wait and schedules the release with no upper bound, so a mistyped `99999`
+took the cart out of service for a day and a bit, with no way to get it back but breaking it.
+
+**Rewrite:** a wait is between one second and an hour, and a sign asking for more is refused as it
+is written.

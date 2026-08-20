@@ -52,10 +52,11 @@ ones that show weather illusions or play music, and the mechanics have not been 
 | Potion areas, particles and fireworks | Done |
 | Sensing people, creatures and items | Done |
 | World-changing ICs (messaging) | Not started |
-| Mechanics | Not started |
+| Minecart mechanics (13 on the rails, plus the dispenser) | Done |
+| Mechanics other than the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1185 tests passing**.
+**1320 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -157,6 +158,31 @@ anywhere in the plugin.
 - `@NullMarked` at type level; JSpecify annotations, not JetBrains or JSR-305.
 - Tests use JUnit 5 with `@Nested` groupings and AssertJ. Test names read as sentences.
 - One behaviour per test; assert on outcomes, not on how they were reached.
+
+## The minecart mechanics
+
+A cart mechanic is a piece of rail, the block under it, and usually a sign. The block says which
+mechanic it is and the sign says what to do. `core/cart/` holds the seams (`Cart`, `CartWorld`,
+`CartVisit`), the frozen filter grammar (`CartFilter`), the shared destination registry
+(`Stations`) and the mechanics themselves in `core/cart/mechanic/`; `paper/cart/` binds them.
+
+`CartDispatcher` is the single entry point. A cart crossing one block sends a dozen move events, so
+the mechanism is resolved and its wiring read once per event and every applicable mechanic is then
+run against the same `CartVisit`. Do not give a mechanic its own listener.
+
+Three things are frozen and must not be quietly improved:
+
+1. **The filter grammar** in `CartFilter` — `storage`, `#north*`, `ply:!Steve`, `sci+:stone:4` and
+   the rest. Junction signs all over existing railways are written in it.
+2. **The sign names** in `CartSignRules` — `[Station]`, `[CartLift]`, `[Sort]` and so on.
+3. **Which block builds which mechanic**, though an operator may now change it in `config.yml`.
+
+`Bukkit`'s `VehicleMoveEvent` is not cancellable, unlike the Sponge event the fork was written
+against. A mechanic that wants to hold a cart stops it dead instead, which is what holding it
+amounted to anyway.
+
+**Not ported:** CartWarp, whose whole purpose was teleporting a cart to a CBWarp. CBWarps is on
+the dropped list, so there is nothing for it to warp to.
 
 ## Folia and regions
 

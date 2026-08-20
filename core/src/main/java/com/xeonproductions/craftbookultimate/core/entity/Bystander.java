@@ -1,9 +1,12 @@
 package com.xeonproductions.craftbookultimate.core.entity;
 
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
+import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -80,6 +83,33 @@ public interface Bystander {
      * seen at all, so neither should set off a sensor they pass. Everything else is visible.
      */
     boolean isVisible();
+
+    /**
+     * What it is carrying about, for anything that carries a pack.
+     *
+     * <p>Only a player has one. A cart sorter is the one thing that asks, so that a junction can
+     * send a rider carrying a pickaxe down the mine and everybody else past it.
+     */
+    Optional<Stockpile> inventory();
+
+    /**
+     * The name the server knows it by, which never changes and is never reused.
+     *
+     * <p>Only useful for a player, and only where something has to be remembered about them
+     * between one place and another: where they said they were going, most of all. Everything else
+     * about somebody is read from the entity in front of the mechanic.
+     */
+    Optional<UUID> uniqueId();
+
+    /**
+     * Says something to it.
+     *
+     * <p>Only a player hears anything; everything else quietly ignores it, so a mechanic speaking
+     * to whoever is riding does not have to ask what kind of rider it has first.
+     *
+     * @return whether there was anybody there to hear it
+     */
+    boolean tell(Component message);
 
     /** The things riding on it. */
     List<Bystander> riders();

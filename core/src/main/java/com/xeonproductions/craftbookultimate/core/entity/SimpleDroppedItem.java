@@ -35,12 +35,10 @@ public final class SimpleDroppedItem implements DroppedItem {
     }
 
     @Override
-    public boolean takeOne() {
-        if (count <= 0) {
-            return false;
-        }
-        count--;
-        return true;
+    public int take(int amount) {
+        int taken = Math.min(Math.max(amount, 0), count);
+        count -= taken;
+        return taken;
     }
 
     @Override

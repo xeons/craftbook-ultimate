@@ -1,8 +1,12 @@
 package com.xeonproductions.craftbookultimate.core.world;
 
+import com.xeonproductions.craftbookultimate.core.effect.FireworkBurst;
+import com.xeonproductions.craftbookultimate.core.entity.Bystander;
 import com.xeonproductions.craftbookultimate.core.entity.DroppedItem;
+import com.xeonproductions.craftbookultimate.core.entity.EntitySpec;
 import com.xeonproductions.craftbookultimate.core.entity.Traveller;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
+import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,6 +50,15 @@ public final class SimpleChipWorld implements ChipWorld {
     private final Map<Vec3i, BlockFace> facings = new HashMap<>();
     private final Set<Vec3i> silentlyPlaced = new HashSet<>();
     private final List<PlacedItem> items = new ArrayList<>();
+    private final List<Bystander> bystanders = new ArrayList<>();
+    private final Map<Vec3i, List<String>> books = new HashMap<>();
+    private final List<Spawn> spawns = new ArrayList<>();
+    private final List<Drop> droppedStacks = new ArrayList<>();
+    private final List<Shot> shots = new ArrayList<>();
+    private final List<Firework> fireworks = new ArrayList<>();
+    private final List<Vec3i> strikes = new ArrayList<>();
+    private final List<Particle> particles = new ArrayList<>();
+    private final List<Sound> sounds = new ArrayList<>();
 
     private BlockFace acceptedFacing = BlockFace.NORTH;
     private int minHeight = DEFAULT_MIN_HEIGHT;
@@ -119,6 +132,80 @@ public final class SimpleChipWorld implements ChipWorld {
             }
         }
         return found;
+    }
+
+    @Override
+    public int spawn(Vec3d at, EntitySpec what, int count) {
+        if (!what.isSpawnable() || count < 1 || !isLoaded(at.toBlock())) {
+            return 0;
+        }
+        spawns.add(new Spawn(at, what, count));
+        return count;
+    }
+
+    @Override
+    public boolean dropItem(Vec3d at, Key item, int count) {
+        if (count < 1 || !isLoaded(at.toBlock())) {
+            return false;
+        }
+        droppedStacks.add(new Drop(at, item, count));
+        return true;
+    }
+
+    @Override
+    public boolean launchProjectile(
+            Vec3d from, Key projectile, Vec3d direction, double speed, double spread) {
+        if (!isLoaded(from.toBlock())) {
+            return false;
+        }
+        shots.add(new Shot(from, projectile, direction, speed, spread));
+        return true;
+    }
+
+    @Override
+    public boolean launchFirework(Vec3d at, FireworkBurst burst, int flightTicks) {
+        if (!isLoaded(at.toBlock())) {
+            return false;
+        }
+        fireworks.add(new Firework(at, burst, flightTicks));
+        return true;
+    }
+
+    @Override
+    public boolean strikeLightning(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+        strikes.add(position);
+        return true;
+    }
+
+    @Override
+    public List<Bystander> bystandersNear(Vec3d centre, double radius) {
+        List<Bystander> found = new ArrayList<>();
+        for (Bystander bystander : bystanders) {
+            if (bystander.isPresent() && bystander.position().distanceSquared(centre) <= radius * radius) {
+                found.add(bystander);
+            }
+        }
+        return found;
+    }
+
+    @Override
+    public boolean showParticle(Vec3d at, Key particle, Optional<Key> block) {
+        particles.add(new Particle(at, particle, block));
+        return true;
+    }
+
+    @Override
+    public boolean playSound(Vec3d at, Key sound, float volume, float pitch) {
+        sounds.add(new Sound(at, sound, volume, pitch));
+        return true;
+    }
+
+    @Override
+    public List<String> bookPagesAt(Vec3i position) {
+        return List.copyOf(books.getOrDefault(position, List.of()));
     }
 
     @Override
@@ -329,8 +416,73 @@ public final class SimpleChipWorld implements ChipWorld {
         return this;
     }
 
+    /** Puts a book in the container at a position, for the chips that read their settings from one. */
+    public SimpleChipWorld withBook(Vec3i position, List<String> pages) {
+        books.put(position, List.copyOf(pages));
+        return this;
+    }
+
+    /** Puts something in front of a chip, where a chip looking around will find it. */
+    public SimpleChipWorld withBystander(Bystander bystander) {
+        bystanders.add(bystander);
+        return this;
+    }
+
+    /** Everything a chip has spawned, in the order it did. */
+    public List<Spawn> spawns() {
+        return List.copyOf(spawns);
+    }
+
+    /** Every stack a chip has dropped, in the order it did. */
+    public List<Drop> droppedStacks() {
+        return List.copyOf(droppedStacks);
+    }
+
+    /** Every projectile a chip has thrown, in the order it did. */
+    public List<Shot> shots() {
+        return List.copyOf(shots);
+    }
+
+    /** Every firework a chip has set off, in the order it did. */
+    public List<Firework> fireworks() {
+        return List.copyOf(fireworks);
+    }
+
+    /** Everywhere a chip has called lightning down on, in the order it did. */
+    public List<Vec3i> lightningStrikes() {
+        return List.copyOf(strikes);
+    }
+
+    /** Every particle a chip has shown, in the order it did. */
+    public List<Particle> particles() {
+        return List.copyOf(particles);
+    }
+
+    /** Every sound a chip has played, in the order it did. */
+    public List<Sound> sounds() {
+        return List.copyOf(sounds);
+    }
+
     /** A stack of items and where it is lying. */
     private record PlacedItem(Vec3i position, DroppedItem item) {}
+
+    /** Something a chip put in the world. */
+    public record Spawn(Vec3d at, EntitySpec what, int count) {}
+
+    /** A stack a chip dropped. */
+    public record Drop(Vec3d at, Key item, int count) {}
+
+    /** A projectile a chip threw. */
+    public record Shot(Vec3d from, Key projectile, Vec3d direction, double speed, double spread) {}
+
+    /** A firework a chip set off. */
+    public record Firework(Vec3d at, FireworkBurst burst, int flightTicks) {}
+
+    /** A particle a chip showed. */
+    public record Particle(Vec3d at, Key particle, Optional<Key> block) {}
+
+    /** A sound a chip played. */
+    public record Sound(Vec3d at, Key sound, float volume, float pitch) {}
 
     /** The number of blocks explicitly placed, which is what a test asserts changes against. */
     public int placedBlockCount() {

@@ -26,20 +26,21 @@ public record BukkitDroppedItem(Item entity) implements DroppedItem {
     }
 
     @Override
-    public boolean takeOne() {
-        if (!isPresent()) {
-            return false;
+    public int take(int amount) {
+        if (amount <= 0 || !isPresent()) {
+            return 0;
         }
 
         ItemStack stack = entity.getItemStack();
-        if (stack.getAmount() <= 1) {
+        int taken = Math.min(amount, stack.getAmount());
+        if (taken >= stack.getAmount()) {
             entity.remove();
-            return true;
+            return taken;
         }
 
-        stack.setAmount(stack.getAmount() - 1);
+        stack.setAmount(stack.getAmount() - taken);
         entity.setItemStack(stack);
-        return true;
+        return taken;
     }
 
     @Override

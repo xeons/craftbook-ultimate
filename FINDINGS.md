@@ -506,3 +506,160 @@ required to be empty when the chip was made and quietly filled with whitespace a
 **Rewrite:** the countdown is kept in memory. A timer caught mid-count by a chunk unloading comes
 back ready rather than part way through, which is only visible to somebody who was not there to
 see it.
+
+## Entities and projectiles
+
+### 41. The shooters checked their numbers only when the sign was made
+
+`ArrowShooter.create` validated the speed, spread and vertical velocity and threw for anything out
+of range. `ArrowShooter.load` re-read the same three numbers with no checks at all, so editing the
+sign afterwards set whatever it liked: a speed of five hundred, a spread of nine hundred degrees.
+The same code is repeated verbatim in `ArrowBarrage`, `SnowShooter`, `SnowBarrage`, `EggShooter`
+and `EggBarrage`.
+
+**Rewrite:** the limits are applied every time the sign is read, so an edited sign is held to the
+same range as a new one. The six chips are one implementation with the projectile and the count as
+parameters.
+
+### 42. The fireball's speed and power were validated and then discarded
+
+`FireballShooter.create` insisted the speed was between zero and five and the power between a tenth
+and ten. `load` parsed both into fields and `onTrigger` used neither: it called `launch` with the
+bare unit vector pointing out of the back of the sign. The rotation and pitch fared no better —
+`pitchYawRoll` was assembled as `rotation + SignUtil.getFacing(getBlock()).asOffset().getX()`,
+adding a block offset to an angle, and applied as an entity rotation, which a fireball recomputes
+from its own motion on the next tick.
+
+**Rewrite:** the rotation and the pitch aim the fireball, which is what a builder writing them
+meant. The speed and the power stay inert: a fireball steers itself once it is away, so speed would
+change nothing, and making the explosion bigger than a ghast's on signs that already exist is not a
+change to make quietly.
+
+### 43. The Zeus bolt's default radius struck nothing
+
+`ZeusBolt.load` set the radius to `(1, 1, 1)` when line 3 was empty, and `onTrigger` looped
+`for (int x = -radius + 1; x < radius; x++)`, which for a radius of one runs from zero to below
+zero and so never executes. A chip left on its defaults did nothing at all. Where the loop did run
+it was also asymmetric, covering one more block on one side of the middle than the other, and it
+subtracted the loop variable from the centre rather than adding it.
+
+The chance was compared as `nextInt(100) <= chance`, so a chance of zero still struck one block in
+a hundred.
+
+**Rewrite:** a reach of one means the cube of twenty-seven blocks around the middle, and a chance
+of zero means never.
+
+### 44. The fireworks chip was a disabled experiment
+
+`Fireworks.onTrigger` shot a tipped arrow upward and started a bare `new Thread` per trigger, which
+polled the arrow's position every hundred milliseconds off the server thread until it began to fall
+and then removed it. Everything that would have made it a firework — `explodeTNT` and its callers —
+is commented out in the source. So the chip fired an invisible arrow that deleted itself at the top
+of its arc, from an unbounded number of threads reading entity state they had no right to touch.
+
+**Rewrite:** the chip sets off a firework rocket, which is what its name, its shorthand and its
+description all say it does. Fireworks have been an item in the game since long after this code was
+written, so the arrow-and-TNT approach it never finished is not worth reviving.
+
+### 45. The firework display's stop flag read a system property
+
+`ProgrammableFireworksDisplay.load` set its stop-on-low flag with `Boolean.getBoolean(bits[0])`.
+That method takes the name of a **system property** and reports whether it is set to `"true"`; it
+does not parse the string it is given. The flag was therefore always false and the fourth line of
+every one of these signs did nothing.
+
+**Rewrite:** the line is parsed as what it says.
+
+### 46. The plain firework script could not wait
+
+`BasicShowInterpreter` split each line on a colon, so `wait:20` gave `bits[0] = "wait"`. It then
+computed the delay as `Long.parseLong(line.replace("wait ", ""))` — replacing `"wait "`, with a
+trailing space, which does not occur in `wait:20`. The parse therefore ran on the whole line and
+threw, out of a scheduled task with nothing catching it. A show written in the documented format
+ran every launch in the same tick and then died at its first pause.
+
+The same branch built a fresh interpreter for the continuation but never assigned it to `show`, so
+`isShowRunning` went on reporting the state of the old one.
+
+**Rewrite:** a wait is the number after the separator, in both spellings, and the show that is
+running is the one being tracked.
+
+### 47. The potion area measured its duration in the wrong unit
+
+`PotionArea.parsePotionEffect` multiplied the seconds on the sign by twenty to get ticks and then
+rejected the result if it was above 999, while telling the player the limit was "999 seconds". The
+real ceiling was therefore forty-nine seconds. Writing `INF` produced a hundred thousand ticks,
+which failed the same check, so the documented way of asking for an effect that never wears off
+could never be used.
+
+The effect was also added to the list before those checks ran, and `load` swallowed the exception,
+so a sign that was rejected when it was made still applied its effect after a chunk reload.
+
+**Rewrite:** the limit is nine hundred and ninety-nine seconds, as the message always said, and
+`INF` means an effect that does not wear off. A dose that cannot be read is not applied.
+
+### 48. The potion area replaced a player's effects rather than adding to them
+
+`onTrigger` called `entity.offer(Keys.POTION_EFFECTS, potionEffects)`, which sets the whole list.
+Walking through an area that gives speed stripped whatever the player had drunk.
+
+It also never checked whether the chip had actually been triggered, so it fired on the falling edge
+as well as the rising one, and its self-triggering variant ignored the think flag.
+
+**Rewrite:** effects are added to what is already there, and the chip acts only while something
+drives it.
+
+### 49. Two of the short names for potion effects collided
+
+The abbreviations were generated at class load by walking `PotionEffectTypes` with reflection and
+taking the first two letters of each underscore-separated word. `REGENERATION` and `RESISTANCE`
+both give `RE`, and whichever field came later in the class won, which made regeneration
+unreachable. The scheme was also unstable by design: adding an effect to the game could take a
+short name away from an existing one.
+
+**Rewrite:** the abbreviations are a fixed table, so what a sign means cannot change under it, and
+`RE` stays on resistance because that is what signs have always got. Every effect can also be named
+outright, which is how regeneration is reached and how the effects added since are reached.
+
+### 50. Hit Mob Above matched nothing when its third line was blank
+
+`HitMobAbove.load` fell back to an anonymous matcher whose test was `entity instanceof Creature`.
+`Creature` there resolves to `DetailedEntityType.Creature`, a nested class of the matcher's own
+superclass, not to Sponge's `Creature` interface — and no entity is ever an instance of it.
+`DetailedEntityType.Creature.matches` has the same mistake. A chip left on its defaults hurt
+nothing.
+
+`load` also called `Integer.parseInt(getLine(3))` unguarded, and left `detailedEntityType` null when
+parsing failed, so the next trigger threw.
+
+**Rewrite:** a blank line means hostile mobs, which is what the chip is named for and what the mob
+zapper already defaulted to.
+
+### 51. The zapper and the collector searched for entities off the server thread
+
+`MobZapper.onTrigger` and `ChestCollector.getAsyncAction` both ran their entity search through
+`scheduleAsyncBatch` and then hopped back to the main thread to act on the results. Finding 35
+records the same pattern in the planters. The list could be stale by the time it was used, and the
+search itself read entity state from another thread.
+
+**Rewrite:** both search through the world seam, on the thread that owns the place they are
+searching.
+
+### 52. The spawners promised an output they never drove
+
+The pin help for `MCX200` says "Outputs when spawning entities" and for `MCX201` "Outputs when
+spawning items". Neither `onTrigger` writes to a pin.
+
+**Rewrite:** the behaviour is kept as the code had it rather than as the help described it. Turning
+a pin that has always read low into one that pulses would change what every existing build wired to
+it does, which is not a fix worth making silently.
+
+### 53. The stacked-entity grammar was reachable from chips that could not use it
+
+`MobZapper.load` parsed its third line with `parseStackedAndNbt`, which understands riders and NBT.
+`MobZapper.create` accepts only `mob`, `animal` or a bare type name, so no sign that the plugin
+made could ever carry either. The NBT half of the grammar was likewise only ever reachable from the
+entity spawner, and matching against it needed a full entity write-out per candidate.
+
+**Rewrite:** one parser covers the whole grammar, and the extra data it can carry is used when
+spawning and ignored when matching. Only the spawner's sign can carry any, so nothing is lost.

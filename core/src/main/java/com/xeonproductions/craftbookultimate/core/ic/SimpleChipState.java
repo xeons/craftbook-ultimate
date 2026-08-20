@@ -40,6 +40,7 @@ public final class SimpleChipState implements ChipState {
     private final SimpleChipWorld world;
     private final ChipServices services;
     private Stockpile stockpile;
+    private final java.util.Map<Vec3i, Stockpile> placedStockpiles = new java.util.HashMap<>();
     private final Vec3i signPosition;
     private final BlockFace facing;
     private SignLines sign;
@@ -184,9 +185,25 @@ public final class SimpleChipState implements ChipState {
         return stockpile;
     }
 
+    @Override
+    public Stockpile stockpileNear(Vec3i centre, int radius, java.util.Set<net.kyori.adventure.key.Key> kinds) {
+        for (var placed : placedStockpiles.entrySet()) {
+            if (placed.getKey().chebyshevDistance(centre) <= radius) {
+                return placed.getValue();
+            }
+        }
+        return SimpleStockpile.empty();
+    }
+
     /** Sets where this chip takes materials from. */
     public SimpleChipState withStockpile(Stockpile stockpile) {
         this.stockpile = stockpile;
+        return this;
+    }
+
+    /** Puts a container somewhere in particular, for the chips that name one. */
+    public SimpleChipState withStockpileAt(Vec3i position, Stockpile stockpile) {
+        placedStockpiles.put(position, stockpile);
         return this;
     }
 

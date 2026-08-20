@@ -1,7 +1,11 @@
 package com.xeonproductions.craftbookultimate.paper.ic;
 
+import com.xeonproductions.craftbookultimate.core.effect.FireworkBurst;
+import com.xeonproductions.craftbookultimate.core.entity.Bystander;
 import com.xeonproductions.craftbookultimate.core.entity.DroppedItem;
+import com.xeonproductions.craftbookultimate.core.entity.EntitySpec;
 import com.xeonproductions.craftbookultimate.core.entity.Traveller;
+import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
@@ -13,21 +17,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.Registry;
 import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Container;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.AnaloguePowerable;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.Powerable;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Item;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.inventory.meta.FireworkMeta;
+import org.bukkit.util.Vector;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -44,6 +65,13 @@ public record BukkitChipWorld(World world) implements ChipWorld {
 
     /** How far around a block to ask the server for entities before checking exactly where they are. */
     private static final double ENTITY_SEARCH_RADIUS = 1.0;
+
+    /**
+     * How far a degree of spread may push a shot off its aim.
+     *
+     * <p>The game's own figure, used everywhere it scatters a projectile.
+     */
+    private static final double INACCURACY_PER_DEGREE = 0.0172275;
 
     @Override
     public UUID id() {
@@ -152,6 +180,184 @@ public record BukkitChipWorld(World world) implements ChipWorld {
     @Override
     public Optional<Key> resolveItem(String written) {
         return LegacyBlocks.resolveItem(written);
+    }
+
+    @Override
+    public int spawn(Vec3d at, EntitySpec what, int count) {
+        if (count < 1 || !isLoaded(at.toBlock())) {
+            return 0;
+        }
+        return EntitySpawning.spawn(toLocation(at), what, count);
+    }
+
+    @Override
+    public boolean dropItem(Vec3d at, Key item, int count) {
+        if (count < 1 || !isLoaded(at.toBlock())) {
+            return false;
+        }
+        Material material = Registry.MATERIAL.get(item);
+        if (material == null || material.isAir()) {
+            return false;
+        }
+        world.dropItem(toLocation(at), ItemStack.of(material, count));
+        return true;
+    }
+
+    @Override
+    public boolean launchProjectile(
+            Vec3d from, Key projectile, Vec3d direction, double speed, double spread) {
+        if (!isLoaded(from.toBlock())) {
+            return false;
+        }
+
+        EntityType type = Registry.ENTITY_TYPE.get(projectile);
+        if (type == null || !type.isSpawnable()) {
+            return false;
+        }
+
+        Entity thrown = world.spawnEntity(
+                toLocation(from), type, CreatureSpawnEvent.SpawnReason.CUSTOM, null);
+        Vec3d velocity = scatter(direction, spread).multiply(speed);
+        thrown.setVelocity(new Vector(velocity.x(), velocity.y(), velocity.z()));
+        return true;
+    }
+
+    /**
+     * Nudges an aim off true by the game's own amount of inaccuracy.
+     *
+     * <p>The same measure the game uses for a dispenser, so a shooter left on its defaults
+     * scatters the way a dispenser does rather than by some number of this plugin's own.
+     */
+    private static Vec3d scatter(Vec3d direction, double spread) {
+        Vec3d aim = direction.normalise();
+        if (spread <= 0) {
+            return aim;
+        }
+        double deviation = INACCURACY_PER_DEGREE * spread;
+        return aim.add(triangle(deviation), triangle(deviation), triangle(deviation));
+    }
+
+    /** A number around zero, most likely to be near it and never further than the deviation. */
+    private static double triangle(double deviation) {
+        return deviation
+                * (ThreadLocalRandom.current().nextDouble() - ThreadLocalRandom.current().nextDouble());
+    }
+
+    @Override
+    public boolean launchFirework(Vec3d at, FireworkBurst burst, int fuseTicks) {
+        if (!isLoaded(at.toBlock())) {
+            return false;
+        }
+
+        Firework firework = world.spawn(toLocation(at), Firework.class);
+        FireworkMeta meta = firework.getFireworkMeta();
+        meta.addEffect(toEffect(burst));
+        firework.setFireworkMeta(meta);
+        firework.setTicksToDetonate(Math.max(1, fuseTicks));
+        return true;
+    }
+
+    /** Turns a described burst into the game's own idea of one. */
+    private static FireworkEffect toEffect(FireworkBurst burst) {
+        FireworkEffect.Builder builder = FireworkEffect.builder()
+                .with(FireworkEffect.Type.valueOf(burst.shape().name()))
+                .flicker(burst.flicker())
+                .trail(burst.trail());
+
+        for (int colour : burst.colours()) {
+            builder.withColor(Color.fromRGB(colour));
+        }
+        for (int fade : burst.fades()) {
+            builder.withFade(Color.fromRGB(fade));
+        }
+        return builder.build();
+    }
+
+    @Override
+    public boolean strikeLightning(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+        world.strikeLightning(Positions.toCentre(world, position));
+        return true;
+    }
+
+    @Override
+    public List<Bystander> bystandersNear(Vec3d centre, double radius) {
+        if (!isLoaded(centre.toBlock())) {
+            return List.of();
+        }
+        return world.getNearbyEntities(toLocation(centre), radius, radius, radius).stream()
+                .filter(entity -> entity.getLocation().distanceSquared(toLocation(centre))
+                        <= radius * radius)
+                .<Bystander>map(BukkitBystander::new)
+                .toList();
+    }
+
+    @Override
+    public boolean showParticle(Vec3d at, Key particle, Optional<Key> block) {
+        if (!isLoaded(at.toBlock())) {
+            return false;
+        }
+
+        Particle kind = Registry.PARTICLE_TYPE.get(particle);
+        if (kind == null) {
+            return false;
+        }
+
+        Object data = null;
+        if (BlockData.class.isAssignableFrom(kind.getDataType())) {
+            Material material = block.map(Registry.MATERIAL::get).orElse(null);
+            if (material == null || !material.isBlock()) {
+                return false;
+            }
+            data = material.createBlockData();
+        } else if (kind.getDataType() != Void.class) {
+            // Particles wanting anything else have no way of being described on a sign.
+            return false;
+        }
+
+        world.spawnParticle(kind, toLocation(at), 1, data);
+        return true;
+    }
+
+    @Override
+    public boolean playSound(Vec3d at, Key sound, float volume, float pitch) {
+        if (!isLoaded(at.toBlock())) {
+            return false;
+        }
+        world.playSound(
+                Sound.sound(sound, Sound.Source.MASTER, volume, pitch), at.x(), at.y(), at.z());
+        return true;
+    }
+
+    @Override
+    public List<String> bookPagesAt(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return List.of();
+        }
+
+        BlockState state = Positions.toBlock(world, position).getState(false);
+        if (!(state instanceof Container container)) {
+            return List.of();
+        }
+
+        for (ItemStack stack : container.getInventory()) {
+            if (stack == null || !(stack.getItemMeta() instanceof BookMeta book)) {
+                continue;
+            }
+            List<String> pages = new java.util.ArrayList<>();
+            for (Component page : book.pages()) {
+                pages.add(PlainTextComponentSerializer.plainText().serialize(page));
+            }
+            return pages;
+        }
+        return List.of();
+    }
+
+    /** The place in the world a point names. */
+    private Location toLocation(Vec3d point) {
+        return new Location(world, point.x(), point.y(), point.z());
     }
 
     @Override

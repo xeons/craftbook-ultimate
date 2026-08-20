@@ -10,6 +10,8 @@ import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.core.transport.Destinations;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
+import java.util.Set;
+import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -118,6 +120,18 @@ public interface ChipState {
     ICMode mode();
 
     /**
+     * The mode exactly as it was written, before anything was made of it.
+     *
+     * <p>A few chips take a letter of their own there rather than one of the modes the framework
+     * knows: a chest collector's {@code c} says which kind of container to fill, and a potion
+     * area's {@code B} says to read its settings out of a book. Those letters overlap with the pin
+     * permutation letters, so they can only be read by the chip that means something by them.
+     */
+    default String modeText() {
+        return ICLine.parse(sign().trimmedText(ICLine.LINE_INDEX)).map(ICLine::mode).orElse("");
+    }
+
+    /**
      * Schedules work on the region owning this chip.
      *
      * <p>A chip that acts after a delay, or repeatedly, goes through here. Work scheduled this
@@ -166,6 +180,19 @@ public interface ChipState {
      * refunded what it removes, so a structure it puts up costs the same as building it by hand.
      */
     Stockpile stockpile();
+
+    /**
+     * The containers near somewhere in particular, taken as one stockpile.
+     *
+     * <p>Most chips want {@link #stockpile()}, which is the containers around the chip itself. The
+     * container chips let a sign say which container to use and what kind it must be, so they ask
+     * for one directly.
+     *
+     * @param centre the position to look around
+     * @param radius how far to look in each direction; zero means that block alone
+     * @param kinds the containers that count, or empty for any container at all
+     */
+    Stockpile stockpileNear(Vec3i centre, int radius, Set<Key> kinds);
 
     /** The position of this chip's sign. */
     Vec3i signPosition();

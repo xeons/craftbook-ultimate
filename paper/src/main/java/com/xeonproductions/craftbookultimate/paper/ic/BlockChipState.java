@@ -221,6 +221,11 @@ public final class BlockChipState implements ChipState {
     }
 
     @Override
+    public Stockpile stockpileNear(Vec3i centre, int radius, java.util.Set<net.kyori.adventure.key.Key> kinds) {
+        return NearbyStockpiles.around(world, centre, radius, kinds);
+    }
+
+    @Override
     public Vec3i signPosition() {
         return signPosition;
     }

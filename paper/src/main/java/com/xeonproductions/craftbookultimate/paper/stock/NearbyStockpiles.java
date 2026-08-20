@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.kyori.adventure.key.Key;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -63,6 +64,15 @@ public final class NearbyStockpiles {
      * @param radius how far to look in each direction
      */
     public static Stockpile around(World world, Vec3i centre, int radius) {
+        return around(world, centre, radius, Set.of());
+    }
+
+    /**
+     * Collects the containers of particular kinds within a radius of a position.
+     *
+     * @param kinds the container blocks that count, or empty for any container at all
+     */
+    public static Stockpile around(World world, Vec3i centre, int radius, Set<Key> kinds) {
         List<Found> found = new ArrayList<>();
         Set<Vec3i> claimed = new HashSet<>();
 
@@ -76,6 +86,9 @@ public final class NearbyStockpiles {
                     }
 
                     Block block = Positions.toBlock(world, position);
+                    if (!kinds.isEmpty() && !kinds.contains(block.getType().getKey())) {
+                        continue;
+                    }
                     Inventory inventory = inventoryOf(block);
                     if (inventory == null) {
                         continue;

@@ -1,7 +1,11 @@
 package com.xeonproductions.craftbookultimate.core.world;
 
+import com.xeonproductions.craftbookultimate.core.effect.FireworkBurst;
+import com.xeonproductions.craftbookultimate.core.entity.Bystander;
 import com.xeonproductions.craftbookultimate.core.entity.DroppedItem;
+import com.xeonproductions.craftbookultimate.core.entity.EntitySpec;
 import com.xeonproductions.craftbookultimate.core.entity.Traveller;
+import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +93,99 @@ public interface ChipWorld {
      * @param radius how far to look, in blocks
      */
     List<DroppedItem> itemsNear(Vec3i centre, int radius);
+
+    /**
+     * Puts one or more creatures in the world.
+     *
+     * <p>Everything a sign can describe is spawned here, including riders and any extra data the
+     * description carried. A description that names something the game does not have, or that
+     * cannot be created at all, spawns nothing.
+     *
+     * @param at where to put them
+     * @param what the description read off the sign
+     * @param count how many
+     * @return how many were actually put in the world
+     */
+    int spawn(Vec3d at, EntitySpec what, int count);
+
+    /**
+     * Drops a stack of items on the ground.
+     *
+     * @return true if the stack was dropped
+     */
+    boolean dropItem(Vec3d at, Key item, int count);
+
+    /**
+     * Throws a projectile.
+     *
+     * <p>The spread is the game's own notion of inaccuracy, in the same units the dispensers use,
+     * so a shooter with the default spread scatters like a dispenser does. The randomness belongs
+     * to the world rather than the chip, which is what keeps a chip's own behaviour repeatable.
+     *
+     * @param from where it leaves
+     * @param projectile what to throw
+     * @param direction which way, which need not be a unit vector
+     * @param speed how fast
+     * @param spread how far it may stray from the direction given
+     * @return true if it was thrown
+     */
+    boolean launchProjectile(Vec3d from, Key projectile, Vec3d direction, double speed, double spread);
+
+    /**
+     * Sets off a firework.
+     *
+     * @param at where it launches from
+     * @param burst what it looks like when it goes off
+     * @param flightTicks how long it climbs first
+     * @return true if it was launched
+     */
+    boolean launchFirework(Vec3d at, FireworkBurst burst, int flightTicks);
+
+    /**
+     * Calls down a lightning bolt.
+     *
+     * @return true if it struck
+     */
+    boolean strikeLightning(Vec3i position);
+
+    /**
+     * The creatures near a point.
+     *
+     * <p>Includes players, dropped stacks and vehicles, since a sign can name any of them; see
+     * {@link Bystander}.
+     *
+     * @param centre the point to measure from
+     * @param radius how far to look, in blocks
+     */
+    List<Bystander> bystandersNear(Vec3d centre, double radius);
+
+    /**
+     * Shows a particle to everyone who can see the place.
+     *
+     * @param at where it appears
+     * @param particle which particle
+     * @param block the block a particle that needs one takes its appearance from
+     * @return true if it was shown
+     */
+    boolean showParticle(Vec3d at, Key particle, Optional<Key> block);
+
+    /**
+     * Plays a sound to everyone in earshot.
+     *
+     * @return true if it was played
+     */
+    boolean playSound(Vec3d at, Key sound, float volume, float pitch);
+
+    /**
+     * The pages of the first book in the container at a position.
+     *
+     * <p>A book is a way of giving a chip more configuration than four sign lines hold, and of
+     * letting a builder change that configuration without breaking the sign. Each page is one
+     * string with its line breaks intact.
+     *
+     * @return the pages, or nothing if there is no container there or no book in it
+     */
+    List<String> bookPagesAt(Vec3i position);
 
     /** Whether the chunk holding a position is loaded and safe to read. */
     boolean isLoaded(Vec3i position);

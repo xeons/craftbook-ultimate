@@ -7,9 +7,9 @@ A ground-up rewrite of CraftBook for **Paper 26.x** on **Java 25**, in the names
 
 **Phase: chips run in game. Writing a recognised model reference on a wall sign creates a
 working chip that responds to redstone and to the passage of time, places and swaps blocks, farms,
-drives wireless bands, moves people between named pads and follows switches thrown by command. The
-chips that spawn or harm entities, the ones that talk to players, and the mechanics have not been
-started.**
+drives wireless bands, moves people between named pads, follows switches thrown by command, and
+spawns, shoots at, hurts and doses what stands near it. The chips that talk to players, the ones
+that show weather illusions or play music, and the mechanics have not been started.**
 
 | Area | State |
 | --- | --- |
@@ -24,7 +24,7 @@ started.**
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (66 chips) | Done |
+| IC catalogue wiring (87 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
@@ -38,17 +38,23 @@ started.**
 | Stockpiles, formerly BlockBags | Done |
 | Shared chip registries (`ChipServices`, `Radio`, `Destinations`) | Done |
 | Entity seam: finding and moving people (`Traveller`) | Done |
+| Entity seam: seeing, spawning and hurting (`Bystander`, `EntitySpec`) | Done |
 | Block placing chips (bridge, door, flex set, set above/below) | Done |
 | Block swapping chips (toggle block, block replacer) | Done |
 | Harvesting and planting (harvester, planter, area planter) | Done |
 | Command driven switches, shift register, monoflop, trigger reader | Done |
 | Wireless bands (transmitter, receiver, analog transmitter) | Done |
 | Transporters and destinations | Done |
-| World-changing ICs (entities, messaging) | Not started |
+| Spawners, dispensers and the chest collector | Done |
+| Shooters, barrages and the fireball | Done |
+| Lightning, Zeus bolt and holy smite | Done |
+| Mob zapper and the two trap chips | Done |
+| Potion areas, particles and fireworks | Done |
+| World-changing ICs (messaging) | Not started |
 | Mechanics | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**854 tests passing**.
+**1062 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -82,6 +88,9 @@ either; each is read to learn what a mechanic does, then written fresh.
   The larger catalogue.
 
 Between them: 58 ICs in both, 73 upstream only, **64 only in this fork**, for a target of ~195.
+
+`E:\Code\Paper` holds a Paper source checkout. Read it to settle a question about server API
+behaviour rather than inferring one from a javadoc summary.
 
 ## Rules for this rewrite
 

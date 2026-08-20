@@ -2,6 +2,7 @@ package com.xeonproductions.craftbookultimate.core.ic;
 
 import com.xeonproductions.craftbookultimate.core.control.PasswordStore;
 import com.xeonproductions.craftbookultimate.core.control.Switchboard;
+import com.xeonproductions.craftbookultimate.core.effect.FireworkShows;
 import com.xeonproductions.craftbookultimate.core.radio.Radio;
 import com.xeonproductions.craftbookultimate.core.transport.Destinations;
 import org.jspecify.annotations.NullMarked;
@@ -25,6 +26,7 @@ import org.jspecify.annotations.NullMarked;
  * @param switchboard the switches anyone may throw by command
  * @param guardedSwitchboard the switches that take a password
  * @param passwords the passwords guarding those switches
+ * @param shows the firework displays the server has scripts for
  */
 @NullMarked
 public record ChipServices(
@@ -32,11 +34,17 @@ public record ChipServices(
         Destinations destinations,
         Switchboard switchboard,
         Switchboard guardedSwitchboard,
-        PasswordStore passwords) {
+        PasswordStore passwords,
+        FireworkShows shows) {
 
     /** A fresh set, with nothing transmitting, no destinations claimed and no switches known. */
     public static ChipServices create() {
         return new ChipServices(
-                new Radio(), new Destinations(), new Switchboard(), new Switchboard(), new PasswordStore());
+                new Radio(),
+                new Destinations(),
+                new Switchboard(),
+                new Switchboard(),
+                new PasswordStore(),
+                new FireworkShows());
     }
 }

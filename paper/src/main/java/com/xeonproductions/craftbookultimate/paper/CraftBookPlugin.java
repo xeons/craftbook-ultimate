@@ -7,6 +7,7 @@ import com.xeonproductions.craftbookultimate.paper.command.CatalogueCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
 import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
+import com.xeonproductions.craftbookultimate.paper.store.FireworkFiles;
 import com.xeonproductions.craftbookultimate.paper.store.PasswordFile;
 import com.xeonproductions.craftbookultimate.paper.listener.ICChunkListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICRedstoneListener;
@@ -43,6 +44,7 @@ public final class CraftBookPlugin extends JavaPlugin {
     private @Nullable RegionSchedulers schedulers;
     private @Nullable ICManager icManager;
     private @Nullable PasswordFile passwordFile;
+    private @Nullable FireworkFiles fireworkFiles;
     private @Nullable ChipServices services;
 
     /**
@@ -62,9 +64,11 @@ public final class CraftBookPlugin extends JavaPlugin {
         this.icManager = manager;
         this.services = chipServices;
         this.passwordFile = new PasswordFile(getDataPath());
+        this.fireworkFiles = new FireworkFiles(getDataPath());
 
         registerPermissions();
         loadPasswords();
+        loadFireworkShows();
         registerCommands(chipServices);
 
         getServer().getPluginManager().registerEvents(new ICSignListener(manager, regionSchedulers), this);
@@ -156,6 +160,23 @@ public final class CraftBookPlugin extends JavaPlugin {
             getComponentLogger().error(
                     Component.text("Could not read " + passwordFile.path() + "; guarded switches "
                             + "will not open until it is fixed"), e);
+        }
+    }
+
+    /** Reads the firework display scripts an operator has left in the plugin's folder. */
+    private void loadFireworkShows() {
+        if (fireworkFiles == null || services == null) {
+            return;
+        }
+        try {
+            int read = fireworkFiles.load(services.shows());
+            if (read > 0) {
+                getComponentLogger().info(Component.text("Read " + read + " firework displays"));
+            }
+        } catch (IOException e) {
+            getComponentLogger().error(
+                    Component.text("Could not read " + fireworkFiles.path() + "; no firework "
+                            + "display will play until it is fixed"), e);
         }
     }
 

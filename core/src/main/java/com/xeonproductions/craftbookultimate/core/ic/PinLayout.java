@@ -42,6 +42,18 @@ public enum PinLayout {
                     new PinOffset(0, 0, -1), new PinOffset(0, 1, 0)),
             List.of(new PinOffset(-2, 0, 0))),
 
+    /**
+     * Four inputs clustered in front of the sign, one output.
+     *
+     * <p>Every input is reachable from the block in front of the sign or from one touching it,
+     * which leaves the sides and the top clear. That suits the chips built into a floor or a
+     * ceiling, where there is only room to wire from one side.
+     */
+    UISO("UISO",
+            List.of(new PinOffset(1, 0, 0), new PinOffset(1, 1, 0),
+                    new PinOffset(1, -1, 0), new PinOffset(1, 0, -1)),
+            List.of(new PinOffset(-2, 0, 0))),
+
     /** Three inputs and no outputs, for chips whose effect is entirely on the world. */
     AIZO("AIZO",
             List.of(new PinOffset(1, 0, 0), new PinOffset(0, -1, 0), new PinOffset(0, 1, 0)),

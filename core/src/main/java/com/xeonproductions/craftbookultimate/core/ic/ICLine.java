@@ -55,6 +55,9 @@ public record ICLine(
         SHORTHAND
     }
 
+    /** Which line of a sign carries the identifier, counted from zero. */
+    public static final int LINE_INDEX = 1;
+
     /** Marks the self-triggering variant in a model suffix. */
     private static final char SELF_TRIGGER_FLAG = 'S';
 

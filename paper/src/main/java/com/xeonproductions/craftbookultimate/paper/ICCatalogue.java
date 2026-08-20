@@ -7,8 +7,15 @@ import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Arithmetic;
 import com.xeonproductions.craftbookultimate.core.ic.gate.BlockPlacers;
 import com.xeonproductions.craftbookultimate.core.ic.gate.BlockSwappers;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Combat;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Containers;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Control;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Effects;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Farming;
+import com.xeonproductions.craftbookultimate.core.ic.gate.FireworkDisplay;
+import com.xeonproductions.craftbookultimate.core.ic.gate.LightningChips;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Projectiles;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Spawners;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Latches;
 import com.xeonproductions.craftbookultimate.core.ic.gate.LogicGates;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
@@ -53,8 +60,194 @@ public final class ICCatalogue {
         registerControl(registry);
         registerWireless(registry);
         registerTransport(registry);
+        registerSpawners(registry);
+        registerContainers(registry);
+        registerProjectiles(registry);
+        registerLightning(registry);
+        registerCombat(registry);
+        registerEffects(registry);
 
         return registry;
+    }
+
+    private static void registerSpawners(ICRegistry registry) {
+        // MC1200 asked a player for the entity in chat and kept it outside the sign; MCX200 puts
+        // the same thing on the sign, so one implementation serves both and the sign is the record.
+        registry.register(ICDefinition.builder("MCX200", "ENTITY SPAWNER")
+                .name("Entity Spawner")
+                .description("Spawns creatures above itself.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .aliases("MC1200")
+                .logic(Spawners::entitySpawner)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX201", "ITEM SPAWNER")
+                .name("Item Spawner")
+                .description("Drops items above itself, out of nothing.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .aliases("MC1201")
+                .logic(Spawners::itemSpawner)
+                .build());
+    }
+
+    private static void registerContainers(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MCX202", "CHEST DISPENSER")
+                .name("Chest Dispenser")
+                .description("Drops items taken out of a nearby container.")
+                .layout(PinLayout.AISO)
+                .aliases("MC1202")
+                .logic(Containers::chestDispenser)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX203", "CHEST COLLECTOR")
+                .name("Chest Collector")
+                .description("Picks up dropped items and puts them in a nearby container.")
+                .layout(PinLayout.AISO)
+                .selfTriggeringModel("MCZ203")
+                .logic(Containers::chestCollector)
+                .build());
+    }
+
+    private static void registerProjectiles(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MC1240", "ARROW SHOOTER")
+                .name("Arrow Shooter")
+                .description("Shoots a single arrow out of the back of the sign.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .logic(Projectiles::arrowShooter)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1241", "ARROW BARRAGE")
+                .name("Arrow Barrage")
+                .description("Shoots five arrows out of the back of the sign.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .logic(Projectiles::arrowBarrage)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX242", "SNOW SHOOTER")
+                .name("Snow Shooter")
+                .description("Throws a single snowball.")
+                .restricted()
+                .logic(Projectiles::snowShooter)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX243", "SNOW BARRAGE")
+                .name("Snow Barrage")
+                .description("Throws five snowballs.")
+                .restricted()
+                .logic(Projectiles::snowBarrage)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX244", "EGG SHOOTER")
+                .name("Egg Shooter")
+                .description("Throws a single egg.")
+                .restricted()
+                .logic(Projectiles::eggShooter)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX245", "EGG BARRAGE")
+                .name("Egg Barrage")
+                .description("Throws five eggs.")
+                .restricted()
+                .logic(Projectiles::eggBarrage)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX246", "FIREBALL")
+                .name("Fireball")
+                .description("Launches a ghast fireball, aimed by the sign.")
+                .restricted()
+                .logic(Projectiles::fireballShooter)
+                .build());
+    }
+
+    private static void registerLightning(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MCX255", "LIGHTNING")
+                .name("Lightning")
+                .description("Strikes one place with lightning.")
+                .restricted()
+                .logic(LightningChips::lightning)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1203", "ZEUS BOLT")
+                .name("Zeus Bolt")
+                .description("Strikes an area with lightning, at a chance per block.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .logic(() -> LightningChips.zeusBolt(THREAD_LOCAL_RANDOM))
+                .build());
+
+        registry.register(ICDefinition.builder("MCX256", "HOLY SMITE")
+                .name("Holy Smite")
+                .description("Strikes everything within range with lightning.")
+                .restricted()
+                .selfTriggeringModel("MCZ256")
+                .logic(LightningChips::holySmite)
+                .build());
+    }
+
+    private static void registerCombat(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MCX130", "MOB ZAPPER")
+                .name("Mob Zapper")
+                .description("Removes creatures within range.")
+                .layout(PinLayout.SISO)
+                .restricted()
+                .selfTriggeringModel("MCZ130")
+                .logic(Combat::mobZapper)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX131", "HIT PLAYER ABV")
+                .name("Hit Player Above")
+                .description("Hurts players standing above it.")
+                .layout(PinLayout.UISO)
+                .restricted()
+                .selfTriggeringModel("MCU131")
+                .logic(Combat::hitPlayerAbove)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX132", "HIT MOB ABOVE")
+                .name("Hit Mob Above")
+                .description("Hurts creatures standing above it.")
+                .layout(PinLayout.UISO)
+                .restricted()
+                .selfTriggeringModel("MCU132")
+                .logic(Combat::hitMobAbove)
+                .build());
+    }
+
+    private static void registerEffects(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MCX146", "POTION AREA")
+                .name("Potion Area")
+                .description("Gives potion effects to whatever is in an area.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .selfTriggeringModel("MCU146")
+                .logic(Effects::potionArea)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX250", "PARTICLE")
+                .name("Particle")
+                .description("Shows a particle, optionally offset from the sign.")
+                .logic(Effects::particleEmitter)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1250", "FIREWORKS")
+                .name("Fireworks")
+                .description("Sets off a firework.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .logic(() -> Effects.fireworks(THREAD_LOCAL_RANDOM))
+                .build());
+
+        registry.register(ICDefinition.builder("MC1253", "FIREWORK")
+                .name("Programmable Firework Display")
+                .description("Plays a firework display from a script.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .logic(FireworkDisplay::display)
+                .build());
     }
 
     private static void registerBuffers(ICRegistry registry) {

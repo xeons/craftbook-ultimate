@@ -5,44 +5,12 @@ are in `CLAUDE.md`; bugs found in the legacy code are in `FINDINGS.md`.
 
 ## Integrated circuits
 
-**66 chips are registered, under 74 model numbers.** 51 of the extra fork's remain, plus 4
+**87 chips are registered, under 104 model numbers.** 27 of the extra fork's remain, plus 4
 dropped by decision.
 
 The legacy class named in each row is the one to read for behaviour, under
 `src/main/java/com/minecraftonline/` or `src/main/java/com/sk89q/craftbook/sponge/mechanics/ics/chips/`.
 Look every model number and shorthand up in `ICManager` before registering it; do not invent them.
-
-### Entities and projectiles
-
-Needs an entity seam in `ChipWorld` or alongside it: spawning, finding
-nearby entities, damaging them, and launching projectiles.
-
-| Model | Shorthand | Name | Legacy class | Layout |
-| --- | --- | --- | --- | --- |
-| `MC1200` | SPAWNER | Entity Spawner | `EntitySpawner` | AISO |
-| `MCX200` | ENTITY SPAWNER | Entity Spawner | `?` | 3ISO |
-| `MC1201` | DISPENSER | Item Dispenser | `ItemDispenser` | AISO |
-| `MCX201` | ITEM SPAWNER | Item Spawner | `ItemSpawner` | AISO |
-| `MC1202` | CONTAINER DISPENSER | Container Dispenser | `ContainerDispenser` | 3ISO |
-| `MCX202` | CHEST DISPENSER | Chest Dispenser | `ChestDispenser` | AISO |
-| `MCX203` | CHEST COLLECTOR | Chest Collector | `ChestCollector` | AISO |
-| `MC1240` | ARROW SHOOTER | Arrow Shooter | `ArrowShooter` | AISO |
-| `MC1241` | ARROW BARRAGE | Arrow Barrage | `ArrowBarrage` | AISO |
-| `MCX242` | SNOW SHOOTER | Snow Shooter | `SnowShooter` | 3ISO |
-| `MCX243` | SNOW BARRAGE | Snow Barrage | `SnowBarrage` | 3ISO |
-| `MCX244` | EGG SHOOTER | Egg Shooter | `EggShooter` | 3ISO |
-| `MCX245` | EGG BARRAGE | Egg Barrage | `EggBarrage` | 3ISO |
-| `MCX246` | FIREBALL | Fireball | `FireballShooter` | 3ISO |
-| `MC1203` | ZEUS BOLT | Zeus Bolt | `ZeusBolt` | AISO |
-| `MCX255` | LIGHTNING | Lightning | `Lightning` | 3ISO |
-| `MCX256` | HOLY SMITE | Holy Smite | `HolySmite` | 3ISO |
-| `MCX130` | MOB ZAPPER | Mob Zapper | `MobZapper` | SISO |
-| `MCX131` | HIT PLAYER ABV | Hit Player Above | `HitPlayerAbove` | UISO |
-| `MCX132` | HIT MOB ABOVE | Hit Mob Above | `HitMobAbove` | UISO |
-| `MC1250` | FIREWORKS | Fireworks | `Fireworks` | AISO |
-| `MC1253` | FIREWORK | Programmable Firework Display | `ProgrammableFireworksDisplay` | AISO |
-| `MCX146` | POTION AREA | Potion Area | `PotionArea` | AISO |
-| `MCX250` | PARTICLE | Particle | `ParticleEmitter` | 3ISO |
 
 ### Sensing players, mobs and items
 
@@ -149,9 +117,8 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 
 | Piece | Why it is needed |
 | --- | --- |
-| Entity seam | Spawning, damaging entities and launching projectiles. Blocks ~24 ICs. Finding and moving people exists already as `Traveller`, and finding and consuming dropped items as `DroppedItem`. |
 | Audience seam | Sending Adventure components to players near a chip. Blocks ~9 ICs, and the warning a destination should give when its name is already in use. |
-| Persistence | Only the switch passwords are saved, in `switch-passwords.txt`. Everything else a chip remembers is kept on its own sign or lost when its chunk unloads. |
+| Persistence | Only the switch passwords are saved, in `switch-passwords.txt`. Everything else a chip remembers is kept on its own sign or lost when its chunk unloads. The firework display scripts in `fireworks/` are read, never written. |
 | Configuration | Nothing is configurable. The legacy code had per-mechanic config with an enable flag. |
 | Commands | `/craftbook` reads the catalogue and the switch commands drive `MCX120` and `MCX121`, all through Brigadier. The per-mechanic commands come with their mechanics. |
 | Permissions | Every chip's permission is registered under `craftbook.ic.safe.*` or `craftbook.ic.restricted.*` and checked on creation. Nothing yet checks anything at run time. |
@@ -171,4 +138,7 @@ at all. Worth checking early, in roughly this order:
 6. A planter sows seeds thrown at it, and a harvester gathers the crop into a chest.
 7. `/craftbook ic list` reports the catalogue, and `/mcx120` throws a switch a chip follows.
 8. A password set with `/mcx121pass add` still works after a restart.
-9. Region behaviour on an actual Folia server.
+9. A spawner makes what its sign describes, riders and all, and a shooter fires out of its back.
+10. A potion area doses whoever walks through it without stripping what they had drunk.
+11. A firework script in `fireworks/` plays, pauses and stops when it should.
+12. Region behaviour on an actual Folia server.

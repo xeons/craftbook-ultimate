@@ -27,6 +27,9 @@ public final class SimpleBystander implements Bystander {
     private String name = "";
     private Traits traits = Traits.NONE;
     private Optional<Key> carried = Optional.empty();
+    private Optional<ItemView> held = Optional.empty();
+    private boolean visible = true;
+    private boolean tamed;
     private final Set<String> groups = new LinkedHashSet<>();
     private final List<Bystander> riders = new ArrayList<>();
     private final List<PotionDose> doses = new ArrayList<>();
@@ -86,6 +89,21 @@ public final class SimpleBystander implements Bystander {
     @Override
     public boolean isAnimal() {
         return animal;
+    }
+
+    @Override
+    public boolean isTamed() {
+        return tamed;
+    }
+
+    @Override
+    public Optional<ItemView> heldItem() {
+        return held;
+    }
+
+    @Override
+    public boolean isVisible() {
+        return visible;
     }
 
     @Override
@@ -185,6 +203,24 @@ public final class SimpleBystander implements Bystander {
     /** Gives it the properties a sign can ask about. */
     public SimpleBystander withTraits(Traits traits) {
         this.traits = traits;
+        return this;
+    }
+
+    /** Puts something in its hand. */
+    public SimpleBystander holding(ItemView item) {
+        this.held = Optional.of(item);
+        return this;
+    }
+
+    /** Hides it, as spectating or vanishing would. */
+    public SimpleBystander hidden() {
+        this.visible = false;
+        return this;
+    }
+
+    /** Marks it as tamed by somebody. */
+    public SimpleBystander tamed() {
+        this.tamed = true;
         return this;
     }
 

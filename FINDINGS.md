@@ -626,8 +626,9 @@ outright, which is how regeneration is reached and how the effects added since a
 `HitMobAbove.load` fell back to an anonymous matcher whose test was `entity instanceof Creature`.
 `Creature` there resolves to `DetailedEntityType.Creature`, a nested class of the matcher's own
 superclass, not to Sponge's `Creature` interface — and no entity is ever an instance of it.
-`DetailedEntityType.Creature.matches` has the same mistake. A chip left on its defaults hurt
-nothing.
+`DetailedEntityType.Creature.matches` has the same mistake, and `MobAbove.load` falls back to that
+very class, so that sensor reported nothing when its third line was blank. A chip left on its
+defaults hurt or saw nothing.
 
 `load` also called `Integer.parseInt(getLine(3))` unguarded, and left `detailedEntityType` null when
 parsing failed, so the next trigger threw.
@@ -638,8 +639,9 @@ zapper already defaulted to.
 ### 51. The zapper and the collector searched for entities off the server thread
 
 `MobZapper.onTrigger` and `ChestCollector.getAsyncAction` both ran their entity search through
-`scheduleAsyncBatch` and then hopped back to the main thread to act on the results. Finding 35
-records the same pattern in the planters. The list could be stale by the time it was used, and the
+`scheduleAsyncBatch` and then hopped back to the main thread to act on the results. `PlayerNear`
+and `MobNear` do the same, and `ItemNear` and `HeldItemNear` call the `Async` search variants from
+the ticking thread without leaving it. Finding 35 records the same pattern in the planters. The list could be stale by the time it was used, and the
 search itself read entity state from another thread.
 
 **Rewrite:** both search through the world seam, on the thread that owns the place they are
@@ -663,3 +665,78 @@ entity spawner, and matching against it needed a full entity write-out per candi
 
 **Rewrite:** one parser covers the whole grammar, and the extra data it can carry is used when
 spawning and ignored when matching. Only the spawner's sign can carry any, so nothing is lost.
+
+## Sensing players, mobs and items
+
+### 54. The item sensor took its range only when the range was impossible
+
+`ItemNear.load` read line 4 as:
+
+```java
+if (Integer.parseInt(line4) < 1 || Integer.parseInt(line4) > 30) {
+    range = Integer.parseInt(line4);
+}
+```
+
+The condition is inverted. A range inside the allowed one to thirty was parsed, found to be
+allowed, and thrown away, leaving the default of five; a range outside it was accepted and used.
+`create` checked the same line the right way round, so a sign could only ever be made with a range
+the chip would then ignore. `HeldItemNear.load`, which is otherwise the same class, has the check
+the right way round, which is how the mistake shows itself.
+
+**Rewrite:** the range on the sign is the range used, held between one and thirty.
+
+### 55. The area sensor searched a ball too small for the box it then filtered
+
+`InArea.onTrigger` narrowed the candidates with
+`getNearbyEntitiesInRadius(middle, max(range) / 2)` and then filtered them against a box whose
+half-extent on each axis was the full `range`. A ball of radius `max/2` does not reach the faces of
+that box, let alone its corners, so most of the area the sign asked for was never looked at. With
+the default reach of three the sign describes a seven-block-wide box and the chip searched a ball
+one and a half blocks across.
+
+The box was also hung off the corner of the sign's block rather than its middle, so it sat half a
+block out of true on two axes.
+
+**Rewrite:** the world is asked for a box directly, which is what the chip wanted, and the box is
+centred on the middle of the sign's block.
+
+### 56. The sparing mode of Humans Only removed the humans
+
+`HumansOnly.ExtraFilter` decides what to spare by testing `entity.getType()`:
+
+```java
+EntityType type = entity.getType();
+return !(type instanceof Humanoid) && !(type instanceof Minecart) && ...
+```
+
+An `EntityType` is a registry entry, not an entity, and is never an instance of either interface.
+Both tests are therefore constantly true, so the mode meant to spare *more* than the ordinary one
+spared *less*: it kept nothing back, players included. The ordinary mode filters on the entity
+itself and is correct.
+
+**Rewrite:** the sparing mode spares what somebody is using — minecarts and boats, thrown ender
+pearls, eyes of ender, fishing lines and tamed animals — and players are never removed in either
+mode.
+
+### 57. The item sensors accepted numeric item ids only
+
+`parseDetectionParameters` reads an `ID:` value as
+`String.valueOf(Integer.parseInt(value))`, so anything but a number throws and is reported as "ID
+and damage value must be integers". `ID:wool` was refused while `ID:35` was accepted. The resolved
+type was then taken with `.get()` on an `Optional`, so an id that named nothing threw
+`NoSuchElementException` out of a method whose contract is to throw `InvalidICException`.
+
+**Rewrite:** an item is named the same way as everywhere else in the plugin, by modern name or by
+the old number and damage, and a name that resolves to nothing leaves the sensor reporting nothing.
+
+### 58. Two sensors classified mobs from a list frozen at 1.12
+
+`MobNear` and `MobZapper` decide what counts as a mob or an animal by looking the entity's type up
+in `EntityParsingUtil.getMobs()` and `getAnimals()`, two hand-written sets. Anything added to the
+game after they were written is in neither, so a sensor set to watch for mobs ignores it entirely
+and a zapper set to clear them leaves it standing.
+
+**Rewrite:** the question goes to the game, which knows what it counts as hostile and what it
+counts as an animal, so a mob added by a later version is classified without anything here
+changing.

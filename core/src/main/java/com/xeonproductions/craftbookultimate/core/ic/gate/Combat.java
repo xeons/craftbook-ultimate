@@ -6,8 +6,11 @@ import com.xeonproductions.craftbookultimate.core.ic.ChipState;
 import com.xeonproductions.craftbookultimate.core.ic.SelfTriggeringICLogic;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
+import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -15,7 +18,7 @@ import org.jspecify.annotations.NullMarked;
  *
  * <p>Two of them work on the first place above their own support that something could stand, which
  * is what makes a trap: put the chip under the floor and whoever walks over it is in range. The
- * third works on a radius and is used to keep an area clear.
+ * other two work on a radius and are used to keep an area clear.
  *
  * <p>Line 3 says what to act on, in the same spelling the spawner uses, and line 4 says how hard or
  * how far. All three are restricted.
@@ -40,6 +43,30 @@ public final class Combat {
 
     /** The hardest a trap chip may hit, which is more than enough to kill anything. */
     private static final int MAX_DAMAGE = 1000;
+
+    /** How far a sweeper reaches when its sign does not say. */
+    private static final int DEFAULT_SWEEP_RANGE = 5;
+
+    /**
+     * What a sweeper spares in its sparing mode, beyond the players it always spares.
+     *
+     * <p>The things somebody is using rather than the things wandering past: what they are riding,
+     * what they have thrown, and the line they are fishing with.
+     */
+    private static final Set<Key> SPARED_WHEN_SPARING =
+            Set.of(
+                    Blocks.key("minecart"),
+                    Blocks.key("chest_minecart"),
+                    Blocks.key("furnace_minecart"),
+                    Blocks.key("tnt_minecart"),
+                    Blocks.key("hopper_minecart"),
+                    Blocks.key("spawner_minecart"),
+                    Blocks.key("command_block_minecart"),
+                    Blocks.key("boat"),
+                    Blocks.key("chest_boat"),
+                    Blocks.key("ender_pearl"),
+                    Blocks.key("eye_of_ender"),
+                    Blocks.key("fishing_bobber"));
 
     /**
      * How far from the middle of a block a trap chip looks.
@@ -81,6 +108,67 @@ public final class Combat {
      */
     public static SelfTriggeringICLogic hitMobAbove() {
         return new Trap(new EntitySpec.Category(EntitySpec.Group.MONSTERS), false);
+    }
+
+    /**
+     * Removes everything that is not a player from a radius.
+     *
+     * <p>Line 4 is how far to reach, which defaults to five blocks. Line 3 is unused.
+     *
+     * <p>Writing {@code -} after the model reference spares the things somebody is using rather
+     * than the things wandering past: minecarts and boats, thrown ender pearls, eyes of ender,
+     * fishing lines, and any animal that has been tamed.
+     *
+     * <p>The output reports whether anything was removed.
+     */
+    public static SelfTriggeringICLogic humansOnly() {
+        return new Sweeper();
+    }
+
+    /** Clears everything but people out of a radius, on a pulse or on every tick. */
+    private static final class Sweeper implements SelfTriggeringICLogic {
+
+        /** The mode letter that turns the sparing on. */
+        private static final char SPARING = '-';
+
+        @Override
+        public void trigger(ChipState state) {
+            if (state.isAnyInputActive()) {
+                sweep(state);
+            }
+        }
+
+        @Override
+        public void tick(ChipState state) {
+            sweep(state);
+        }
+
+        private static void sweep(ChipState state) {
+            int range = boundedNumber(
+                    state.sign().trimmedText(AMOUNT_LINE), 1, MAX_ZAP_RANGE, DEFAULT_SWEEP_RANGE);
+            boolean sparing = isSparing(state);
+
+            boolean removed = false;
+            Vec3d centre = Vec3d.centreOf(state.signPosition());
+            for (Bystander bystander : state.world().bystandersNear(centre, range)) {
+                if (bystander.isPlayer() || (sparing && isSpared(bystander))) {
+                    continue;
+                }
+                if (bystander.remove()) {
+                    removed = true;
+                }
+            }
+            state.setMainOutput(removed);
+        }
+
+        private static boolean isSparing(ChipState state) {
+            String mode = state.modeText();
+            return !mode.isEmpty() && mode.charAt(mode.length() - 1) == SPARING;
+        }
+
+        private static boolean isSpared(Bystander bystander) {
+            return bystander.isTamed() || SPARED_WHEN_SPARING.contains(bystander.type());
+        }
     }
 
     /** Clears creatures out of a radius, on a pulse or on every tick. */

@@ -90,14 +90,21 @@ public sealed interface EntitySpec {
             return switch (group) {
                 case MONSTERS -> bystander.isMonster();
                 case ANIMALS -> bystander.isAnimal();
+                case CREATURES -> bystander.isMonster() || bystander.isAnimal();
             };
         }
     }
 
-    /** The two groups a sign can name wholesale. */
+    /**
+     * The groups a sign can name wholesale.
+     *
+     * <p>{@link #CREATURES} covers both of the others. No word on a sign selects it — it is what a
+     * chip means when its sign says nothing and it watches for anything alive.
+     */
     enum Group {
         MONSTERS,
-        ANIMALS
+        ANIMALS,
+        CREATURES
     }
 
     /**

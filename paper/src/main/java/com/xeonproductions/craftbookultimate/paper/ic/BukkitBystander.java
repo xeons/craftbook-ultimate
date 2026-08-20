@@ -1,6 +1,7 @@
 package com.xeonproductions.craftbookultimate.paper.ic;
 
 import com.xeonproductions.craftbookultimate.core.entity.Bystander;
+import com.xeonproductions.craftbookultimate.core.entity.ItemView;
 import com.xeonproductions.craftbookultimate.core.entity.PotionDose;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Registry;
 import org.bukkit.damage.DamageSource;
@@ -15,12 +17,18 @@ import org.bukkit.damage.DamageType;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Pig;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
+import org.bukkit.entity.Tameable;
+import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.metadata.MetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jspecify.annotations.NullMarked;
@@ -37,6 +45,14 @@ public record BukkitBystander(Entity entity) implements Bystander {
 
     /** The permission node a player's group membership is read from. */
     private static final String GROUP_PREFIX = "group.";
+
+    /**
+     * The metadata key the vanish plugins agree on.
+     *
+     * <p>Hiding a player is not something the server itself does, so the only way to know is to
+     * read what whichever plugin did it left behind. Every one of them sets this.
+     */
+    private static final String VANISHED = "vanished";
 
     @Override
     public Key type() {
@@ -66,6 +82,69 @@ public record BukkitBystander(Entity entity) implements Bystander {
     @Override
     public boolean isAnimal() {
         return entity instanceof Animals;
+    }
+
+    @Override
+    public boolean isTamed() {
+        return entity instanceof Tameable tameable && tameable.isTamed();
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isVisible() {
+        if (entity instanceof Player player && player.getGameMode() == GameMode.SPECTATOR) {
+            return false;
+        }
+        // The metadata flag is deprecated and is still the one every vanish plugin sets, so it is
+        // what there is to read.
+        for (MetadataValue value : entity.getMetadata(VANISHED)) {
+            if (value.asBoolean()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public Optional<ItemView> heldItem() {
+        if (!(entity instanceof LivingEntity living)) {
+            return Optional.empty();
+        }
+        EntityEquipment equipment = living.getEquipment();
+        if (equipment == null) {
+            return Optional.empty();
+        }
+        return viewOf(equipment.getItemInMainHand());
+    }
+
+    /**
+     * What a stack looks like to a chip.
+     *
+     * @return the stack, or empty if there is nothing there
+     */
+    static Optional<ItemView> viewOf(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Optional<String> displayName = Optional.empty();
+        List<String> lore = List.of();
+        ItemMeta meta = stack.hasItemMeta() ? stack.getItemMeta() : null;
+        if (meta != null) {
+            if (meta.hasDisplayName() && meta.displayName() != null) {
+                displayName = Optional.of(
+                        PlainTextComponentSerializer.plainText().serialize(meta.displayName()));
+            }
+            if (meta.hasLore() && meta.lore() != null) {
+                List<String> lines = new ArrayList<>();
+                for (Component line : meta.lore()) {
+                    lines.add(PlainTextComponentSerializer.plainText().serialize(line));
+                }
+                lore = lines;
+            }
+        }
+
+        return Optional.of(new ItemView(stack.getType().getKey(), stack.getAmount(), displayName, lore));
     }
 
     @Override

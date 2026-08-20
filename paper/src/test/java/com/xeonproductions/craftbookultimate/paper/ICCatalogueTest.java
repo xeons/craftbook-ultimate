@@ -44,6 +44,10 @@ class ICCatalogueTest {
         "[MCX255]", "[MC1203]", "[MCX256]", "[MCZ256]",
         "[MCX130]", "[MCZ130]", "[MCX131]", "[MCU131]", "[MCX132]", "[MCU132]",
         "[MCX146]", "[MCU146]", "[MCX250]", "[MC1250]", "[MC1253]",
+        "[MCM116]", "[MCO116]", "[MCX116]", "[MCZ116]", "[MCX117]", "[MCZ117]",
+        "[MCX118]", "[MCZ118]", "[MCX119]", "[MCZ119]",
+        "[MCX133]", "[MCZ133]", "[MCX138]", "[MCZ138]", "[MCX139]", "[MCZ139]",
+        "[MCX140]", "[MCU140]", "[MC1500]", "[MC0500]",
     })
     void resolvesEveryRegisteredModelNumber(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -72,6 +76,8 @@ class ICCatalogueTest {
         "=LIGHTNING", "=ZEUS BOLT", "=HOLY SMITE",
         "=MOB ZAPPER", "=HIT PLAYER ABV", "=HIT MOB ABOVE",
         "=POTION AREA", "=PARTICLE", "=FIREWORKS", "=FIREWORK",
+        "=MOB ABOVE?", "=PLAYER ABOVE?", "=PLAYER BELOW?", "=PLAYER NEAR?", "=MOB NEAR?",
+        "=HUMANS ONLY", "=ITEM NEAR?", "=HELD ITEM NEAR?", "=IN AREA", "=PLAYER ONLINE?",
     })
     void resolvesEveryRegisteredShorthand(String signLine) {
         assertThat(REGISTRY.resolve(signLine)).isPresent();
@@ -89,6 +95,8 @@ class ICCatalogueTest {
         "MC6543, AISO",
         "MCX131, UISO",
         "MCX130, SISO",
+        "MCX133, SISO",
+        "MCX140, UISO",
     })
     void wiresEachChipForItsDocumentedLayout(String model, String layoutCode) {
         ICDefinition definition = REGISTRY.byModel(model).orElseThrow();

@@ -160,6 +160,18 @@ public interface ChipWorld {
     List<Bystander> bystandersNear(Vec3d centre, double radius);
 
     /**
+     * The creatures inside a box.
+     *
+     * <p>The sensors that watch a doorway or a corridor want a box rather than a ball: they are
+     * given a width, a height and a depth, and something standing in the corner of that area
+     * counts as much as something standing in the middle.
+     *
+     * @param min the lowest corner
+     * @param max the highest corner
+     */
+    List<Bystander> bystandersIn(Vec3d min, Vec3d max);
+
+    /**
      * Shows a particle to everyone who can see the place.
      *
      * @param at where it appears
@@ -328,6 +340,25 @@ public interface ChipWorld {
             Vec3i candidate = new Vec3i(start.x(), y, start.z());
             if (isPassable(candidate)) {
                 return Optional.of(candidate);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * The first place at or above a position where somebody could stand.
+     *
+     * <p>Two blocks of room rather than one, because that is what a player takes up. Chips that
+     * sense people measure from here, so a sensor under a floor watches the floor rather than the
+     * inside of it.
+     *
+     * @return the position, or empty if there is nowhere with room up to the top of the world
+     */
+    default Optional<Vec3i> firstStandingSpotAtOrAbove(Vec3i start) {
+        for (int y = start.y(); y < maxHeight() - 1; y++) {
+            Vec3i feet = new Vec3i(start.x(), y, start.z());
+            if (isPassable(feet) && isPassable(feet.add(0, 1, 0))) {
+                return Optional.of(feet);
             }
         }
         return Optional.empty();

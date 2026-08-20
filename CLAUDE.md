@@ -8,8 +8,8 @@ A ground-up rewrite of CraftBook for **Paper 26.x** on **Java 25**, in the names
 **Phase: chips run in game. Writing a recognised model reference on a wall sign creates a
 working chip that responds to redstone and to the passage of time, places and swaps blocks, farms,
 drives wireless bands, moves people between named pads, follows switches thrown by command, and
-spawns, shoots at, hurts and doses what stands near it. The chips that talk to players, the ones
-that show weather illusions or play music, and the mechanics have not been started.**
+spawns, shoots at, hurts, doses and senses what stands near it. The chips that talk to players, the
+ones that show weather illusions or play music, and the mechanics have not been started.**
 
 | Area | State |
 | --- | --- |
@@ -24,7 +24,7 @@ that show weather illusions or play music, and the mechanics have not been start
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (87 chips) | Done |
+| IC catalogue wiring (97 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
@@ -50,11 +50,12 @@ that show weather illusions or play music, and the mechanics have not been start
 | Lightning, Zeus bolt and holy smite | Done |
 | Mob zapper and the two trap chips | Done |
 | Potion areas, particles and fireworks | Done |
+| Sensing people, creatures and items | Done |
 | World-changing ICs (messaging) | Not started |
 | Mechanics | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1062 tests passing**.
+**1161 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 

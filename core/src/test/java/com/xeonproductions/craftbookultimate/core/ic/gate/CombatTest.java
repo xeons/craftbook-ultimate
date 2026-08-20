@@ -110,6 +110,97 @@ class CombatTest {
     }
 
     @Nested
+    @DisplayName("humans only")
+    class HumansOnly {
+
+        private SimpleChipState sweeper(String mode, String range) {
+            return SimpleChipState.forLayout(PinLayout.SISO)
+                    .at(SIGN, BlockFace.SOUTH)
+                    .world(world)
+                    .sign("SWEEP", "[MCX133]" + mode, "", range)
+                    .inputs(true)
+                    .build();
+        }
+
+        @Test
+        void removesEverythingThatIsNotAPlayer() {
+            SimpleBystander zombie = SimpleBystander.monster("zombie").at(new Vec3d(1, 64, 0));
+            SimpleBystander cow = SimpleBystander.animal("cow").at(new Vec3d(1, 64, 0));
+            SimpleBystander walker = SimpleBystander.player("Notch").at(new Vec3d(1, 64, 0));
+            world.withBystander(zombie).withBystander(cow).withBystander(walker);
+
+            Combat.humansOnly().trigger(sweeper("", ""));
+
+            assertThat(zombie.isPresent()).isFalse();
+            assertThat(cow.isPresent()).isFalse();
+            assertThat(walker.isPresent()).isTrue();
+        }
+
+        @Test
+        void reportsWhetherItRemovedAnything() {
+            world.withBystander(SimpleBystander.monster("zombie").at(new Vec3d(1, 64, 0)));
+            SimpleChipState state = sweeper("", "");
+
+            Combat.humansOnly().trigger(state);
+
+            assertThat(state.output(0)).isTrue();
+        }
+
+        @Test
+        void saysSoWhenThereWasNothingToRemove() {
+            SimpleChipState state = sweeper("", "");
+
+            Combat.humansOnly().trigger(state);
+
+            assertThat(state.output(0)).isFalse();
+        }
+
+        @Test
+        void sparesWhatSomebodyIsUsingWhenAskedTo() {
+            SimpleBystander cart = SimpleBystander.of("minecart").at(new Vec3d(1, 64, 0)).asObject();
+            SimpleBystander pearl = SimpleBystander.of("ender_pearl").at(new Vec3d(1, 64, 0)).asObject();
+            world.withBystander(cart).withBystander(pearl);
+
+            Combat.humansOnly().trigger(sweeper("-", ""));
+
+            assertThat(cart.isPresent()).isTrue();
+            assertThat(pearl.isPresent()).isTrue();
+        }
+
+        @Test
+        void takesAMinecartWhenItWasNotAskedToSpareOne() {
+            SimpleBystander cart = SimpleBystander.of("minecart").at(new Vec3d(1, 64, 0)).asObject();
+            world.withBystander(cart);
+
+            Combat.humansOnly().trigger(sweeper("", ""));
+
+            assertThat(cart.isPresent()).isFalse();
+        }
+
+        @Test
+        void sparesATamedAnimalWhenAskedTo() {
+            SimpleBystander pet = SimpleBystander.animal("wolf").at(new Vec3d(1, 64, 0)).tamed();
+            SimpleBystander wild = SimpleBystander.animal("wolf").at(new Vec3d(1, 64, 0));
+            world.withBystander(pet).withBystander(wild);
+
+            Combat.humansOnly().trigger(sweeper("-", ""));
+
+            assertThat(pet.isPresent()).isTrue();
+            assertThat(wild.isPresent()).isFalse();
+        }
+
+        @Test
+        void leavesAnythingBeyondItsRange() {
+            SimpleBystander far = SimpleBystander.monster("zombie").at(new Vec3d(30, 64, 0));
+            world.withBystander(far);
+
+            Combat.humansOnly().trigger(sweeper("", "5"));
+
+            assertThat(far.isPresent()).isTrue();
+        }
+    }
+
+    @Nested
     @DisplayName("hit player above")
     class HitPlayerAbove {
 

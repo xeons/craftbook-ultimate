@@ -5,27 +5,12 @@ are in `CLAUDE.md`; bugs found in the legacy code are in `FINDINGS.md`.
 
 ## Integrated circuits
 
-**87 chips are registered, under 104 model numbers.** 27 of the extra fork's remain, plus 4
+**97 chips are registered, under 124 model numbers.** 17 of the extra fork's remain, plus 4
 dropped by decision.
 
 The legacy class named in each row is the one to read for behaviour, under
 `src/main/java/com/minecraftonline/` or `src/main/java/com/sk89q/craftbook/sponge/mechanics/ics/chips/`.
 Look every model number and shorthand up in `ICManager` before registering it; do not invent them.
-
-### Sensing players, mobs and items
-
-| Model | Shorthand | Name | Legacy class | Layout |
-| --- | --- | --- | --- | --- |
-| `MCM116` | MOB ABOVE? | Mob Above | `MobAbove` | 3ISO |
-| `MCX116` | PLAYER ABOVE? | Player Above | `PlayerAbove` | 3ISO |
-| `MCX117` | PLAYER BELOW? | Player Below | `PlayerBelow` | 3ISO |
-| `MCX118` | PLAYER NEAR? | Player Near | `PlayerNear` | 3ISO |
-| `MCX119` | MOB NEAR? | Mob Near | `MobNear` | 3ISO |
-| `MCX133` | HELD ITEM NEAR? | Held Item Near | `HeldItemNear` | MCX133 |
-| `MCX138` | ITEM NEAR? | Item Near | `ItemNear` | 3ISO |
-| `MCX139` | HELD ITEM NEAR? | Held Item Near | `HeldItemNear` | MCX133 |
-| `MCX140` | IN AREA | In Area | `InArea` | UISO |
-| `MC1500` | PLAYER ONLINE? | Player Online? | `PlayerOnline` | 3ISO |
 
 ### Messaging and logging
 
@@ -117,7 +102,7 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 
 | Piece | Why it is needed |
 | --- | --- |
-| Audience seam | Sending Adventure components to players near a chip. Blocks ~9 ICs, and the warning a destination should give when its name is already in use. |
+| Audience seam | Sending Adventure components to players near a chip. Blocks the 9 messaging ICs, and the warning a destination should give when its name is already in use. |
 | Persistence | Only the switch passwords are saved, in `switch-passwords.txt`. Everything else a chip remembers is kept on its own sign or lost when its chunk unloads. The firework display scripts in `fireworks/` are read, never written. |
 | Configuration | Nothing is configurable. The legacy code had per-mechanic config with an enable flag. |
 | Commands | `/craftbook` reads the catalogue and the switch commands drive `MCX120` and `MCX121`, all through Brigadier. The per-mechanic commands come with their mechanics. |
@@ -141,4 +126,5 @@ at all. Worth checking early, in roughly this order:
 9. A spawner makes what its sign describes, riders and all, and a shooter fires out of its back.
 10. A potion area doses whoever walks through it without stripping what they had drunk.
 11. A firework script in `fireworks/` plays, pauses and stops when it should.
-12. Region behaviour on an actual Folia server.
+12. A sensor under a floor reports whoever walks over it, and ignores a vanished player.
+13. Region behaviour on an actual Folia server.

@@ -1,6 +1,8 @@
 package com.xeonproductions.craftbookultimate.core.entity;
 
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
+import java.util.List;
+import java.util.Optional;
 import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
 
@@ -13,6 +15,8 @@ public final class SimpleDroppedItem implements DroppedItem {
 
     private final Key type;
     private int count;
+    private Optional<String> displayName = Optional.empty();
+    private List<String> lore = List.of();
 
     public SimpleDroppedItem(Key type, int count) {
         this.type = type;
@@ -25,13 +29,8 @@ public final class SimpleDroppedItem implements DroppedItem {
     }
 
     @Override
-    public Key type() {
-        return type;
-    }
-
-    @Override
-    public int count() {
-        return count;
+    public ItemView stack() {
+        return new ItemView(type, count, displayName, lore);
     }
 
     @Override
@@ -44,6 +43,18 @@ public final class SimpleDroppedItem implements DroppedItem {
     @Override
     public boolean isPresent() {
         return count > 0;
+    }
+
+    /** Gives the stack a name, as an anvil would. */
+    public SimpleDroppedItem named(String displayName) {
+        this.displayName = Optional.of(displayName);
+        return this;
+    }
+
+    /** Writes lines on the stack. */
+    public SimpleDroppedItem withLore(String... lines) {
+        this.lore = List.of(lines);
+        return this;
     }
 
     @Override

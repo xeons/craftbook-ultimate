@@ -7,16 +7,24 @@ import org.jspecify.annotations.NullMarked;
  * A stack of items lying on the ground.
  *
  * <p>The planting chips work from these: they watch for seeds and saplings dropped nearby and
- * put them in the earth one at a time, so a farm can be fed by throwing a stack at it.
+ * put them in the earth one at a time, so a farm can be fed by throwing a stack at it. The
+ * collector and the item sensor read them too.
  */
 @NullMarked
 public interface DroppedItem {
 
+    /** What is lying there. */
+    ItemView stack();
+
     /** What kind of item this is. */
-    Key type();
+    default Key type() {
+        return stack().type();
+    }
 
     /** How many are in the stack. */
-    int count();
+    default int count() {
+        return stack().count();
+    }
 
     /**
      * Takes some out of the stack, removing it entirely when nothing is left.

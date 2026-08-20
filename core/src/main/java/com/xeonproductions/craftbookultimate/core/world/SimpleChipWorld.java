@@ -192,6 +192,21 @@ public final class SimpleChipWorld implements ChipWorld {
     }
 
     @Override
+    public List<Bystander> bystandersIn(Vec3d min, Vec3d max) {
+        List<Bystander> found = new ArrayList<>();
+        for (Bystander bystander : bystanders) {
+            Vec3d at = bystander.position();
+            if (bystander.isPresent()
+                    && at.x() >= min.x() && at.x() <= max.x()
+                    && at.y() >= min.y() && at.y() <= max.y()
+                    && at.z() >= min.z() && at.z() <= max.z()) {
+                found.add(bystander);
+            }
+        }
+        return found;
+    }
+
+    @Override
     public boolean showParticle(Vec3d at, Key particle, Optional<Key> block) {
         particles.add(new Particle(at, particle, block));
         return true;

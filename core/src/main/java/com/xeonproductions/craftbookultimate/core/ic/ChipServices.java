@@ -3,6 +3,8 @@ package com.xeonproductions.craftbookultimate.core.ic;
 import com.xeonproductions.craftbookultimate.core.control.PasswordStore;
 import com.xeonproductions.craftbookultimate.core.control.Switchboard;
 import com.xeonproductions.craftbookultimate.core.effect.FireworkShows;
+import com.xeonproductions.craftbookultimate.core.entity.Roster;
+import com.xeonproductions.craftbookultimate.core.entity.SimpleRoster;
 import com.xeonproductions.craftbookultimate.core.radio.Radio;
 import com.xeonproductions.craftbookultimate.core.transport.Destinations;
 import org.jspecify.annotations.NullMarked;
@@ -27,6 +29,7 @@ import org.jspecify.annotations.NullMarked;
  * @param guardedSwitchboard the switches that take a password
  * @param passwords the passwords guarding those switches
  * @param shows the firework displays the server has scripts for
+ * @param roster who is on the server
  */
 @NullMarked
 public record ChipServices(
@@ -35,16 +38,23 @@ public record ChipServices(
         Switchboard switchboard,
         Switchboard guardedSwitchboard,
         PasswordStore passwords,
-        FireworkShows shows) {
+        FireworkShows shows,
+        Roster roster) {
 
     /** A fresh set, with nothing transmitting, no destinations claimed and no switches known. */
     public static ChipServices create() {
+        return create(SimpleRoster.empty());
+    }
+
+    /** A fresh set reading a particular roster, which is how the plugin supplies the real one. */
+    public static ChipServices create(Roster roster) {
         return new ChipServices(
                 new Radio(),
                 new Destinations(),
                 new Switchboard(),
                 new Switchboard(),
                 new PasswordStore(),
-                new FireworkShows());
+                new FireworkShows(),
+                roster);
     }
 }

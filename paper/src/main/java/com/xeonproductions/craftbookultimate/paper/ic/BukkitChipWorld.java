@@ -48,6 +48,7 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.FireworkMeta;
+import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 import org.jspecify.annotations.NullMarked;
 
@@ -292,6 +293,16 @@ public record BukkitChipWorld(World world) implements ChipWorld {
                         <= radius * radius)
                 .<Bystander>map(BukkitBystander::new)
                 .toList();
+    }
+
+    @Override
+    public List<Bystander> bystandersIn(Vec3d min, Vec3d max) {
+        BoundingBox box = BoundingBox.of(
+                new Vector(min.x(), min.y(), min.z()), new Vector(max.x(), max.y(), max.z()));
+        if (!isLoaded(min.toBlock()) || !isLoaded(max.toBlock())) {
+            return List.of();
+        }
+        return world.getNearbyEntities(box).stream().<Bystander>map(BukkitBystander::new).toList();
     }
 
     @Override

@@ -47,6 +47,9 @@ public interface Bystander {
     /** Whether the game counts it as an animal. */
     boolean isAnimal();
 
+    /** Whether somebody has tamed it. False for anything that cannot be tamed. */
+    boolean isTamed();
+
     /** What it is called. For a player this is their account name. */
     String name();
 
@@ -62,6 +65,21 @@ public interface Bystander {
 
     /** What a dropped stack holds, empty for anything that is not one. */
     Optional<Key> carriedItem();
+
+    /**
+     * What it is holding in its main hand, empty for anything holding nothing.
+     *
+     * <p>Only players and the mobs that can hold things ever have one.
+     */
+    Optional<ItemView> heldItem();
+
+    /**
+     * Whether it is really there to be sensed.
+     *
+     * <p>A player in spectator mode is walking through walls and a vanished one is not meant to be
+     * seen at all, so neither should set off a sensor they pass. Everything else is visible.
+     */
+    boolean isVisible();
 
     /** The things riding on it. */
     List<Bystander> riders();

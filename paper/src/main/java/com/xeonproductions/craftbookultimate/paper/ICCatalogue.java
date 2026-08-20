@@ -19,6 +19,7 @@ import com.xeonproductions.craftbookultimate.core.ic.gate.Spawners;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Latches;
 import com.xeonproductions.craftbookultimate.core.ic.gate.LogicGates;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Sensing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensors;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Transport;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Wireless;
@@ -66,8 +67,78 @@ public final class ICCatalogue {
         registerLightning(registry);
         registerCombat(registry);
         registerEffects(registry);
+        registerSensing(registry);
 
         return registry;
+    }
+
+    private static void registerSensing(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MCM116", "MOB ABOVE?")
+                .name("Mob Above")
+                .description("Outputs high while a creature is standing above the sign's support.")
+                .selfTriggeringModel("MCO116")
+                .logic(Sensing::mobAbove)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX116", "PLAYER ABOVE?")
+                .name("Player Above")
+                .description("Outputs high while a player is standing above the sign's support.")
+                .selfTriggeringModel("MCZ116")
+                .logic(Sensing::playerAbove)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX117", "PLAYER BELOW?")
+                .name("Player Below")
+                .description("Outputs high while a player is standing below the sign's support.")
+                .selfTriggeringModel("MCZ117")
+                .logic(Sensing::playerBelow)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX118", "PLAYER NEAR?")
+                .name("Player Near")
+                .description("Outputs high while a player is within range.")
+                .selfTriggeringModel("MCZ118")
+                .logic(Sensing::playerNear)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX119", "MOB NEAR?")
+                .name("Mob Near")
+                .description("Outputs high while a creature is within range.")
+                .selfTriggeringModel("MCZ119")
+                .logic(Sensing::mobNear)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX138", "ITEM NEAR?")
+                .name("Item Near")
+                .description("Outputs high while a matching stack is lying within range.")
+                .restricted()
+                .selfTriggeringModel("MCZ138")
+                .logic(Sensing::itemNear)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX139", "HELD ITEM NEAR?")
+                .name("Held Item Near")
+                .description("Outputs high while a player within range is holding a matching item.")
+                .restricted()
+                .selfTriggeringModel("MCZ139")
+                .logic(Sensing::heldItemNear)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX140", "IN AREA")
+                .name("In Area")
+                .description("Outputs high while something is inside a box measured from the sign.")
+                .layout(PinLayout.UISO)
+                .restricted()
+                .selfTriggeringModel("MCU140")
+                .logic(Sensing::inArea)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1500", "PLAYER ONLINE?")
+                .name("Player Online")
+                .description("Outputs high while a named player is logged in.")
+                .selfTriggeringModel("MC0500")
+                .logic(Sensing::playerOnline)
+                .build());
     }
 
     private static void registerSpawners(ICRegistry registry) {
@@ -196,6 +267,15 @@ public final class ICCatalogue {
                 .restricted()
                 .selfTriggeringModel("MCZ130")
                 .logic(Combat::mobZapper)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX133", "HUMANS ONLY")
+                .name("Humans Only")
+                .description("Removes everything but players from within range.")
+                .layout(PinLayout.SISO)
+                .restricted()
+                .selfTriggeringModel("MCZ133")
+                .logic(Combat::humansOnly)
                 .build());
 
         registry.register(ICDefinition.builder("MCX131", "HIT PLAYER ABV")

@@ -1,7 +1,7 @@
 package com.xeonproductions.craftbookultimate.paper.ic;
 
 import com.xeonproductions.craftbookultimate.core.entity.DroppedItem;
-import net.kyori.adventure.key.Key;
+import com.xeonproductions.craftbookultimate.core.entity.ItemView;
 import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.jspecify.annotations.NullMarked;
@@ -16,13 +16,12 @@ import org.jspecify.annotations.NullMarked;
 public record BukkitDroppedItem(Item entity) implements DroppedItem {
 
     @Override
-    public Key type() {
-        return entity.getItemStack().getType().getKey();
-    }
-
-    @Override
-    public int count() {
-        return isPresent() ? entity.getItemStack().getAmount() : 0;
+    public ItemView stack() {
+        if (!isPresent()) {
+            return ItemView.of(entity.getItemStack().getType().getKey(), 0);
+        }
+        return BukkitBystander.viewOf(entity.getItemStack())
+                .orElseGet(() -> ItemView.of(entity.getItemStack().getType().getKey(), 0));
     }
 
     @Override

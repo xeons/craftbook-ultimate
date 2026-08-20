@@ -6,6 +6,7 @@ import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.paper.command.CatalogueCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
 import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
+import com.xeonproductions.craftbookultimate.paper.ic.BukkitRoster;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.store.FireworkFiles;
 import com.xeonproductions.craftbookultimate.paper.store.PasswordFile;
@@ -57,7 +58,7 @@ public final class CraftBookPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         RegionSchedulers regionSchedulers = new RegionSchedulers(this);
-        ChipServices chipServices = ChipServices.create();
+        ChipServices chipServices = ChipServices.create(new BukkitRoster(getServer()));
         ICManager manager = new ICManager(icRegistry, regionSchedulers, chipServices);
 
         this.schedulers = regionSchedulers;

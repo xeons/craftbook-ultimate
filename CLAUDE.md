@@ -7,9 +7,10 @@ A ground-up rewrite of CraftBook for **Paper 26.x** on **Java 25**, in the names
 
 **Phase: chips run in game. Writing a recognised model reference on a wall sign creates a
 working chip that responds to redstone and to the passage of time, places and swaps blocks, farms,
-drives wireless bands, moves people between named pads, follows switches thrown by command, and
-spawns, shoots at, hurts, doses and senses what stands near it. The chips that talk to players, the
-ones that show weather illusions or play music, and the mechanics have not been started.**
+drives wireless bands, moves people between named pads, follows switches thrown by command,
+spawns, shoots at, hurts, doses and senses what stands near it, and speaks to whoever is near, to
+one player anywhere, to the whole server or to the log. The chips that show weather illusions or
+play music, and the mechanics other than the minecart ones, have not been started.**
 
 | Area | State |
 | --- | --- |
@@ -24,7 +25,7 @@ ones that show weather illusions or play music, and the mechanics have not been 
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (97 chips) | Done |
+| IC catalogue wiring (106 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
@@ -51,12 +52,12 @@ ones that show weather illusions or play music, and the mechanics have not been 
 | Mob zapper and the two trap chips | Done |
 | Potion areas, particles and fireworks | Done |
 | Sensing people, creatures and items | Done |
-| World-changing ICs (messaging) | Not started |
+| Messaging, logging and the two marquees | Done |
 | Minecart mechanics (13 on the rails, plus the dispenser) | Done |
 | Mechanics other than the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1320 tests passing**.
+**1384 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -104,7 +105,9 @@ behaviour rather than inferring one from a javadoc summary.
    format, or storage.
 3. **No MinecraftOnline references** anywhere in the new code.
 4. **Prefer Paper API over Bukkit API**, including experimental Paper API.
-5. **Adventure for all text.** No legacy colour codes, no `ChatColor`.
+5. **Adventure for all text.** No legacy colour codes, no `ChatColor`. The one place `&` codes
+   are read at all is where a builder writes them on a sign, which is part of the frozen format;
+   they become a component the moment they are read and are never written back out.
 6. **Folia compatible** where possible: region schedulers, no cross-region reach, no assumption
    of a single main thread.
 7. **Fix bugs rather than reproduce them.** Record each one in `FINDINGS.md` with what the old
@@ -212,6 +215,12 @@ writes its band's state, a destination publishes a `Landing`, and neither ever l
 other's blocks. Where the work itself must happen elsewhere, the server's own region-crossing
 API does the carrying — a transporter calls `Entity#teleportAsync` rather than moving anybody
 itself.
+
+*Say it rather than reach for it.* `Announcer` in `ChipServices` is how a chip addresses the
+server rather than a place: everybody online, one player wherever they are, or the log. Only a
+name and a piece of text cross, and both are immutable, so it is safe from any region's thread.
+The chips that speak to whoever is standing near them do not go through it — those ask the world
+who is there and tell each in turn, which is work in their own region.
 
 *Hand the work over.* Where a value cannot stand in for the work,
 `RegionSchedulers.executeAt(world, position, task)` runs it immediately when the caller already

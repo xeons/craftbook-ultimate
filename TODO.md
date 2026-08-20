@@ -5,29 +5,12 @@ are in `CLAUDE.md`; bugs found in the legacy code are in `FINDINGS.md`.
 
 ## Integrated circuits
 
-**97 chips are registered, under 124 model numbers.** 17 of the extra fork's remain, plus 4
+**106 chips are registered, under 133 model numbers.** 8 of the extra fork's remain, plus 4
 dropped by decision.
 
 The legacy class named in each row is the one to read for behaviour, under
 `src/main/java/com/minecraftonline/` or `src/main/java/com/sk89q/craftbook/sponge/mechanics/ics/chips/`.
 Look every model number and shorthand up in `ICManager` before registering it; do not invent them.
-
-### Messaging and logging
-
-Needs an audience seam in core so messages can be composed as Adventure
-components and asserted in tests without a server.
-
-| Model | Shorthand | Name | Legacy class | Layout |
-| --- | --- | --- | --- | --- |
-| `MC1510` | MESSAGE PLAYER | Player Messenger | `SendMessage` | 3ISO |
-| `MC1511` | MESSAGE ALL | Message All | `MessageAll` | 3ISO |
-| `MCX512` | MESSAGENEARBY | Message Nearby | `MessageNearby` | 3ISO |
-| `MCX513` | NAMED NEARBY | Message Named Nearby | `NamedNearby` | AISO |
-| `MCX515` | SERVER LOG | Server Log | `ServerLog` | 3ISO |
-| `MCX516` | S-LOG NEARBY | Server Log Nearby | `ServerLogNearby` | 3ISO |
-| `MCX517` | S-LOG NEARBY+ | Server Log Nearby+ | `ServerLogNearbyPlus` | 3ISO |
-| `MC2999` | MARQUEE | Marquee | `Marquee` | SI3O |
-| `MC3456` | MARQUEETRANSMIT | Marquee Transmitter | `MarqueeTransmitter` | 3ISO |
 
 ### Weather illusions
 
@@ -67,6 +50,7 @@ Around 70 further model numbers exist in `E:\Code\CraftBook` that never existed 
 covering the automatic crafter, container sorters and stockers, ranged collectors, the sentry
 gun and others. They are optional additions rather than a compatibility obligation, so they
 come after everything above.
+
 ## Mechanics
 
 The minecart ones are done. The remaining ~58 live under `src/main/java/`, each marked with
@@ -110,7 +94,6 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 
 | Piece | Why it is needed |
 | --- | --- |
-| Audience seam | `Bystander#tell` says something to one person, which is what the cart mechanics needed. The 9 messaging ICs want a wider one: everybody within a radius, rather than one entity at a time. |
 | Persistence | Only the switch passwords are saved, in `switch-passwords.txt`. Everything else a chip remembers is kept on its own sign or lost when its chunk unloads. The firework display scripts in `fireworks/` are read, never written. |
 | Configuration | `config.yml` carries the settings the chips read. Each mechanic will want its own section as it arrives, and the mechanics also need the legacy enable flag. |
 | Commands | `/craftbook` reads the catalogue and the switch commands drive `MCX120` and `MCX121`, all through Brigadier. The per-mechanic commands come with their mechanics. |
@@ -137,4 +120,6 @@ at all. Worth checking early, in roughly this order:
 12. A sensor under a floor reports whoever walks over it, and ignores a vanished player.
 13. `config.yml` is written on first run, a narrowed limit shortens a bridge, and
     `/craftbook reload` picks up a change without a restart.
-14. Region behaviour on an actual Folia server.
+14. A message nearby reads a script out of a book, waits where the book says to, and never
+    names a vanished player in the log.
+15. Region behaviour on an actual Folia server.

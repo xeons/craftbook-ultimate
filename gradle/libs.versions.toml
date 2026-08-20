@@ -12,6 +12,7 @@ paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper" }
 adventure-bom = { module = "net.kyori:adventure-bom", version.ref = "adventure" }
 adventure-api = { module = "net.kyori:adventure-api" }
 adventure-serializer-plain = { module = "net.kyori:adventure-text-serializer-plain" }
+adventure-serializer-legacy = { module = "net.kyori:adventure-text-serializer-legacy" }
 adventure-minimessage = { module = "net.kyori:adventure-text-minimessage" }
 jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
 configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref = "configurate" }

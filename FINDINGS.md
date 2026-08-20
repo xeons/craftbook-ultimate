@@ -849,3 +849,123 @@ took the cart out of service for a day and a bit, with no way to get it back but
 
 **Rewrite:** a wait is between one second and an hour, and a sign asking for more is refused as it
 is written.
+
+## Messaging and logging
+
+### 65. A message nearby forgot its range every time its chunk came back
+
+`MessageNearby.load` reads the distance back off the first line under this guard:
+
+```java
+Matcher matcher = pattern.matcher(line1);
+if (matcher.find() && distance != 64) {
+    distance = Integer.parseInt(matcher.group());
+} else {
+    distance = 64;
+}
+```
+
+`distance` is still its initial `64` at that point and nothing sets it beforehand, so the second
+half of the condition is never true and the else branch always runs. A sign built to reach ten
+blocks reached the full sixty-four as soon as its chunk unloaded and came back, which is to say
+almost always.
+
+**Rewrite:** the range is read from the sign every time the chip runs, so there is nothing to
+forget.
+
+### 66. A server log nearby never used the range on its sign
+
+`ServerLogNearby.onTrigger` looks for the closest player starting from
+
+```java
+double closestplayerdistance = 64;
+```
+
+rather than from the range the sign asked for. The range was parsed on creation, validated,
+stamped onto the first line and then never read by anything that mattered: every one of these
+chips reached sixty-four blocks whatever it said.
+
+**Rewrite:** the range bounds the search, so a chip asking for ten blocks sees ten blocks.
+
+### 67. A server log nearby refused to load from a sign it had not stamped itself
+
+`load()` ends with
+
+```java
+range = Integer.parseInt(line1.substring(length));
+```
+
+where `length` is the title's. A first line shorter than the title threw
+`StringIndexOutOfBoundsException` and one of the right length carrying anything else threw
+`NumberFormatException`, either of which came out of chip loading. Only a sign the plugin had
+written itself was safe to read back.
+
+**Rewrite:** the range is the run of digits at the end of the line, and a line with none means the
+default. A hand-written sign and a stamped one both work.
+
+### 68. The fuller log chip left one of its placeholders showing
+
+`ServerLogNearbyPlus.onTrigger` replaces both `%a` and `%p` when it has somebody to report, but
+its other branch replaces only `%p`:
+
+```java
+String msg = "[CB!] " + logmessage.replaceAll("%p", "[NONE_FOUND]");
+```
+
+A sign written with `%a` on it therefore logged a literal `%a` whenever nobody was in range.
+
+**Rewrite:** both placeholders read `[NONE_FOUND]` when there is nobody to name.
+
+### 69. A vanished player was logged along with how far away they were
+
+Both nearby log chips walk every player in the world with no visibility check, and the fuller one
+writes each name out with a distance. Anybody able to press a button could find somebody who had
+taken trouble not to be found, to within a tenth of a block.
+
+**Rewrite:** these chips see the same people a sensor sees, which does not include anybody
+spectating or vanished.
+
+### 70. A marquee refused to load from a sign somebody had written on
+
+`Marquee.load` reads its running position with a bare
+
+```java
+this.currentPin = Integer.parseInt(getLine(2));
+```
+
+so any text on the third line — a builder's note, a leftover from a previous chip — threw out of
+chip loading rather than being ignored.
+
+**Rewrite:** a line that is not a position means the beginning of the cycle.
+
+### 71. A marquee transmitter's reset left a band transmitting for ever
+
+The step branch of `MarqueeTransmitter.onTrigger` turns the current band off before moving on. The
+reset branch does not:
+
+```java
+if (getTriggeredPin() == 1) {
+    current = getMode().getType() != Modes.REVERSE ? start : end;
+}
+```
+
+The band it had reached stayed on with nothing to turn it off again, so a reset left two lamps lit
+and every reset after that left another.
+
+**Rewrite:** reset and step both turn the old band off and the new band on, so exactly one band in
+a run is ever carrying a signal.
+
+### 72. Message All declared an output and never drove it
+
+`MessageAll.Factory.getPinHelp` documents an output, and `onTrigger` never writes one. A builder
+chaining anything off it got a pin that stayed wherever it happened to be.
+
+**Rewrite:** the output is high while the chip is being driven and has something to say.
+
+### 73. A book could hold a message back for as long as it liked
+
+`MessageNearby.parseDelay` accumulates whatever a `[DELAY:]` line asks for with no upper bound, so
+a mistyped page scheduled a message for some time next week and held a task open until then.
+
+**Rewrite:** a book cannot hold a message back by more than an hour, which is the same bound the
+cart delay takes.

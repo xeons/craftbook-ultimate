@@ -1,6 +1,8 @@
 package com.xeonproductions.craftbookultimate.core.ic.gate;
 
+import com.xeonproductions.craftbookultimate.core.ic.ChipState;
 import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
+import com.xeonproductions.craftbookultimate.core.ic.ICMode;
 import java.util.random.RandomGenerator;
 import org.jspecify.annotations.NullMarked;
 
@@ -146,6 +148,23 @@ public final class Routing {
         };
     }
 
+    /**
+     * Moves one raised output along its three outputs, a step per pulse.
+     *
+     * <p>Exactly one output is ever high. Each pulse turns that one off and the next one on,
+     * wrapping round after the third, so a row of three lamps chases. Written with an {@code r}
+     * after the model reference it chases the other way.
+     *
+     * <p>The outputs are lit in the order 2, 1, 3, which is the order they sit in around the sign
+     * rather than the order they are numbered in.
+     *
+     * <p>Where it had got to is kept on line 3, so a chunk unloading and coming back does not put
+     * the chase back to its first lamp.
+     */
+    public static ICLogic marquee() {
+        return new Marquee();
+    }
+
     /** Fisher-Yates, driven by the supplied source so a seeded generator gives a repeatable run. */
     private static void shuffle(boolean[] values, RandomGenerator random) {
         for (int i = values.length - 1; i > 0; i--) {
@@ -153,6 +172,57 @@ public final class Routing {
             boolean swap = values[i];
             values[i] = values[j];
             values[j] = swap;
+        }
+    }
+
+    /** Chases one raised output round three, keeping its place on the sign. */
+    private static final class Marquee implements ICLogic {
+
+        /** The sign line the current step is kept on. */
+        private static final int STEP_LINE = 2;
+
+        /** The outputs in the order they are lit, which is the order they sit in around the sign. */
+        private static final int[] ORDER = {1, 0, 2};
+
+        /** How far along {@link #ORDER} the chase has got. */
+        private int step;
+
+        @Override
+        public void load(ChipState state) {
+            step = readStep(state);
+        }
+
+        @Override
+        public void unload(ChipState state) {
+            state.setSignLine(STEP_LINE, String.valueOf(step + 1));
+        }
+
+        @Override
+        public void trigger(ChipState state) {
+            if (!state.isAnyInputActive()) {
+                return;
+            }
+
+            state.setAllOutputs(false);
+            state.setOutput(ORDER[step], true);
+            step = state.mode().behaviour() == ICMode.Behaviour.REVERSE
+                    ? Math.floorMod(step - 1, ORDER.length)
+                    : (step + 1) % ORDER.length;
+        }
+
+        /**
+         * Where the sign says the chase had got to, counted from one.
+         *
+         * <p>A line saying anything else means the beginning, so a sign somebody has written on
+         * chases from its first lamp rather than refusing to load.
+         */
+        private static int readStep(ChipState state) {
+            try {
+                int written = Integer.parseInt(state.sign().trimmedText(STEP_LINE));
+                return Math.clamp(written, 1, ORDER.length) - 1;
+            } catch (NumberFormatException e) {
+                return 0;
+            }
         }
     }
 }

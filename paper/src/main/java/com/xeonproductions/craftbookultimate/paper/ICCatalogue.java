@@ -18,6 +18,7 @@ import com.xeonproductions.craftbookultimate.core.ic.gate.Projectiles;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Spawners;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Latches;
 import com.xeonproductions.craftbookultimate.core.ic.gate.LogicGates;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Messages;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensors;
@@ -68,6 +69,7 @@ public final class ICCatalogue {
         registerCombat(registry);
         registerEffects(registry);
         registerSensing(registry);
+        registerMessages(registry);
 
         return registry;
     }
@@ -138,6 +140,58 @@ public final class ICCatalogue {
                 .description("Outputs high while a named player is logged in.")
                 .selfTriggeringModel("MC0500")
                 .logic(Sensing::playerOnline)
+                .build());
+    }
+
+    private static void registerMessages(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MC1510", "MESSAGE PLAYER")
+                .name("Player Messenger")
+                .description("Says something to one named player, wherever they are.")
+                .restricted()
+                .logic(Messages::playerMessenger)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1511", "MESSAGE ALL")
+                .name("Message All")
+                .description("Says something to everybody online.")
+                .restricted()
+                .logic(Messages::messageAll)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX512", "MESSAGENEARBY")
+                .name("Message Nearby")
+                .description("Says something to everybody standing within range.")
+                .restricted()
+                .logic(Messages::messageNearby)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX513", "NAMED NEARBY")
+                .name("Message Named Nearby")
+                .description("Says something to everybody within range, naming the nearest.")
+                .layout(PinLayout.AISO)
+                .restricted()
+                .logic(Messages::namedNearby)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX515", "SERVER LOG")
+                .name("Server Log")
+                .description("Writes a line to the server's log.")
+                .restricted()
+                .logic(Messages::serverLog)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX516", "S-LOG NEARBY")
+                .name("Server Log Nearby")
+                .description("Writes a line to the log naming the nearest player.")
+                .restricted()
+                .logic(Messages::serverLogNearby)
+                .build());
+
+        registry.register(ICDefinition.builder("MCX517", "S-LOG NEARBY+")
+                .name("Server Log Nearby+")
+                .description("Writes a line to the log naming everybody in range and how far off.")
+                .restricted()
+                .logic(Messages::serverLogNearbyPlus)
                 .build());
     }
 
@@ -493,6 +547,13 @@ public final class ICCatalogue {
                 .logic(() -> Routing.demultiplexer(1, 2))
                 .build());
 
+        registry.register(ICDefinition.builder("MC2999", "MARQUEE")
+                .name("Marquee")
+                .description("Moves one raised output along its three outputs, a step per pulse.")
+                .layout(PinLayout.SI3O)
+                .logic(Routing::marquee)
+                .build());
+
         registry.register(ICDefinition.builder("MC1020", "RANDOM BIT")
                 .name("Random Bit")
                 .description("Randomly sets the output high.")
@@ -783,6 +844,13 @@ public final class ICCatalogue {
                 .layout(PinLayout.AISO)
                 .playerIdentityLine(Wireless.WIDE_BAND_LINE)
                 .logic(Wireless::analogTransmitter)
+                .build());
+
+        registry.register(ICDefinition.builder("MC3456", "MARQUEETRANSMIT")
+                .name("Marquee Transmitter")
+                .description("Steps along a run of numbered bands, one at a time.")
+                .playerIdentityLine(Wireless.WIDE_BAND_LINE)
+                .logic(Wireless::marqueeTransmitter)
                 .build());
     }
 

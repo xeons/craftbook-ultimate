@@ -4,6 +4,7 @@ import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.control.Switchboard;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
+import com.xeonproductions.craftbookultimate.core.message.Announcer;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.radio.Radio;
@@ -162,6 +163,16 @@ public interface ChipState {
      */
     default Settings settings() {
         return services().configuration().settings();
+    }
+
+    /**
+     * How this chip speaks to the server rather than to somewhere.
+     *
+     * <p>The chips that talk to people nearby ask the world who is there and tell each in turn;
+     * this is for the ones addressing everybody online, one player anywhere, or the log.
+     */
+    default Announcer announcer() {
+        return services().announcer();
     }
 
     /** What every wireless band is currently carrying. */

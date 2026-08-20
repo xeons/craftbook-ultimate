@@ -2,6 +2,7 @@ package com.xeonproductions.craftbookultimate.core.ic.gate;
 
 import com.xeonproductions.craftbookultimate.core.ic.ChipState;
 import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
+import com.xeonproductions.craftbookultimate.core.ic.ICMode;
 import com.xeonproductions.craftbookultimate.core.ic.SelfTriggeringICLogic;
 import com.xeonproductions.craftbookultimate.core.radio.Band;
 import java.util.Locale;
@@ -93,6 +94,26 @@ public final class Wireless {
      */
     public static ICLogic analogTransmitter() {
         return new AnalogTransmitter();
+    }
+
+    /**
+     * Steps along a run of numbered bands, one at a time.
+     *
+     * <p>Line 3 reads {@code channel:first:last}, which names a run of bands from
+     * {@code channel0} upwards: {@code lamps:0:3} is the four bands {@code lamps0} through
+     * {@code lamps3}. Exactly one of them is ever on, and each pulse on input 1 turns that one off
+     * and the next one on, wrapping round at the end of the run. Line 4 is the namespace, as it is
+     * for every other wireless chip.
+     *
+     * <p>Input 2 puts the run back to its beginning, and input 3 holds it: while that is powered
+     * the run stays where it is however hard input 1 is pulsed. Written with an {@code r} after
+     * the model reference the run is walked backwards, starting at its end.
+     *
+     * <p>Where it had got to is kept on the sign as a fourth field, so a chunk unloading and
+     * coming back does not put a row of lamps back to its first.
+     */
+    public static ICLogic marqueeTransmitter() {
+        return new MarqueeTransmitter();
     }
 
     /**
@@ -262,6 +283,142 @@ public final class Wireless {
                 highest = Math.max(highest, state.inputPower(input));
             }
             return highest;
+        }
+    }
+
+    /**
+     * The run of bands a marquee transmitter steps along.
+     *
+     * @param channel the name the number is appended to
+     * @param first the number the run starts at
+     * @param last the number it ends at
+     * @param resumeAt the band it had reached, when the sign records one
+     */
+    record Sequence(String channel, int first, int last, Optional<Integer> resumeAt) {
+
+        /**
+         * Reads the settings line.
+         *
+         * @return the run, or empty if the line does not name one
+         */
+        static Optional<Sequence> parse(String line) {
+            String[] parts = line.trim().split(String.valueOf(SETTING_SEPARATOR), -1);
+            if (parts.length < 3 || parts.length > 4 || parts[0].trim().isEmpty()) {
+                return Optional.empty();
+            }
+
+            try {
+                int first = Integer.parseInt(parts[1].trim());
+                int last = Integer.parseInt(parts[2].trim());
+                if (first < 0 || first > last) {
+                    return Optional.empty();
+                }
+                Optional<Integer> resumeAt = parts.length == 4
+                        ? Optional.of(Math.clamp(Integer.parseInt(parts[3].trim()), first, last))
+                        : Optional.empty();
+                return Optional.of(new Sequence(parts[0].trim(), first, last, resumeAt));
+            } catch (NumberFormatException e) {
+                return Optional.empty();
+            }
+        }
+
+        /** The band carrying a particular number. */
+        Band bandAt(String wide, int number) {
+            return new Band(wide, channel + number);
+        }
+
+        /** The number after one, wrapping round at the end of the run. */
+        int next(int number, boolean backwards) {
+            if (backwards) {
+                return number - 1 < first ? last : number - 1;
+            }
+            return number + 1 > last ? first : number + 1;
+        }
+
+        /** Where the run begins, which is its far end when it is walked backwards. */
+        int start(boolean backwards) {
+            return backwards ? last : first;
+        }
+
+        /** This run written back out, with where it has got to on the end. */
+        String written(int number) {
+            return channel + SETTING_SEPARATOR + first + SETTING_SEPARATOR + last
+                    + SETTING_SEPARATOR + number;
+        }
+    }
+
+    /** Walks a run of bands, one band on at a time. */
+    private static final class MarqueeTransmitter implements ICLogic {
+
+        /** The input a pulse on steps the run along. */
+        private static final int STEP_INPUT = 0;
+
+        /** The input a pulse on puts the run back to its beginning. */
+        private static final int RESET_INPUT = 1;
+
+        /** The input that holds the run where it is while it is powered. */
+        private static final int HOLD_INPUT = 2;
+
+        /** Where the run has got to, or -1 before the sign has been read. */
+        private int current = -1;
+
+        @Override
+        public void load(ChipState state) {
+            settingsOn(state).ifPresent(sequence -> {
+                current = sequence.resumeAt().orElseGet(() -> sequence.start(backwards(state)));
+                state.radio().transmit(sequence.bandAt(wideBandOn(state), current), true);
+            });
+        }
+
+        @Override
+        public void unload(ChipState state) {
+            if (current >= 0) {
+                settingsOn(state)
+                        .ifPresent(sequence ->
+                                state.setSignLine(NARROW_BAND_LINE, sequence.written(current)));
+            }
+        }
+
+        @Override
+        public void trigger(ChipState state) {
+            Optional<Sequence> settings = settingsOn(state);
+            if (settings.isEmpty()) {
+                return;
+            }
+
+            Sequence sequence = settings.get();
+            boolean backwards = backwards(state);
+            if (current < 0) {
+                current = sequence.start(backwards);
+            }
+
+            int wanted;
+            if (state.isTriggered(RESET_INPUT) && state.input(RESET_INPUT)) {
+                wanted = sequence.start(backwards);
+            } else if (state.isTriggered(STEP_INPUT)
+                    && state.input(STEP_INPUT)
+                    && !state.input(HOLD_INPUT)) {
+                wanted = sequence.next(current, backwards);
+            } else {
+                return;
+            }
+
+            String wide = wideBandOn(state);
+            state.radio().transmit(sequence.bandAt(wide, current), false);
+            state.radio().transmit(sequence.bandAt(wide, wanted), true);
+            current = wanted;
+        }
+
+        private static Optional<Sequence> settingsOn(ChipState state) {
+            return Sequence.parse(state.sign().trimmedText(NARROW_BAND_LINE));
+        }
+
+        private static String wideBandOn(ChipState state) {
+            return state.sign().trimmedText(WIDE_BAND_LINE);
+        }
+
+        private static boolean backwards(ChipState state) {
+            return state.mode().behaviour() == ICMode.Behaviour.REVERSE;
         }
     }
 }

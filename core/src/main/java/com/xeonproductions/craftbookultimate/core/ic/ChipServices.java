@@ -6,6 +6,8 @@ import com.xeonproductions.craftbookultimate.core.control.Switchboard;
 import com.xeonproductions.craftbookultimate.core.effect.FireworkShows;
 import com.xeonproductions.craftbookultimate.core.entity.Roster;
 import com.xeonproductions.craftbookultimate.core.entity.SimpleRoster;
+import com.xeonproductions.craftbookultimate.core.message.Announcer;
+import com.xeonproductions.craftbookultimate.core.message.SimpleAnnouncer;
 import com.xeonproductions.craftbookultimate.core.radio.Radio;
 import com.xeonproductions.craftbookultimate.core.transport.Destinations;
 import org.jspecify.annotations.NullMarked;
@@ -32,6 +34,7 @@ import org.jspecify.annotations.NullMarked;
  * @param passwords the passwords guarding those switches
  * @param shows the firework displays the server has scripts for
  * @param roster who is on the server
+ * @param announcer how a chip speaks to the server rather than to a place
  * @param configuration the settings an operator has put in force
  */
 @NullMarked
@@ -43,15 +46,24 @@ public record ChipServices(
         PasswordStore passwords,
         FireworkShows shows,
         Roster roster,
+        Announcer announcer,
         Configuration configuration) {
 
     /** A fresh set, with nothing transmitting, no destinations claimed and no switches known. */
     public static ChipServices create() {
-        return create(SimpleRoster.empty());
+        return create(SimpleRoster.empty(), new SimpleAnnouncer());
     }
 
-    /** A fresh set reading a particular roster, which is how the plugin supplies the real one. */
+    /** A fresh set reading a particular roster, saying anything it is told to say to nobody. */
     public static ChipServices create(Roster roster) {
+        return create(roster, new SimpleAnnouncer());
+    }
+
+    /**
+     * A fresh set reading a particular roster and speaking through a particular announcer, which
+     * is how the plugin supplies the real ones.
+     */
+    public static ChipServices create(Roster roster, Announcer announcer) {
         return new ChipServices(
                 new Radio(),
                 new Destinations(),
@@ -60,6 +72,7 @@ public record ChipServices(
                 new PasswordStore(),
                 new FireworkShows(),
                 roster,
+                announcer,
                 new Configuration());
     }
 }

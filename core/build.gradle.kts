@@ -9,6 +9,7 @@ dependencies {
     api(rootProject.libs.adventure.api)
     api(rootProject.libs.jspecify)
     implementation(rootProject.libs.adventure.serializer.plain)
+    implementation(rootProject.libs.adventure.serializer.legacy)
 
     testImplementation(platform(rootProject.libs.junit.bom))
     testImplementation(rootProject.libs.junit.jupiter)

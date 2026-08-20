@@ -3,6 +3,8 @@ package com.xeonproductions.craftbookultimate.core.ic.gate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
+import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
+import com.xeonproductions.craftbookultimate.core.ic.ICMode;
 import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import com.xeonproductions.craftbookultimate.core.ic.SimpleChipState;
 import com.xeonproductions.craftbookultimate.core.radio.Band;
@@ -289,6 +291,134 @@ class WirelessTest {
         @Test
         void asksToBeToldAboutPowerLevelsRatherThanJustOnAndOff() {
             assertThat(Wireless.analogTransmitter().requiresAnalogRedstone()).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("stepping along a run of bands")
+    class SteppingAlongARunOfBands {
+
+        private SimpleChipState marquee(String settings, String mode) {
+            return SimpleChipState.forLayout(PinLayout.THREE_I_SO)
+                    .services(services)
+                    .sign("", "[MC3456]" + mode, settings, "")
+                    .mode(ICMode.parse(mode))
+                    .build();
+        }
+
+        @Test
+        void raisesTheFirstBandOfTheRunAsSoonAsItLoads() {
+            ICLogic chip = Wireless.marqueeTransmitter();
+
+            chip.load(marquee("lamps:0:3", ""));
+
+            assertThat(services.radio().signal(Band.named("lamps0"))).contains(true);
+        }
+
+        @Test
+        void movesTheRaisedBandAlongOnEveryPulse() {
+            SimpleChipState state = marquee("lamps:0:3", "");
+            ICLogic chip = Wireless.marqueeTransmitter();
+            chip.load(state);
+
+            chip.trigger(state.withInput(0, true).withTriggeredInput(0));
+
+            assertThat(services.radio().signal(Band.named("lamps0"))).contains(false);
+            assertThat(services.radio().signal(Band.named("lamps1"))).contains(true);
+        }
+
+        @Test
+        void goesBackToTheFirstBandAfterTheLast() {
+            SimpleChipState state = marquee("lamps:0:1", "");
+            ICLogic chip = Wireless.marqueeTransmitter();
+            chip.load(state);
+
+            chip.trigger(state.withInput(0, true).withTriggeredInput(0));
+            chip.trigger(state);
+
+            assertThat(services.radio().signal(Band.named("lamps0"))).contains(true);
+            assertThat(services.radio().signal(Band.named("lamps1"))).contains(false);
+        }
+
+        @Test
+        void staysWhereItIsWhileItIsHeld() {
+            SimpleChipState state = marquee("lamps:0:3", "");
+            ICLogic chip = Wireless.marqueeTransmitter();
+            chip.load(state);
+
+            chip.trigger(state.withInput(2, true).withInput(0, true).withTriggeredInput(0));
+
+            assertThat(services.radio().signal(Band.named("lamps0"))).contains(true);
+            assertThat(services.radio().signal(Band.named("lamps1"))).isEmpty();
+        }
+
+        @Test
+        void putsTheRunBackToItsBeginningWhenAskedTo() {
+            SimpleChipState state = marquee("lamps:0:3", "");
+            ICLogic chip = Wireless.marqueeTransmitter();
+            chip.load(state);
+            chip.trigger(state.withInput(0, true).withTriggeredInput(0));
+
+            chip.trigger(state.withInput(0, false).withInput(1, true).withTriggeredInput(1));
+
+            assertThat(services.radio().signal(Band.named("lamps0"))).contains(true);
+            assertThat(services.radio().signal(Band.named("lamps1"))).contains(false);
+        }
+
+        @Test
+        void walksTheRunBackwardsWhenTheSignAsksItTo() {
+            SimpleChipState state = marquee("lamps:0:3", "r");
+            ICLogic chip = Wireless.marqueeTransmitter();
+            chip.load(state);
+            assertThat(services.radio().signal(Band.named("lamps3"))).contains(true);
+
+            chip.trigger(state.withInput(0, true).withTriggeredInput(0));
+
+            assertThat(services.radio().signal(Band.named("lamps2"))).contains(true);
+        }
+
+        @Test
+        void writesWhereItGotToBackOntoTheSign() {
+            SimpleChipState state = marquee("lamps:0:3", "");
+            ICLogic chip = Wireless.marqueeTransmitter();
+            chip.load(state);
+            chip.trigger(state.withInput(0, true).withTriggeredInput(0));
+
+            chip.unload(state);
+
+            assertThat(state.sign().trimmedText(2)).isEqualTo("lamps:0:3:1");
+        }
+
+        @Test
+        void takesUpWhereTheSignSaysItLeftOff() {
+            ICLogic chip = Wireless.marqueeTransmitter();
+
+            chip.load(marquee("lamps:0:3:2", ""));
+
+            assertThat(services.radio().signal(Band.named("lamps2"))).contains(true);
+        }
+
+        @Test
+        void keepsTheNamespaceSeparateFromTheRun() {
+            SimpleChipState state = SimpleChipState.forLayout(PinLayout.THREE_I_SO)
+                    .services(services)
+                    .sign("", "[MC3456]", "lamps:0:3", "alice")
+                    .build();
+
+            Wireless.marqueeTransmitter().load(state);
+
+            assertThat(services.radio().signal(new Band("alice", "lamps0"))).contains(true);
+            assertThat(services.radio().signal(Band.named("lamps0"))).isEmpty();
+        }
+
+        @ParameterizedTest(name = "line 3 reading \"{0}\"")
+        @ValueSource(strings = {"", "lamps", "lamps:0", ":0:3", "lamps:3:0", "lamps:x:3"})
+        void saysNothingWithoutARunItUnderstands(String settings) {
+            ICLogic chip = Wireless.marqueeTransmitter();
+
+            chip.load(marquee(settings, ""));
+
+            assertThat(services.radio().bandCount()).isZero();
         }
     }
 }

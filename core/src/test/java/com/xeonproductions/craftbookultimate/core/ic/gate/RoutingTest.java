@@ -2,6 +2,8 @@ package com.xeonproductions.craftbookultimate.core.ic.gate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
+import com.xeonproductions.craftbookultimate.core.ic.ICMode;
 import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import com.xeonproductions.craftbookultimate.core.ic.SimpleChipState;
 import java.util.Random;
@@ -213,6 +215,131 @@ class RoutingTest {
                 }
             }
             return count;
+        }
+    }
+
+    @Nested
+    @DisplayName("marquee")
+    class Marquee {
+
+        private SimpleChipState chip(String step, String mode) {
+            return SimpleChipState.forLayout(PinLayout.SI3O)
+                    .sign("", "[MC2999]" + mode, step, "")
+                    .mode(ICMode.parse(mode))
+                    .inputs(true)
+                    .build();
+        }
+
+        /** Which output a chip has raised, or -1 if none is. */
+        private int raised(SimpleChipState state) {
+            for (int output = 0; output < state.outputCount(); output++) {
+                if (state.output(output)) {
+                    return output;
+                }
+            }
+            return -1;
+        }
+
+        @Test
+        void movesTheRaisedOutputAlongOnEveryPulse() {
+            SimpleChipState state = chip("", "");
+            ICLogic marquee = Routing.marquee();
+            marquee.load(state);
+
+            marquee.trigger(state);
+            assertThat(raised(state)).isEqualTo(1);
+            marquee.trigger(state);
+            assertThat(raised(state)).isEqualTo(0);
+            marquee.trigger(state);
+            assertThat(raised(state)).isEqualTo(2);
+        }
+
+        @Test
+        void goesBackToItsFirstAfterItsLast() {
+            SimpleChipState state = chip("", "");
+            ICLogic marquee = Routing.marquee();
+            marquee.load(state);
+
+            for (int pulse = 0; pulse < 3; pulse++) {
+                marquee.trigger(state);
+            }
+            marquee.trigger(state);
+
+            assertThat(raised(state)).isEqualTo(1);
+        }
+
+        @Test
+        void raisesOnlyOneOutputAtATime() {
+            SimpleChipState state = chip("", "");
+            ICLogic marquee = Routing.marquee();
+            marquee.load(state);
+
+            marquee.trigger(state);
+            marquee.trigger(state);
+
+            assertThat(state.outputs()).containsExactly(true, false, false);
+        }
+
+        @Test
+        void chasesTheOtherWayWhenTheSignAsksItTo() {
+            SimpleChipState state = chip("", "r");
+            ICLogic marquee = Routing.marquee();
+            marquee.load(state);
+
+            marquee.trigger(state);
+            assertThat(raised(state)).isEqualTo(1);
+            marquee.trigger(state);
+            assertThat(raised(state)).isEqualTo(2);
+            marquee.trigger(state);
+            assertThat(raised(state)).isEqualTo(0);
+        }
+
+        @Test
+        void takesUpWhereTheSignSaysItLeftOff() {
+            SimpleChipState state = chip("3", "");
+            ICLogic marquee = Routing.marquee();
+            marquee.load(state);
+
+            marquee.trigger(state);
+
+            assertThat(raised(state)).isEqualTo(2);
+        }
+
+        @Test
+        void writesWhereItGotToBackOntoTheSign() {
+            SimpleChipState state = chip("", "");
+            ICLogic marquee = Routing.marquee();
+            marquee.load(state);
+
+            marquee.trigger(state);
+            marquee.unload(state);
+
+            assertThat(state.sign().trimmedText(2)).isEqualTo("2");
+        }
+
+        @Test
+        void startsAtItsFirstWhenTheSignSaysSomethingElse() {
+            SimpleChipState state = chip("hello", "");
+            ICLogic marquee = Routing.marquee();
+            marquee.load(state);
+
+            marquee.trigger(state);
+
+            assertThat(raised(state)).isEqualTo(1);
+        }
+
+        @Test
+        void staysWhereItIsWhileNothingDrivesIt() {
+            SimpleChipState state = SimpleChipState.forLayout(PinLayout.SI3O)
+                    .sign("", "[MC2999]", "", "")
+                    .inputs(false)
+                    .build();
+            ICLogic marquee = Routing.marquee();
+            marquee.load(state);
+
+            marquee.trigger(state);
+
+            assertThat(raised(state)).isEqualTo(-1);
         }
     }
 }

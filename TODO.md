@@ -32,8 +32,8 @@ come after everything above.
 
 ## Mechanics
 
-The minecart ones are done, and so are the bridge, the door, the gate and the lift. The remaining
-~54 live under `src/main/java/`, each marked with `@Module`. Those below are unique to this fork
+The minecart ones are done, and so are the bridge, the door, the gate, the lift and the toggled
+area. The remaining ~53 live under `src/main/java/`, each marked with `@Module`. Those below are unique to this fork
 and have no upstream equivalent to compare against, so the legacy source is the only
 specification.
 
@@ -48,13 +48,14 @@ Porting it needs a decision about what it should warp to instead.
 
 ### Sign mechanics: done
 
-`Bridge`, `Door`, `Gate` and `Elevator`, on the seam in `core/mechanic/` and the dispatcher in
-`paper/mechanic/`. Every sign name either fork carries is accepted, the gate's six materials and
-its small and clickable forms included.
+`Bridge`, `Door`, `Gate`, `Elevator` and `ComplexArea`, on the seam in `core/mechanic/` and the
+dispatcher in `paper/mechanic/`. Every sign name either fork carries is accepted, the gate's six
+materials and its small and clickable forms included.
 
-`ComplexArea` is the one left in the `area` package. It is a different mechanic from the other
-three — it saves and restores a region rather than filling a box — and needs the self-contained
-storage format decided on in `CLAUDE.md`, since there is no WorldEdit to lean on.
+The toggled area keeps its blocks in the game's own structure format through
+`org.bukkit.structure`, with the place they belong in an `.anchor` beside each one, and brings its
+own selection commands since there is no world editor to borrow one from. The whole `area` package
+is done.
 
 ### Unique to this fork
 
@@ -73,8 +74,8 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 `Ammeter`, `BetterPhysics`, `BetterPlants`, `Bookshelf`, `BounceBlocks`, `Chairs`, `CommandSigns`,
 `CookingPot`, `GlowStone`, `HeadDrops`, `HiddenSwitch`, `JackOLantern`, `LightStone`,
 `LightSwitch`, `Marquee`, `Netherrack`, `PaintingSwitcher`, `Pipes`, `RedstoneJukebox`,
-`SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `Variables`, `XPStorer`, `ComplexArea`, the
-`boat` set, `DispenserRecipes`.
+`SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `Variables`, `XPStorer`, the `boat` set,
+`DispenserRecipes`.
 
 ### Dropped by decision
 
@@ -86,6 +87,7 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 | --- | --- |
 | Persistence | The switch passwords, the switch positions and the wireless bands are saved. What a chip keeps on its own sign is saved with the world. What remains unsaved is deliberate: a destination republishes itself when it loads, and a cart's rider says again where they are going. The scripts in `fireworks/`, `midi/` and `playlist/` are read, never written. |
 | Configuration | `config.yml` carries the settings the chips read, the minecart mechanics read, and the sign mechanics read. Each further mechanic will want its own entries as it arrives. |
+| Storage | The saved areas live in `areas/`, two files each, in the game's own structure format. Nothing else a mechanic uses is written down. |
 | Commands | `/craftbook` reads the catalogue and the switch commands drive `MCX120` and `MCX121`, all through Brigadier. The per-mechanic commands come with their mechanics. |
 | Permissions | Every chip's permission is registered under `craftbook.ic.safe.*` or `craftbook.ic.restricted.*` and checked on creation. The sign mechanics register a pair each, `craftbook.<name>` to build and `craftbook.<name>.use` to work, and both are checked. Nothing checks a chip at run time. |
 | Documentation generator | The legacy code generated its own IC documentation. |
@@ -118,4 +120,6 @@ at all. Worth checking early, in roughly this order:
     and winds back up when clicked on its own fence.
 17. A lift carries somebody between floors by sign, by button and by jumping on a pad, and names
     the floor they arrive at.
-18. Region behaviour on an actual Folia server.
+18. `/area pos1`, `/area pos2` and `/area save` write a structure and an anchor, an `[Area]` sign
+    swaps it in and out, and an area holding a chest keeps what was in the chest.
+19. Region behaviour on an actual Folia server.

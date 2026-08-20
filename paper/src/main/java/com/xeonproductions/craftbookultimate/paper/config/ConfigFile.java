@@ -70,6 +70,8 @@ public final class ConfigFile {
     private static final String LIFT_JUMPING = "mechanics.lift-jumping";
     private static final String LIFT_BUTTONS = "mechanics.lift-buttons";
     private static final String LIFT_TOLERANCE = "mechanics.lift-tolerance";
+    private static final String MAX_AREA_BLOCKS = "mechanics.max-area-blocks";
+    private static final String MAX_AREAS = "mechanics.max-areas-per-name";
 
     private final Path file;
     private final Server server;
@@ -156,6 +158,8 @@ public final class ConfigFile {
         setIfAbsent(yaml, LIFT_JUMPING, mechanics.liftJumping());
         setIfAbsent(yaml, LIFT_BUTTONS, mechanics.liftButtons());
         setIfAbsent(yaml, LIFT_TOLERANCE, mechanics.liftTolerance());
+        setIfAbsent(yaml, MAX_AREA_BLOCKS, mechanics.maxAreaBlocks());
+        setIfAbsent(yaml, MAX_AREAS, mechanics.maxAreasPerNamespace());
     }
 
     private static void setIfAbsent(YamlConfiguration yaml, String path, Object value) {
@@ -291,6 +295,16 @@ public final class ConfigFile {
         yaml.setComments(LIFT_TOLERANCE, List.of(
                 "How far a lift will drop somebody below the far sign to find them a floor.",
                 "Beyond this it says there is no floor rather than dropping them down a shaft."));
+
+        yaml.setComments(MAX_AREA_BLOCKS, List.of(
+                "",
+                "The most blocks one saved area may hold. Zero is no limit.",
+                "An area is saved with /area save and lives in the areas folder, one file of",
+                "blocks and one saying where they go."));
+
+        yaml.setComments(MAX_AREAS, List.of(
+                "The most areas any one name may have saved. Zero is no limit.",
+                "Saving over an area that already exists does not count against this."));
     }
 
     /** Turns what the file says into the settings the chips read. */
@@ -321,7 +335,9 @@ public final class ConfigFile {
                 yaml.getBoolean(GATE_CLICKING, defaults.gateClicking()),
                 yaml.getBoolean(LIFT_JUMPING, defaults.liftJumping()),
                 yaml.getBoolean(LIFT_BUTTONS, defaults.liftButtons()),
-                yaml.getInt(LIFT_TOLERANCE, defaults.liftTolerance()));
+                yaml.getInt(LIFT_TOLERANCE, defaults.liftTolerance()),
+                yaml.getInt(MAX_AREA_BLOCKS, defaults.maxAreaBlocks()),
+                yaml.getInt(MAX_AREAS, defaults.maxAreasPerNamespace()));
     }
 
     /** Reads what an operator has said about the minecart mechanics. */

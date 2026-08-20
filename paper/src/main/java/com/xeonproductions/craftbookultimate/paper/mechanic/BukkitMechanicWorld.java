@@ -1,9 +1,11 @@
 package com.xeonproductions.craftbookultimate.paper.mechanic;
 
+import com.xeonproductions.craftbookultimate.core.area.AreaVault;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.mechanic.MechanicWorld;
 import com.xeonproductions.craftbookultimate.core.mechanic.PostedSign;
+import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
@@ -28,7 +30,7 @@ import org.jspecify.annotations.NullMarked;
  * is never a constraint in practice.
  */
 @NullMarked
-public record BukkitMechanicWorld(World world) implements MechanicWorld {
+public record BukkitMechanicWorld(World world, AreaVault vault) implements MechanicWorld {
 
     @Override
     public UUID id() {
@@ -103,6 +105,18 @@ public record BukkitMechanicWorld(World world) implements MechanicWorld {
                     : BlockFace.NORTH;
         }
         return BlockFace.NORTH;
+    }
+
+    @Override
+    public boolean writeSign(Vec3i position, SignLines lines) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+        Block block = Positions.toBlock(world, position);
+        return Signs.at(block).map(sign -> {
+            Signs.write(sign, lines);
+            return true;
+        }).orElse(false);
     }
 
     @Override

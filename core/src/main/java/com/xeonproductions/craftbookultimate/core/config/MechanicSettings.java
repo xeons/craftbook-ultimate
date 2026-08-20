@@ -24,6 +24,8 @@ import org.jspecify.annotations.NullMarked;
  * @param liftJumping whether jumping and crouching work a lift
  * @param liftButtons whether a button in front of a lift's sign works it
  * @param liftTolerance how far a lift will drop somebody to find them a floor
+ * @param maxAreaBlocks the most blocks one saved area may hold, or zero for no limit
+ * @param maxAreasPerNamespace the most areas one name may have saved, or zero for no limit
  */
 @NullMarked
 public record MechanicSettings(
@@ -34,7 +36,9 @@ public record MechanicSettings(
         boolean gateClicking,
         boolean liftJumping,
         boolean liftButtons,
-        int liftTolerance) {
+        int liftTolerance,
+        int maxAreaBlocks,
+        int maxAreasPerNamespace) {
 
     /** Every kind of fence, which is what most gates are made of. */
     private static final String[] FENCES = {
@@ -58,7 +62,7 @@ public record MechanicSettings(
 
     /** The mechanics as they have always worked. */
     public static final MechanicSettings DEFAULTS = new MechanicSettings(
-            Set.of(), true, defaultGateBlocks(), 5, true, true, true, 5);
+            Set.of(), true, defaultGateBlocks(), 5, true, true, true, 5, 5000, 30);
 
     /** Copies the collections and holds every limit to something a mechanic can work with. */
     public MechanicSettings {
@@ -66,6 +70,23 @@ public record MechanicSettings(
         gateBlocks = Collections.unmodifiableSet(new LinkedHashSet<>(gateBlocks));
         gateRadius = Math.clamp(gateRadius, 1, MAX_GATE_RADIUS);
         liftTolerance = Math.max(1, liftTolerance);
+        maxAreaBlocks = Math.max(0, maxAreaBlocks);
+        maxAreasPerNamespace = Math.max(0, maxAreasPerNamespace);
+    }
+
+    /**
+     * Whether an area of a size may be saved.
+     *
+     * <p>A limit of zero is no limit rather than none allowed, which is what the setting has
+     * always been documented to mean.
+     */
+    public boolean allowsAreaOf(int blocks) {
+        return maxAreaBlocks == 0 || blocks <= maxAreaBlocks;
+    }
+
+    /** Whether a namespace already holding this many areas may have another. */
+    public boolean allowsAnotherArea(int held) {
+        return maxAreasPerNamespace == 0 || held < maxAreasPerNamespace;
     }
 
     /**
@@ -86,56 +107,76 @@ public record MechanicSettings(
     public MechanicSettings withDisabled(Set<String> mechanics) {
         return new MechanicSettings(
                 mechanics, redstone, gateBlocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, liftTolerance);
+                liftJumping, liftButtons, liftTolerance,
+                maxAreaBlocks, maxAreasPerNamespace);
     }
 
     /** These settings with redstone allowed or refused. */
     public MechanicSettings withRedstone(boolean allowed) {
         return new MechanicSettings(
                 disabled, allowed, gateBlocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, liftTolerance);
+                liftJumping, liftButtons, liftTolerance,
+                maxAreaBlocks, maxAreasPerNamespace);
     }
 
     /** These settings with a different set of gate materials. */
     public MechanicSettings withGateBlocks(Set<Key> blocks) {
         return new MechanicSettings(
                 disabled, redstone, blocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, liftTolerance);
+                liftJumping, liftButtons, liftTolerance,
+                maxAreaBlocks, maxAreasPerNamespace);
     }
 
     /** These settings with gates reaching a different distance. */
     public MechanicSettings withGateRadius(int radius) {
         return new MechanicSettings(
                 disabled, redstone, gateBlocks, radius, gateClicking,
-                liftJumping, liftButtons, liftTolerance);
+                liftJumping, liftButtons, liftTolerance,
+                maxAreaBlocks, maxAreasPerNamespace);
     }
 
     /** These settings with clicking a gate's material allowed or refused. */
     public MechanicSettings withGateClicking(boolean allowed) {
         return new MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, allowed,
-                liftJumping, liftButtons, liftTolerance);
+                liftJumping, liftButtons, liftTolerance,
+                maxAreaBlocks, maxAreasPerNamespace);
     }
 
     /** These settings with jump lifts allowed or refused. */
     public MechanicSettings withLiftJumping(boolean allowed) {
         return new MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, gateClicking,
-                allowed, liftButtons, liftTolerance);
+                allowed, liftButtons, liftTolerance,
+                maxAreaBlocks, maxAreasPerNamespace);
     }
 
     /** These settings with button lifts allowed or refused. */
     public MechanicSettings withLiftButtons(boolean allowed) {
         return new MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, gateClicking,
-                liftJumping, allowed, liftTolerance);
+                liftJumping, allowed, liftTolerance, maxAreaBlocks, maxAreasPerNamespace);
+    }
+
+    /** These settings with a different limit on how big one area may be. */
+    public MechanicSettings withMaxAreaBlocks(int blocks) {
+        return new MechanicSettings(
+                disabled, redstone, gateBlocks, gateRadius, gateClicking,
+                liftJumping, liftButtons, liftTolerance, blocks, maxAreasPerNamespace);
+    }
+
+    /** These settings with a different limit on how many areas one name may have. */
+    public MechanicSettings withMaxAreasPerNamespace(int areas) {
+        return new MechanicSettings(
+                disabled, redstone, gateBlocks, gateRadius, gateClicking,
+                liftJumping, liftButtons, liftTolerance, maxAreaBlocks, areas);
     }
 
     /** These settings with lifts dropping somebody a different distance to find a floor. */
     public MechanicSettings withLiftTolerance(int tolerance) {
         return new MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, tolerance);
+                liftJumping, liftButtons, tolerance, maxAreaBlocks, maxAreasPerNamespace);
     }
 
     /** What a gate may be made of when nobody has said otherwise. */

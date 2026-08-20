@@ -1434,3 +1434,127 @@ through the fence has the shape of one.
 
 **Rewrite:** there is always a stockpile. Where no chest is near, it is one that holds nothing, and
 a gate asking it for a block is told no in the ordinary way.
+
+## The toggled area
+
+### 108. A limit of zero areas meant none at all rather than no limit
+
+The setting says what it is for in its own description — *"The maximum amount of areas that a
+namespace can own. 0 to disable limit."* — and then:
+
+```java
+if (files == null) return quota > 0 ? -1 : 0;
+...
+return count < quota ? -1 : count;
+```
+
+with the caller refusing on anything but `-1`. At a quota of zero, `count < 0` is never true and
+the no-folder case answers zero rather than `-1`, so an operator who followed the description
+stopped every player on the server from saving an area, including players who had none.
+
+**Rewrite:** zero is no limit, in both of the area settings, which is what both have always said
+they meant.
+
+### 109. Redstone drove a toggled area backwards from every other area mechanic
+
+`ComplexArea` passes the signal straight in as the state:
+
+```java
+boolean state = checkToggleState(cachedData);
+if (forceState != null) {
+    state = forceState;
+}
+
+if (state) {
+    // ... take the area away
+```
+
+but `state` means *the area is already standing*, so power arriving says it is up and the mechanic
+takes it down. A lever wired to a toggled area removed the building when thrown and put it back
+when released. `Gate`, reading the same signal from the same listener, does the opposite.
+
+**Rewrite:** power arriving puts the area up and power leaving takes it away, the same way it shuts
+a door and closes a gate.
+
+### 110. The permission for the more dangerous area sign was the lesser grant
+
+```java
+if (!createPermissions.hasPermission(player)
+        && !("[SaveArea]".equals(line) && createSavePermissions.hasPermission(player))) {
+```
+
+`craftbook.area.create.save` is an alternative to `craftbook.area`, not an addition to it. So
+somebody granted only the narrower-sounding node could not make an ordinary `[Area]` sign but
+could make a `[SaveArea]` one — the sign that overwrites the stored copy of an area every time it
+is used, and the only one that can destroy somebody's saved work.
+
+**Rewrite:** the base permission builds either sign, and the save variant takes that plus its own.
+
+### 111. Listing the areas of somebody who had none threw
+
+```java
+String[] files = new File(new File(..., "areas"), namespace).list();
+List<Text> contents = new ArrayList<>();
+for (String file : files)
+```
+
+`File#list` answers null for a directory that is not there, which is the state every player is in
+before they save their first area. The first thing a new player could do with the command was
+produce a stack trace.
+
+**Rewrite:** a namespace nobody has saved anything under holds no areas and says so.
+
+### 112. Every area command threw when run from the console
+
+All three open by casting:
+
+```java
+String namespace = args.<String>getOne("namespace").orElse(((Player) src).getUniqueId().toString());
+```
+
+The cast is unchecked and there is nothing above it that keeps a console out. Listing and deleting
+are exactly the things an operator wants to do from the console, and neither could be.
+
+**Rewrite:** the commands say who they need. Listing and deleting work from the console with a
+namespace named; picking out corners and saving want somebody standing in the world, and say so
+rather than throwing.
+
+### 113. An area saved as global and a sign saying global were two different folders
+
+The sign path folds the namespace up:
+
+```java
+namespace = "GLOBAL";
+```
+
+while the save command compares it down, and only for deciding whether the quota applies:
+
+```java
+if (area.maxPerUser.getValue() >= 0 && !"global".equals(namespace) && ...)
+```
+
+so `/area save door global` writes into a folder called `global` and skips the quota, and a sign
+reading `global` looks in `GLOBAL` and finds nothing. On a filesystem that tells case apart — which
+is to say on the servers this ran on — the shared areas could be saved somewhere no sign could
+read them.
+
+**Rewrite:** the shared namespace has one spelling everywhere, and a namespace is compared without
+regard to case wherever it is compared at all.
+
+### 114. Every failure was a stack trace on the console and silence to the player
+
+```java
+} catch (Exception e) {
+    e.printStackTrace();
+}
+
+return false;
+```
+
+One catch around the whole of the toggle. A missing area, an unreadable file and a full disk were
+the same nothing to whoever clicked the sign, and the same untraceable stack trace on standard
+output rather than in the plugin's own log.
+
+**Rewrite:** each thing that can fail says which thing it was, to the person who set it off. What
+goes to the log is what nobody standing at the sign could have fixed, such as a file that will not
+open.

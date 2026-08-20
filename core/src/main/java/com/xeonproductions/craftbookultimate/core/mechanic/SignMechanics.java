@@ -21,8 +21,9 @@ public final class SignMechanics {
     private static final Bridge BRIDGE = new Bridge();
     private static final Door DOOR = new Door();
     private static final Gate GATE = new Gate();
+    private static final ToggleArea AREA = new ToggleArea();
 
-    private static final List<SignMechanic> ALL = List.of(ELEVATOR, BRIDGE, DOOR, GATE);
+    private static final List<SignMechanic> ALL = List.of(ELEVATOR, BRIDGE, DOOR, GATE, AREA);
 
     private SignMechanics() {}
 
@@ -39,6 +40,11 @@ public final class SignMechanics {
     /** The gate, which is the one that answers to a hand on its own material. */
     public static Gate gate() {
         return GATE;
+    }
+
+    /** The toggled area, which is the one that keeps its blocks somewhere other than the world. */
+    public static ToggleArea area() {
+        return AREA;
     }
 
     /**

@@ -4,7 +4,10 @@ import com.xeonproductions.craftbookultimate.core.config.Configuration;
 import com.xeonproductions.craftbookultimate.core.mechanic.PostedSign;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanic;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanics;
+import com.xeonproductions.craftbookultimate.core.mechanic.SignReview;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import com.xeonproductions.craftbookultimate.paper.mechanic.MechanicDispatcher;
+import com.xeonproductions.craftbookultimate.paper.mechanic.PlayerActor;
 import java.util.Locale;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
@@ -22,8 +25,8 @@ import org.jspecify.annotations.NullMarked;
  *
  * <p>A builder standing at the sign can fix what is wrong with it; a builder wondering later why
  * their bridge does nothing cannot. So the name is put into its proper spelling as the sign is
- * written, and a builder without the permission to make one is told so rather than being left
- * with a sign that looks right and does nothing.
+ * written, a builder without the permission to make one is told so rather than being left with a
+ * sign that looks right and does nothing, and the mechanic itself gets a look at what was typed.
  */
 @NullMarked
 public final class MechanicSignListener implements Listener {
@@ -32,9 +35,11 @@ public final class MechanicSignListener implements Listener {
     public static final String ADMIN_PERMISSION = "craftbook.mechanic.admin";
 
     private final Configuration configuration;
+    private final MechanicDispatcher dispatcher;
 
-    public MechanicSignListener(Configuration configuration) {
+    public MechanicSignListener(Configuration configuration, MechanicDispatcher dispatcher) {
         this.configuration = configuration;
+        this.dispatcher = dispatcher;
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
@@ -43,8 +48,8 @@ public final class MechanicSignListener implements Listener {
             return;
         }
 
-        SignLines lines = SignLines.of(event.lines());
-        Optional<SignMechanics.Claim> claim = SignMechanics.claiming(lines);
+        SignLines written = SignLines.of(event.lines());
+        Optional<SignMechanics.Claim> claim = SignMechanics.claiming(written);
         if (claim.isEmpty()) {
             return;
         }
@@ -64,19 +69,37 @@ public final class MechanicSignListener implements Listener {
         }
 
         // However the builder typed it, the sign carries the proper spelling from here on.
-        event.line(PostedSign.NAME_LINE, Component.text(claim.get().signName()));
+        SignLines lines = written.withLine(PostedSign.NAME_LINE, claim.get().signName());
 
         if (lines.trimmedText(PostedSign.SUPPLY_LINE).equalsIgnoreCase(PostedSign.ADMIN)
                 && !builder.hasPermission(ADMIN_PERMISSION)) {
-            event.line(PostedSign.SUPPLY_LINE, Component.empty());
+            lines = lines.withLine(PostedSign.SUPPLY_LINE, Component.empty());
             builder.sendMessage(Component.text(
                     "You may not make one that supplies itself, so it will use nearby chests.",
                     NamedTextColor.RED));
         }
 
-        builder.sendMessage(Component.text(
-                "Made a " + mechanic.name().toLowerCase(Locale.ROOT) + ".",
-                NamedTextColor.YELLOW));
+        SignReview review = mechanic.review(
+                lines,
+                new PlayerActor(builder),
+                dispatcher.worldOf(event.getBlock().getWorld()));
+
+        switch (review) {
+            case SignReview.Refused refused -> refuse(event, builder, refused.why());
+            case SignReview.Accepted accepted -> {
+                write(event, accepted.lines());
+                builder.sendMessage(Component.text(
+                        "Made a " + mechanic.name().toLowerCase(Locale.ROOT) + ".",
+                        NamedTextColor.YELLOW));
+            }
+        }
+    }
+
+    /** Puts the reviewed lines onto the sign being written. */
+    private static void write(SignChangeEvent event, SignLines lines) {
+        for (int line = 0; line < SignLines.LINE_COUNT; line++) {
+            event.line(line, lines.line(line));
+        }
     }
 
     private static void refuse(SignChangeEvent event, Player builder, String why) {

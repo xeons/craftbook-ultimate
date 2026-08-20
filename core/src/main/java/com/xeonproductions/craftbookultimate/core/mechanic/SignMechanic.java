@@ -74,4 +74,20 @@ public interface SignMechanic {
     default boolean claims(SignLines lines) {
         return nameOn(lines).isPresent();
     }
+
+    /**
+     * Checks and tidies a sign as it is being written.
+     *
+     * <p>Most of these mechanics have nothing to check: a bridge that names nothing sensible
+     * simply says so the first time somebody uses it, and by then they are standing next to it.
+     * A toggled area is different, because what it names lives on disk rather than in the blocks
+     * beside the sign, and a sign naming an area nobody has saved would be silently dead.
+     *
+     * @param lines what the builder has written, with the name already put right
+     * @param builder whoever is writing it
+     * @param world where the sign is going
+     */
+    default SignReview review(SignLines lines, Actor builder, MechanicWorld world) {
+        return SignReview.keep(lines);
+    }
 }

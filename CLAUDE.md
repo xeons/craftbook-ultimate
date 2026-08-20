@@ -12,9 +12,9 @@ spawns, shoots at, hurts, doses and senses what stands near it, speaks to whoeve
 player anywhere, to the whole server or to the log, shows people weather the world is not having,
 and plays a sound, a record, a tune written on its own sign or a MIDI file out of the plugin's
 folder. The extra fork's whole IC catalogue is done. Beyond the chips, the minecart mechanics all
-run, and the first of the sign mechanics with them: a bridge runs out across a gap, a door fills a
-doorway, a gate drops from its lintel and a lift carries people between floors, each answering to a
-hand and to redstone.**
+run, and the sign mechanics with them: a bridge runs out across a gap, a door fills a doorway, a
+gate drops from its lintel, a lift carries people between floors, and a whole saved region swaps
+itself in and out — each answering to a hand and to redstone.**
 
 | Area | State |
 | --- | --- |
@@ -64,10 +64,11 @@ hand and to redstone.**
 | Sign mechanic seam (`SignMechanic`, `MechanicWorld`, `MechanicVisit`) | Done |
 | Bridge, door and gate, with the gate's six materials | Done |
 | Lifts, including the two-way sign, buttons and jump pads | Done |
+| Toggled areas, saved in the game's own structure format | Done |
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1627 tests passing**.
+**1683 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -162,8 +163,8 @@ ROM Get/Set (MC2300/MC3300).
 Kept despite vanilla equivalents: MapCopier, BannerCopier, BookCopier, the powerable blocks,
 BounceBlocks, XPStorer, Ammeter, LightStone.
 
-ComplexArea is reimplemented with a self-contained storage format; **no WorldEdit dependency**
-anywhere in the plugin.
+ComplexArea is reimplemented on the game's own structure format through `org.bukkit.structure`;
+**no WorldEdit dependency** anywhere in the plugin.
 
 ## Conventions
 
@@ -210,9 +211,10 @@ off — absent when redstone did. `paper/mechanic/` binds them and `MechanicDisp
 entry point, in the same way `CartDispatcher` is for the rails. Do not give a mechanic its own
 listener.
 
-Four are built. Bridge, Door and Gate all put blocks up and take them down, paying into and out of
+Five are built. Bridge, Door and Gate all put blocks up and take them down, paying into and out of
 the chests near their sign, or out of nothing at all where the first line reads `ADMIN` and the
-builder had the permission for it. Elevator builds nothing and carries people instead.
+builder had the permission for it. Elevator builds nothing and carries people instead. ToggleArea
+has no shape of its own at all: it swaps a whole saved region in and out.
 
 Three things set one off, and all three come through the dispatcher: a hand on its own sign, a hand
 on something standing in for that sign — a button in front of a lift, a fence a clickable gate is
@@ -221,14 +223,44 @@ shuts a mechanic and power leaving opens it, so a lever and the thing it drives 
 
 The sign names are frozen along with everything else on a sign. They are `[Bridge]` and
 `[Bridge End]`; `[Door Up]`, `[Door Down]` and `[Door]`; `[Lift Up]`, `[Lift Down]`, `[Lift]` and
-`[Lift UpDown]`; and the gate's eight — `[Gate]`, `[DGate]`, and the glass, iron and nether forms
-of each — every one of which may also carry a trailing `C` for a gate that answers to a hand on its
-own fence.
+`[Lift UpDown]`; `[Area]` and `[SaveArea]`; and the gate's eight — `[Gate]`, `[DGate]`, and the
+glass, iron and nether forms of each — every one of which may also carry a trailing `C` for a gate
+that answers to a hand on its own fence.
+
+A mechanic may check a sign as it is written, through `SignMechanic#review`, and either keep it in
+whatever spelling it wants or refuse it with a reason. Only the toggled area needs to: what it
+names lives on disk rather than in the blocks beside the sign, so a sign naming an area nobody has
+saved would otherwise be silently dead.
 
 Bridges and doors take their limits from the settings the building chips already use, because they
 are the same limits: `ics.max-width`, `ics.max-length` and `ics.placeable-blocks`. The `mechanics`
-section carries only what is peculiar to these — what a gate may be made of, how far it looks, and
-how the lifts are worked.
+section carries only what is peculiar to these — what a gate may be made of, how far it looks, how
+the lifts are worked, and how large and how many the saved areas may be.
+
+## The saved areas
+
+A toggled area is a piece of the world put away and brought back, so unlike every other mechanic
+it keeps its blocks somewhere other than the world. That somewhere is the game's own structure
+format, reached through `org.bukkit.structure` — the same files a structure block writes, and no
+world editor anywhere in the plugin.
+
+Each area is two files in `areas/<namespace>/`: an `.nbt` holding the blocks and an `.anchor`
+saying which world they came out of and where in it. The place is kept outside the structure
+because the structure format does not record one: a structure is meant to be placed anywhere and a
+toggled area belongs in exactly one spot. Keeping them apart also means an area small enough for
+one can be opened in a structure block, and a structure built elsewhere can be dropped in with an
+anchor written by hand.
+
+Blocks only, deliberately. Putting an area up spawns whatever it holds and taking it down clears
+blocks, so an area carrying entities would leave a fresh set of item frames behind on every toggle.
+
+A namespace is a player's name or `GLOBAL`, and it is what is written on the sign rather than
+anything kept beside it. The legacy fork showed the name and stored the owner's UUID in block data
+the player could not see; one readable thing that a builder and an operator can both act on is
+worth more than surviving a rename.
+
+`/area pos1` and `/area pos2` pick out the block being looked at, which is what stands in for a
+world editor's selection. `/area save`, `delete` and `list` do the rest.
 
 ## Folia and regions
 

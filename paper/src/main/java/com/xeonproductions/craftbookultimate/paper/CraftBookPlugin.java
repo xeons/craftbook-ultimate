@@ -8,8 +8,12 @@ import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanic;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanics;
+import com.xeonproductions.craftbookultimate.core.mechanic.ToggleArea;
+import com.xeonproductions.craftbookultimate.paper.area.Selections;
+import com.xeonproductions.craftbookultimate.paper.area.StructureVault;
 import com.xeonproductions.craftbookultimate.paper.cart.CartDispatcher;
 import com.xeonproductions.craftbookultimate.paper.cart.CartRecipes;
+import com.xeonproductions.craftbookultimate.paper.command.AreaCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CartCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CatalogueCommands;
 import com.xeonproductions.craftbookultimate.paper.command.ConfigCommands;
@@ -35,6 +39,7 @@ import com.xeonproductions.craftbookultimate.paper.listener.LiftMoveListener;
 import com.xeonproductions.craftbookultimate.paper.listener.MechanicInteractListener;
 import com.xeonproductions.craftbookultimate.paper.listener.MechanicRedstoneListener;
 import com.xeonproductions.craftbookultimate.paper.listener.MechanicSignListener;
+import com.xeonproductions.craftbookultimate.paper.listener.SelectionListener;
 import com.xeonproductions.craftbookultimate.paper.mechanic.MechanicDispatcher;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
 import java.io.IOException;
@@ -76,6 +81,8 @@ public final class CraftBookPlugin extends JavaPlugin {
     private @Nullable ConfigFile configFile;
     private @Nullable ChipServices services;
     private @Nullable CartDispatcher cartDispatcher;
+    private @Nullable StructureVault areas;
+    private final Selections selections = new Selections();
 
     /**
      * @param icRegistry the chip catalogue, built during bootstrap
@@ -113,6 +120,10 @@ public final class CraftBookPlugin extends JavaPlugin {
                 CartRecipes.readFrom(getServer()));
         this.cartDispatcher = carts;
 
+        StructureVault areaVault = new StructureVault(
+                getDataPath(), getServer(), regionSchedulers, this::reportSetting);
+        this.areas = areaVault;
+
         registerPermissions();
         loadPasswords();
         loadSharedState();
@@ -130,12 +141,14 @@ public final class CraftBookPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new CartSignListener(carts, chipServices.configuration()), this);
 
-        MechanicDispatcher mechanics = new MechanicDispatcher(chipServices.configuration());
+        MechanicDispatcher mechanics =
+                new MechanicDispatcher(chipServices.configuration(), areaVault);
         getServer().getPluginManager().registerEvents(new MechanicInteractListener(mechanics), this);
         getServer().getPluginManager().registerEvents(new MechanicRedstoneListener(mechanics), this);
         getServer().getPluginManager().registerEvents(new LiftMoveListener(mechanics), this);
         getServer().getPluginManager().registerEvents(
-                new MechanicSignListener(chipServices.configuration()), this);
+                new MechanicSignListener(chipServices.configuration(), mechanics), this);
+        getServer().getPluginManager().registerEvents(new SelectionListener(selections), this);
 
         adoptAlreadyLoadedChunks(manager);
 
@@ -177,6 +190,7 @@ public final class CraftBookPlugin extends JavaPlugin {
         declare(manager, MechanicSignListener.ADMIN_PERMISSION,
                 "Make a mechanic that supplies itself rather than drawing on nearby chests.",
                 PermissionDefault.OP);
+        declareAreaPermissions(manager);
 
         for (ICDefinition definition : icRegistry.definitions()) {
             Permission node = new Permission(
@@ -186,6 +200,36 @@ public final class CraftBookPlugin extends JavaPlugin {
             manager.addPermission(node);
             node.addParent(definition.restricted() ? restricted : safe, true);
         }
+    }
+
+    /**
+     * Declares the permissions the toggled areas need beyond the pair every mechanic has.
+     *
+     * <p>Saving, deleting and listing your own areas is ordinary; doing any of it under
+     * somebody else's name, or under the one everybody shares, is not.
+     */
+    private static void declareAreaPermissions(PluginManager manager) {
+        declare(manager, AreaCommands.SAVE, "Save a region as an area.",
+                PermissionDefault.TRUE);
+        declare(manager, AreaCommands.DELETE, "Delete one of your own areas.",
+                PermissionDefault.TRUE);
+        declare(manager, AreaCommands.LIST, "List your own areas.", PermissionDefault.TRUE);
+        declare(manager, AreaCommands.SAVE_OTHER, "Save an area under another name.",
+                PermissionDefault.OP);
+        declare(manager, AreaCommands.DELETE_OTHER, "Delete an area under another name.",
+                PermissionDefault.OP);
+        declare(manager, AreaCommands.LIST_OTHER, "List the areas under another name.",
+                PermissionDefault.OP);
+        declare(manager, AreaCommands.BYPASS_LIMIT,
+                "Save areas larger, and more of them, than the settings allow.",
+                PermissionDefault.OP);
+        declare(manager, ToggleArea.SAVE_SIGN_PERMISSION,
+                "Make an area sign that writes back over what it puts away.",
+                PermissionDefault.OP);
+        declare(manager, ToggleArea.GLOBAL_PERMISSION,
+                "Make an area sign using the areas everybody shares.", PermissionDefault.OP);
+        declare(manager, ToggleArea.OTHER_PERMISSION,
+                "Make an area sign using somebody else's areas.", PermissionDefault.OP);
     }
 
     /** Declares a permission, leaving one the server already knows about alone. */
@@ -222,8 +266,17 @@ public final class CraftBookPlugin extends JavaPlugin {
                         switchCommands,
                         new ConfigCommands(this::rereadSettings),
                         new CartCommands(cartCommandsTarget()),
-                        new MusicCommands(chipServices.songs()))
+                        new MusicCommands(chipServices.songs()),
+                        new AreaCommands(areaTarget(), selections, chipServices.configuration()))
                 .registerOn(this);
+    }
+
+    /** The saved areas, which the commands fill and empty. */
+    private StructureVault areaTarget() {
+        if (areas == null) {
+            throw new IllegalStateException("The saved areas are not available until enabled");
+        }
+        return areas;
     }
 
     /** The cart mechanics, which the commands drive. */

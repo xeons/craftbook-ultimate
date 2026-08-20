@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.paper.mechanic;
 
+import com.xeonproductions.craftbookultimate.core.area.AreaVault;
 import com.xeonproductions.craftbookultimate.core.config.Configuration;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
@@ -47,9 +48,16 @@ public final class MechanicDispatcher {
     };
 
     private final Configuration configuration;
+    private final AreaVault vault;
 
-    public MechanicDispatcher(Configuration configuration) {
+    public MechanicDispatcher(Configuration configuration, AreaVault vault) {
         this.configuration = configuration;
+        this.vault = vault;
+    }
+
+    /** The world as a mechanic sees it, with the saved areas behind it. */
+    public BukkitMechanicWorld worldOf(World world) {
+        return new BukkitMechanicWorld(world, vault);
     }
 
     /**
@@ -67,7 +75,7 @@ public final class MechanicDispatcher {
             return false;
         }
 
-        BukkitMechanicWorld mechanicWorld = new BukkitMechanicWorld(world);
+        BukkitMechanicWorld mechanicWorld = worldOf(world);
         PlayerActor actor = new PlayerActor(who);
         OptionalDouble height = heightWithin(clicked, interactionPoint);
 
@@ -107,7 +115,7 @@ public final class MechanicDispatcher {
             return;
         }
 
-        BukkitMechanicWorld world = new BukkitMechanicWorld(changed.getWorld());
+        BukkitMechanicWorld world = worldOf(changed.getWorld());
         for (BlockFace side : NEIGHBOURS) {
             Block neighbour = changed.getRelative(side);
             if (!Tag.ALL_SIGNS.isTagged(neighbour.getType())) {
@@ -137,7 +145,7 @@ public final class MechanicDispatcher {
         }
         return SignMechanics.elevator().ride(
                 MechanicVisit.byHand(
-                        sign, new BukkitMechanicWorld(world), settings, new PlayerActor(who)),
+                        sign, worldOf(world), settings, new PlayerActor(who)),
                 up
                         ? com.xeonproductions.craftbookultimate.core.math.BlockFace.UP
                         : com.xeonproductions.craftbookultimate.core.math.BlockFace.DOWN);
@@ -150,7 +158,7 @@ public final class MechanicDispatcher {
 
     /** Reads the sign at a block, whatever mechanic it belongs to. */
     public Optional<PostedSign> signAt(Block block) {
-        return new BukkitMechanicWorld(block.getWorld()).signAt(Positions.toDomain(block));
+        return worldOf(block.getWorld()).signAt(Positions.toDomain(block));
     }
 
     /**

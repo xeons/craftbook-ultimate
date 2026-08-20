@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.core.mechanic;
 
+import com.xeonproductions.craftbookultimate.core.area.AreaVault;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
@@ -39,6 +40,7 @@ public final class SimpleMechanicWorld implements MechanicWorld {
     private final Set<Key> passable = new LinkedHashSet<>(Blocks.AIR);
 
     private Stockpile stockpile = SimpleStockpile.empty();
+    private AreaVault vault = AreaVault.empty();
     private int minHeight = DEFAULT_MIN_HEIGHT;
     private int maxHeight = DEFAULT_MAX_HEIGHT;
 
@@ -75,6 +77,21 @@ public final class SimpleMechanicWorld implements MechanicWorld {
     @Override
     public Optional<PostedSign> signAt(Vec3i position) {
         return Optional.ofNullable(signs.get(position));
+    }
+
+    @Override
+    public boolean writeSign(Vec3i position, SignLines lines) {
+        PostedSign existing = signs.get(position);
+        if (existing == null) {
+            return false;
+        }
+        signs.put(position, new PostedSign(position, lines, existing.facing()));
+        return true;
+    }
+
+    @Override
+    public AreaVault vault() {
+        return vault;
     }
 
     @Override
@@ -153,6 +170,12 @@ public final class SimpleMechanicWorld implements MechanicWorld {
     /** Gives the mechanics a bottomless supply, which is what an admin sign has. */
     public SimpleMechanicWorld withUnlimitedStockpile() {
         return withStockpile(Stockpiles.unlimited());
+    }
+
+    /** Gives the world somewhere the saved areas are kept. */
+    public SimpleMechanicWorld withVault(AreaVault vault) {
+        this.vault = vault;
+        return this;
     }
 
     /** Gives the world a floor and a ceiling. */

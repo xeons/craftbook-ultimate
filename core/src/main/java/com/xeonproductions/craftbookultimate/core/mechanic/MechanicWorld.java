@@ -1,7 +1,9 @@
 package com.xeonproductions.craftbookultimate.core.mechanic;
 
+import com.xeonproductions.craftbookultimate.core.area.AreaVault;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
+import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.core.world.BlockReference;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
@@ -41,6 +43,28 @@ public interface MechanicWorld {
 
     /** The sign at a position, or nothing if there is no sign there. */
     Optional<PostedSign> signAt(Vec3i position);
+
+    /**
+     * Replaces what a sign says.
+     *
+     * <p>A toggled area is the one mechanic that keeps anything between one use and the next, and
+     * what it keeps is which of its two halves is standing. That goes on its own sign, in the
+     * dashes a builder can see, rather than anywhere a builder cannot.
+     *
+     * @return true if there was a sign there and it now says this
+     */
+    boolean writeSign(Vec3i position, SignLines lines);
+
+    /**
+     * Where the saved areas are kept.
+     *
+     * <p>Server-wide rather than a property of the world, and reached from here because a
+     * mechanic reaches everything through this seam. A world with no store behind it holds no
+     * areas rather than refusing to answer.
+     */
+    default AreaVault vault() {
+        return AreaVault.empty();
+    }
 
     /** Whether the chunk holding a position is loaded and safe to read. */
     boolean isLoaded(Vec3i position);

@@ -24,18 +24,21 @@ public final class CraftBookCommands {
     private final ConfigCommands config;
     private final CartCommands carts;
     private final MusicCommands music;
+    private final AreaCommands areas;
 
     public CraftBookCommands(
             CatalogueCommands catalogue,
             SwitchCommands switches,
             ConfigCommands config,
             CartCommands carts,
-            MusicCommands music) {
+            MusicCommands music,
+            AreaCommands areas) {
         this.catalogue = catalogue;
         this.switches = switches;
         this.config = config;
         this.carts = carts;
         this.music = music;
+        this.areas = areas;
     }
 
     /** Registers everything against a plugin. */
@@ -90,6 +93,11 @@ public final class CraftBookCommands {
                     carts.recipesCommand().build(),
                     "Looks up what a recipe is called on a cart crafter's sign.",
                     List.of());
+
+            commands.register(
+                    areas.areaCommand().build(),
+                    "Saves, deletes and lists the areas a toggled area sign can name.",
+                    List.of("togglearea"));
         });
     }
 }

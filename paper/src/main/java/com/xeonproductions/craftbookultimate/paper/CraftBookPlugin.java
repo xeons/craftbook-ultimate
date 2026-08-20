@@ -22,6 +22,7 @@ import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.store.FireworkFiles;
 import com.xeonproductions.craftbookultimate.paper.store.MidiFiles;
 import com.xeonproductions.craftbookultimate.paper.store.PasswordFile;
+import com.xeonproductions.craftbookultimate.paper.store.SharedStateFiles;
 import com.xeonproductions.craftbookultimate.paper.listener.CartListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartRedstoneListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartSignListener;
@@ -64,6 +65,7 @@ public final class CraftBookPlugin extends JavaPlugin {
     private @Nullable PasswordFile passwordFile;
     private @Nullable FireworkFiles fireworkFiles;
     private @Nullable MidiFiles midiFiles;
+    private @Nullable SharedStateFiles sharedState;
     private @Nullable ConfigFile configFile;
     private @Nullable ChipServices services;
     private @Nullable CartDispatcher cartDispatcher;
@@ -90,6 +92,7 @@ public final class CraftBookPlugin extends JavaPlugin {
         this.passwordFile = new PasswordFile(getDataPath());
         this.fireworkFiles = new FireworkFiles(getDataPath());
         this.midiFiles = new MidiFiles(getDataPath());
+        this.sharedState = new SharedStateFiles(getDataPath());
         this.configFile = new ConfigFile(getDataPath(), getServer(), this::reportSetting);
 
         // Before anything reads a setting, and before any chip is picked up, so a world or a
@@ -105,6 +108,7 @@ public final class CraftBookPlugin extends JavaPlugin {
 
         registerPermissions();
         loadPasswords();
+        loadSharedState();
         loadFireworkShows();
         loadSongs();
         registerCommands(chipServices);
@@ -133,6 +137,7 @@ public final class CraftBookPlugin extends JavaPlugin {
             icManager.unloadAll();
         }
         savePasswords();
+        saveSharedState();
         getComponentLogger().info(Component.text("Disabled"));
     }
 
@@ -176,7 +181,8 @@ public final class CraftBookPlugin extends JavaPlugin {
                 chipServices.guardedSwitchboard(),
                 chipServices.passwords(),
                 this::runOffThread,
-                this::savePasswords);
+                this::savePasswords,
+                this::saveSharedState);
 
         new CraftBookCommands(
                         new CatalogueCommands(icRegistry),
@@ -288,6 +294,42 @@ public final class CraftBookPlugin extends JavaPlugin {
             getComponentLogger().error(
                     Component.text("Could not read " + fireworkFiles.path() + "; no firework "
                             + "display will play until it is fixed"), e);
+        }
+    }
+
+    /**
+     * Reads back the switches and bands the last run left set.
+     *
+     * <p>Before any chip is picked up, so a chip claiming a switch finds it where it was rather
+     * than with no position at all.
+     */
+    private void loadSharedState() {
+        if (sharedState == null || services == null) {
+            return;
+        }
+        try {
+            int read = sharedState.load(services);
+            if (read > 0) {
+                getComponentLogger().info(Component.text("Read " + read + " switches and bands"));
+            }
+        } catch (IOException e) {
+            getComponentLogger().error(
+                    Component.text("Could not read the saved switches and bands; every switch "
+                            + "starts unthrown and every band silent"), e);
+        }
+    }
+
+    /** Writes the switches and bands out. Safe to call from any thread. */
+    private void saveSharedState() {
+        if (sharedState == null || services == null) {
+            return;
+        }
+        try {
+            sharedState.save(services);
+        } catch (IOException e) {
+            getComponentLogger().error(
+                    Component.text("Could not write the switches and bands out; they will start "
+                            + "again from wherever the last successful save left them"), e);
         }
     }
 

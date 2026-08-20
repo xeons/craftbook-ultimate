@@ -95,4 +95,65 @@ class RadioTest {
             assertThat(radio.signal(Band.named("door"))).isEmpty();
         }
     }
+
+    @Nested
+    @DisplayName("keeping bands between restarts")
+    class KeepingBandsBetweenRestarts {
+
+        private final Radio radio = new Radio();
+
+        @Test
+        void putsABandBackWhereItWas() {
+            radio.transmit(Band.named("door"), true);
+
+            Radio afterRestart = new Radio();
+            afterRestart.load(radio.save());
+
+            assertThat(afterRestart.signal(Band.named("door"))).contains(true);
+        }
+
+        @Test
+        void keepsTheNamespaceApartFromTheChannel() {
+            radio.transmit(new Band("alice", "door"), true);
+
+            Radio afterRestart = new Radio();
+            afterRestart.load(radio.save());
+
+            assertThat(afterRestart.signal(new Band("alice", "door"))).contains(true);
+            assertThat(afterRestart.signal(Band.named("door"))).isEmpty();
+        }
+
+        @Test
+        void keepsAChannelNameWithSpacesInIt() {
+            radio.transmit(Band.named("the north gate"), false);
+
+            Radio afterRestart = new Radio();
+            afterRestart.load(radio.save());
+
+            assertThat(afterRestart.signal(Band.named("the north gate"))).contains(false);
+        }
+
+        @Test
+        void leavesABandNothingHasTransmittedOnUnknown() {
+            radio.transmit(Band.named("door"), true);
+
+            Radio afterRestart = new Radio();
+            afterRestart.load(radio.save());
+
+            assertThat(afterRestart.signal(Band.named("gate"))).isEmpty();
+        }
+
+        @ParameterizedTest(name = "\"{0}\"")
+        @ValueSource(strings = {"", "door", "true door", "maybe - door", "true - "})
+        void skipsALineThatIsNotABand(String line) {
+            assertThat(radio.load(java.util.List.of(line))).isZero();
+            assertThat(radio.bandCount()).isZero();
+        }
+
+        @Test
+        void carriesOnPastALineItCannotRead() {
+            assertThat(radio.load(java.util.List.of("nonsense", "true - door"))).isEqualTo(1);
+            assertThat(radio.signal(Band.named("door"))).contains(true);
+        }
+    }
 }

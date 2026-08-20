@@ -39,6 +39,7 @@ public final class SwitchCommands {
     private final PasswordStore passwords;
     private final Consumer<Runnable> offThread;
     private final Runnable savePasswords;
+    private final Runnable saveSwitches;
 
     /**
      * @param open the switches anyone may throw
@@ -46,18 +47,21 @@ public final class SwitchCommands {
      * @param passwords the passwords guarding those switches
      * @param offThread runs work away from the thread that ticks the world
      * @param savePasswords writes the passwords out after one has changed
+     * @param saveSwitches writes the switch positions out after one has been thrown
      */
     public SwitchCommands(
             Switchboard open,
             Switchboard guarded,
             PasswordStore passwords,
             Consumer<Runnable> offThread,
-            Runnable savePasswords) {
+            Runnable savePasswords,
+            Runnable saveSwitches) {
         this.open = open;
         this.guarded = guarded;
         this.passwords = passwords;
         this.offThread = offThread;
         this.savePasswords = savePasswords;
+        this.saveSwitches = saveSwitches;
     }
 
     /** The command that throws an unguarded switch. */
@@ -177,10 +181,12 @@ public final class SwitchCommands {
                     return 0;
                 }
                 tell(sender, "Switch " + name + " is now " + describe(position.get()) + ".");
+                saveSwitches.run();
             }
             case "on", "off" -> {
                 board.set(name, wanted.equals("on"));
                 tell(sender, "Switch " + name + " is now " + wanted + ".");
+                saveSwitches.run();
             }
             case "state" -> {
                 Optional<Boolean> position = board.state(name);

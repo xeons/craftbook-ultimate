@@ -2,9 +2,12 @@ package com.xeonproductions.craftbookultimate.core.control;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @DisplayName("Switches thrown by command")
 class SwitchboardTest {
@@ -32,6 +35,35 @@ class SwitchboardTest {
             board.forget("door");
 
             assertThat(board.isKnown("door")).isFalse();
+        }
+
+        @Test
+        void keepsWhereASwitchWasThrownAfterEverythingStopsFollowingIt() {
+            // A chunk going out of view must not swing a door shut.
+            board.register("door");
+            board.set("door", true);
+
+            board.forget("door");
+            board.register("door");
+
+            assertThat(board.state("door")).contains(true);
+        }
+
+        @Test
+        void keepsASwitchWhileAnotherChipIsStillFollowingIt() {
+            board.register("door");
+            board.register("door");
+            board.set("door", true);
+
+            board.forget("door");
+
+            assertThat(board.isKnown("door")).isTrue();
+            assertThat(board.state("door")).contains(true);
+        }
+
+        @Test
+        void refusesToThrowASwitchNothingIsFollowing() {
+            assertThat(board.set("door", true)).isFalse();
             assertThat(board.state("door")).isEmpty();
         }
 
@@ -111,5 +143,63 @@ class SwitchboardTest {
 
         assertThat(board.state("door")).contains(true);
         assertThat(other.state("door")).isEmpty();
+    }
+
+    @Nested
+    @DisplayName("keeping switches between restarts")
+    class KeepingSwitchesBetweenRestarts {
+
+        @Test
+        void putsASwitchBackWhereItWas() {
+            board.register("door");
+            board.set("door", true);
+
+            Switchboard afterRestart = new Switchboard();
+            afterRestart.load(board.save());
+            afterRestart.register("door");
+
+            assertThat(afterRestart.state("door")).contains(true);
+        }
+
+        @Test
+        void putsBackASwitchNothingIsFollowingYet() {
+            // The file is read before any chip has loaded, so nothing is following anything.
+            Switchboard afterRestart = new Switchboard();
+            afterRestart.load(List.of("false Front Door"));
+
+            assertThat(afterRestart.state("Front Door")).contains(false);
+            assertThat(afterRestart.isKnown("Front Door")).isFalse();
+        }
+
+        @Test
+        void keepsANameWithSpacesInIt() {
+            board.register("the north gate");
+            board.set("the north gate", true);
+
+            Switchboard afterRestart = new Switchboard();
+            afterRestart.load(board.save());
+
+            assertThat(afterRestart.state("the north gate")).contains(true);
+        }
+
+        @Test
+        void writesNothingForASwitchNobodyHasThrown() {
+            board.register("door");
+
+            assertThat(board.save()).isEmpty();
+        }
+
+        @ParameterizedTest(name = "\"{0}\"")
+        @ValueSource(strings = {"", "door", "maybe door", " ", "true "})
+        void skipsALineThatIsNotASwitch(String line) {
+            assertThat(board.load(List.of(line))).isZero();
+            assertThat(board.rememberedCount()).isZero();
+        }
+
+        @Test
+        void carriesOnPastALineItCannotRead() {
+            assertThat(board.load(List.of("nonsense", "true door"))).isEqualTo(1);
+            assertThat(board.state("door")).contains(true);
+        }
     }
 }

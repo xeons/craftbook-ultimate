@@ -34,7 +34,7 @@ have not been started.**
 | Time-based chips (clock, sensors, pulse, delays) | Done |
 | Commands (Brigadier, `/craftbook` and the switch commands) | Done |
 | Configuration (`config.yml`, `/craftbook reload`) | Done |
-| Persistence | Switch passwords only |
+| Persistence | Switch passwords, switch positions, wireless bands |
 | World seam (`ChipWorld`, `SimpleChipWorld`) | Done |
 | World sensors (liquid, light, weather, block detector) | Done |
 | Weather and time control chips | Done |
@@ -62,7 +62,7 @@ have not been started.**
 | Mechanics other than the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1506 tests passing**.
+**1529 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 

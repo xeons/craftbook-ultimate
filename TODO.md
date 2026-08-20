@@ -86,29 +86,21 @@ Note that `MC1421` is upstream's clock, so it cannot be taken at its own number 
 
 ## Mechanics
 
-The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 22 are
-ported, 3 are dropped by decision, and **45 are left**. The bridge, the door, the gate, the lift
+The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 24 are
+ported, 3 are dropped by decision, and **43 are left**. The bridge, the door, the gate, the lift
 and the toggled area are done, and so is the greater part of the rails. Those listed as unique to
 this fork have no upstream equivalent to compare against, so the legacy source is the only
 specification.
 
-### Minecart mechanics: most of the rails
+### Minecart mechanics: everything with a sign
 
 `Station`, `StationClear`, `CartSort`, `CartLift`, `CartLaunch`, `CartDelay`, `CartLoad`,
-`CartDirection`, `CartBooster`, `CartCollect`, `CartDeposit`, `CartCraft`, `CartPrint` and
-`CartDispenser`, with the `/station`, `/cbgo` and `/cbrecipes` commands. `CartPrint` covers
-`CartMessenger` as well: both claim `[Print]` in the legacy fork, so one implementation answers
-for both.
+`CartDirection`, `CartBooster`, `CartCollect`, `CartDeposit`, `CartCraft`, `CartPrint`,
+`CartDispenser`, `CartEjector` and `CartReverser`, with the `/station`, `/cbgo` and `/cbrecipes`
+commands. `CartPrint` covers `CartMessenger` as well: both claim `[Print]` in the legacy fork, so
+one implementation answers for both.
 
-Two more are **not** ported. Both take a sign or go without one, in the way `CartBooster` and
-`CartDirection` already do, and both would want a name on `CartSignRules`:
-
-| Mechanic | Sign | What it does |
-| --- | --- | --- |
-| `CartEjector` | `[Eject]` | Puts the riders out. With a sign they land one block above the rail behind it, and the third line is a `CartFilter` saying which carts to empty; without one they are simply set down where they are. |
-| `CartReverser` | `[Reverse]` | Turns the cart around. With a sign it only reverses a cart not already heading the way the sign faces, so it works as a one-way; without one it reverses whatever crosses it. |
-
-Seven more are **not** ported and carry no sign at all. They are tweaks to how a cart behaves
+Seven are **not** ported and carry no sign at all. They are tweaks to how a cart behaves
 rather than mechanisms a builder places, so each is a listener and a setting rather than anything
 on `CartDispatcher`:
 
@@ -202,4 +194,6 @@ at all. Worth checking early, in roughly this order:
     the floor they arrive at.
 18. `/area pos1`, `/area pos2` and `/area save` write a structure and an anchor, an `[Area]` sign
     swaps it in and out, and an area holding a chest keeps what was in the chest.
-19. Region behaviour on an actual Folia server.
+19. An `[Eject]` sign sets a rider down on the platform behind it, and a `[Reverse]` sign turns
+    back a cart that comes at it from the wrong side while letting the other way through.
+20. Region behaviour on an actual Folia server.

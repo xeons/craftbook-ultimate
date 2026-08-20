@@ -15,6 +15,7 @@ import java.util.UUID;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.Location;
 import org.bukkit.Registry;
 import org.bukkit.damage.DamageSource;
 import org.bukkit.damage.DamageType;
@@ -229,6 +230,19 @@ public record BukkitBystander(Entity entity) implements Bystander {
     @Override
     public boolean isPresent() {
         return entity.isValid();
+    }
+
+    @Override
+    public boolean moveTo(Vec3d position) {
+        if (!entity.isValid()) {
+            return false;
+        }
+        Location where = entity.getLocation();
+        // Keeps them in their own world, which is the only one this thread may touch, and keeps
+        // them looking the way they were.
+        entity.teleportAsync(new Location(where.getWorld(),
+                position.x(), position.y(), position.z(), where.getYaw(), where.getPitch()));
+        return true;
     }
 
     @Override

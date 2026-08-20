@@ -1558,3 +1558,50 @@ output rather than in the plugin's own log.
 **Rewrite:** each thing that can fail says which thing it was, to the person who set it off. What
 goes to the log is what nobody standing at the sign could have fixed, such as a file that will not
 open.
+
+## The ejector and the reverser
+
+### 115. A one-way reverser worked in two directions out of four
+
+`CartReverser` decides whether a cart is already going the way its sign faces by taking the floor
+of a normalised velocity:
+
+```java
+Vector3d normalVelocity = minecart.getVelocity().normalize();
+case SOUTH:
+    if (normalVelocity.getFloorZ() != 1) {
+        minecart.setVelocity(minecart.getVelocity().mul(-1));
+    }
+```
+
+A cart travelling due south on flat straight rail normalises to exactly `(0, 0, 1)` and passes. Give
+it any velocity on another axis — a curve, a slope, the moment after a booster — and the normalised
+z falls short of 1, floors to 0, and the cart is turned back. The same cart heading north normalises
+to about `-0.95`, which floors to `-1` and passes, because flooring rounds away from zero on one
+side and towards it on the other. So a northbound or westbound one-way tolerated a cart that was
+not perfectly aligned and a southbound or eastbound one did not, and a reverser at the top of a
+slope bounced everything that climbed it.
+
+**Rewrite:** the cart's heading is the axis it is moving along fastest, and a cart is let through
+when that heading is the way the sign looks. Which way round the sign faces makes no difference to
+how forgiving it is.
+
+### 116. An ejector read a filter off a sign belonging to another mechanic
+
+```java
+if (blocks.hasSign()) {
+    String line3 = blocks.getSign().get(Keys.SIGN_LINES)...
+    if (!line3.isEmpty() && !CartSorting.match(minecart, line3)) {
+        return false; // Shouldn't eject
+    }
+}
+```
+
+Any sign at all, not merely an `[Eject]` one. The message sign is the mechanic with no block of its
+own, so hanging one under an ejector is a reasonable thing to build — say what the stop is and then
+turn everybody out. Under that arrangement the ejector read the message as a cart filter, failed to
+match it against anything, and quietly stopped ejecting. The builder saw a working sign and a
+mechanism that had stopped working, with nothing connecting the two.
+
+**Rewrite:** the filter is read only off a sign that names the ejector. A sign naming something else
+leaves the ejector to empty every cart, which is what an ejector with no sign of its own does.

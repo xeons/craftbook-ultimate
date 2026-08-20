@@ -12,8 +12,8 @@ spawns, shoots at, hurts, doses and senses what stands near it, speaks to whoeve
 player anywhere, to the whole server or to the log, shows people weather the world is not having,
 and plays a sound, a record, a tune written on its own sign or a MIDI file out of the plugin's
 folder. The extra fork's whole IC catalogue is done. Beyond the chips, a railway runs — a cart is
-stopped, sorted, lifted, launched, held, emptied, filled and sent on — and the sign mechanics with
-it: a bridge runs out across a gap, a door fills a doorway, a gate drops from its lintel, a lift
+stopped, sorted, lifted, launched, held, turned back, emptied of goods and of people, filled and
+sent on — and the sign mechanics with it: a bridge runs out across a gap, a door fills a doorway, a gate drops from its lintel, a lift
 carries people between floors, and a whole saved region swaps itself in and out — each answering
 to a hand and to redstone.**
 
@@ -61,8 +61,8 @@ to a hand and to redstone.**
 | Weather illusions (false and hidden rain) | Done |
 | Sound effect, jukebox and written tunes | Done |
 | Music from a MIDI file (`MCU700`) | Done |
-| Minecart mechanics (13 on the rails, plus the dispenser) | Done |
-| Minecart mechanics: `[Eject]`, `[Reverse]`, and seven signless tweaks | Not started |
+| Minecart mechanics (15 on the rails, plus the dispenser) | Done |
+| Minecart mechanics: the seven signless tweaks | Not started |
 | Sign mechanic seam (`SignMechanic`, `MechanicWorld`, `MechanicVisit`) | Done |
 | Bridge, door and gate, with the gate's six materials | Done |
 | Lifts, including the two-way sign, buttons and jump pads | Done |
@@ -70,7 +70,7 @@ to a hand and to redstone.**
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1683 tests passing**.
+**1701 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -197,13 +197,12 @@ Three things are frozen and must not be quietly improved:
 against. A mechanic that wants to hold a cart stops it dead instead, which is what holding it
 amounted to anyway.
 
-**Not ported:** `[Eject]` and `[Reverse]`, which belong on `CartSignRules` alongside the rest, and
-the seven signless mechanics that change how any cart behaves rather than what a particular place
-on the rails does — empty carts decaying, riders taking the cart with them, storage carts picking
-items up, creatures kept out, ladders and pressure plates carrying rails, carts passing through
-what they would otherwise hit, and carts clearing what they hit out of the way. Those seven are
-each a listener and a setting; none of them goes through `CartDispatcher`, which resolves a
-mechanism from a block and a sign.
+**Not ported:** the seven signless mechanics that change how any cart behaves rather than what a
+particular place on the rails does — empty carts decaying, riders taking the cart with them,
+storage carts picking items up, creatures kept out, ladders and pressure plates carrying rails,
+carts passing through what they would otherwise hit, and carts clearing what they hit out of the
+way. Those seven are each a listener and a setting; none of them goes through `CartDispatcher`,
+which resolves a mechanism from a block and a sign.
 
 CartWarp is not ported either, and will not be: its whole purpose was teleporting a cart to a
 CBWarp, and CBWarps is on the dropped list, so there is nothing for it to warp to.

@@ -77,6 +77,16 @@ public interface Cart {
      */
     boolean board(Bystander rider);
 
+    /**
+     * Takes everybody out of the cart.
+     *
+     * <p>They are left standing where the cart is unless whatever ejected them moves them on, so
+     * the riders come back to be set down somewhere.
+     *
+     * @return who was aboard, nearest the cart first, and nobody at all if the cart is gone
+     */
+    List<Bystander> ejectRiders();
+
     /** Whether the cart is still in the world. */
     boolean isPresent();
 

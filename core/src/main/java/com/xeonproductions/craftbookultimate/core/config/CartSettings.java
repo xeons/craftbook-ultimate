@@ -115,6 +115,8 @@ public record CartSettings(
         blocks.put("delay", Blocks.key("yellow_wool"));
         blocks.put("load", Blocks.key("cyan_wool"));
         blocks.put("direction", Blocks.key("red_wool"));
+        blocks.put("reverse", Blocks.key("white_wool"));
+        blocks.put("eject", Blocks.key("iron_block"));
         blocks.put("craft", Blocks.key("gray_wool"));
         blocks.put("collect", Blocks.key("iron_ore"));
         blocks.put("deposit", Blocks.key("iron_ore"));

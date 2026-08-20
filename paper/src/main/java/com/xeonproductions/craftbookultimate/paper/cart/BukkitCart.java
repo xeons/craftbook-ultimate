@@ -133,6 +133,16 @@ public record BukkitCart(Minecart minecart) implements Cart {
     }
 
     @Override
+    public List<Bystander> ejectRiders() {
+        if (!minecart.isValid()) {
+            return List.of();
+        }
+        List<Bystander> aboard = riders();
+        minecart.eject();
+        return aboard;
+    }
+
+    @Override
     public boolean isPresent() {
         return minecart.isValid();
     }

@@ -812,6 +812,192 @@ class CartMechanicsTest {
     }
 
     @Nested
+    @DisplayName("the reverser")
+    class TheReverser {
+
+        private final CartMechanic reverser = CartRouting.reverser();
+
+        @Test
+        void turnsBackWhateverCrossesItWhereThereIsNoSign() {
+            SimpleCart cart = SimpleCart.rideable().moving(new Vec3d(0, 0, -0.3));
+            SimpleCartVisit visit = SimpleCartVisit.at(RAIL, "white_wool").cart(cart).build();
+
+            reverser.onCart(visit);
+
+            assertThat(cart.velocity().z()).isEqualTo(0.3);
+        }
+
+        @Test
+        void letsThroughACartAlreadyGoingTheWayTheSignLooks() {
+            SimpleCart cart = SimpleCart.rideable().moving(new Vec3d(0, 0, -0.3));
+            SimpleCartVisit visit = SimpleCartVisit.at(
+                            RAIL, "white_wool", BlockFace.NORTH, "", "[Reverse]", "", "")
+                    .cart(cart)
+                    .build();
+
+            reverser.onCart(visit);
+
+            assertThat(cart.velocity().z()).isEqualTo(-0.3);
+        }
+
+        @Test
+        void turnsBackACartComingAtItTheWrongWay() {
+            SimpleCart cart = SimpleCart.rideable().moving(new Vec3d(0, 0, 0.3));
+            SimpleCartVisit visit = SimpleCartVisit.at(
+                            RAIL, "white_wool", BlockFace.NORTH, "", "[Reverse]", "", "")
+                    .cart(cart)
+                    .build();
+
+            reverser.onCart(visit);
+
+            assertThat(cart.velocity().z()).isEqualTo(-0.3);
+        }
+
+        @Test
+        void countsACartComingOffACurveAsGoingWhicheverWayItIsFastest() {
+            SimpleCart cart = SimpleCart.rideable().moving(new Vec3d(0.1, 0, 0.3));
+            SimpleCartVisit visit = SimpleCartVisit.at(
+                            RAIL, "white_wool", BlockFace.SOUTH, "", "[Reverse]", "", "")
+                    .cart(cart)
+                    .build();
+
+            reverser.onCart(visit);
+
+            assertThat(cart.velocity().z()).isEqualTo(0.3);
+        }
+
+        @Test
+        void leavesACartAloneWhileItIsStillCrossingOneBlock() {
+            SimpleCart cart = SimpleCart.rideable().moving(new Vec3d(0, 0, -0.3));
+            SimpleCartVisit visit =
+                    SimpleCartVisit.at(RAIL, "white_wool").cart(cart).minor().build();
+
+            reverser.onCart(visit);
+
+            assertThat(cart.velocity().z()).isEqualTo(-0.3);
+        }
+
+        @Test
+        void isBuiltFromWhiteWool() {
+            assertThat(reverser.appliesTo(
+                    SimpleCartVisit.at(RAIL, "white_wool").build().mechanism(), Settings.DEFAULTS))
+                    .isTrue();
+            assertThat(reverser.appliesTo(
+                    SimpleCartVisit.at(RAIL, "stone").build().mechanism(), Settings.DEFAULTS))
+                    .isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("the ejector")
+    class TheEjector {
+
+        private final CartMechanic ejector = CartRiders.ejector();
+
+        @Test
+        void setsARiderDownOnTheBlockBehindTheSign() {
+            SimpleBystander rider = SimpleBystander.player("Ada");
+            SimpleCartVisit visit = SimpleCartVisit.at(
+                            RAIL, "iron_block", BlockFace.SOUTH, "", "[Eject]", "", "")
+                    .cart(SimpleCart.rideable().carrying(rider))
+                    .build();
+
+            ejector.onCart(visit);
+
+            assertThat(rider.position()).isEqualTo(new Vec3d(0.5, 65, -0.5));
+            assertThat(visit.cart().isOccupied()).isFalse();
+        }
+
+        @Test
+        void setsThemDownWhereTheyAreWhereThereIsNoSign() {
+            SimpleBystander rider = SimpleBystander.player("Ada");
+            SimpleCartVisit visit = SimpleCartVisit.at(RAIL, "iron_block")
+                    .cart(SimpleCart.rideable().carrying(rider))
+                    .build();
+
+            ejector.onCart(visit);
+
+            assertThat(rider.position()).isEqualTo(Vec3d.ZERO);
+            assertThat(visit.cart().isOccupied()).isFalse();
+        }
+
+        @Test
+        void emptiesEveryCartWhereTheLineIsBlank() {
+            SimpleCart cart = SimpleCart.storage().carrying(SimpleBystander.player("Ada"));
+            SimpleCartVisit visit = SimpleCartVisit.at(
+                            RAIL, "iron_block", BlockFace.SOUTH, "", "[Eject]", "", "")
+                    .cart(cart)
+                    .build();
+
+            ejector.onCart(visit);
+
+            assertThat(cart.isOccupied()).isFalse();
+        }
+
+        @Test
+        void leavesACartTheFilterDoesNotClaim() {
+            SimpleCart cart = SimpleCart.rideable().carrying(SimpleBystander.player("Ada"));
+            SimpleCartVisit visit = SimpleCartVisit.at(
+                            RAIL, "iron_block", BlockFace.SOUTH, "", "[Eject]", "storage", "")
+                    .cart(cart)
+                    .build();
+
+            ejector.onCart(visit);
+
+            assertThat(cart.isOccupied()).isTrue();
+        }
+
+        @Test
+        void readsAFilterOnlyOffItsOwnSign() {
+            // A message sign has no block of its own, so it may hang under an ejector. Its third
+            // line is what it has to say, not a filter, and the ejector still empties the cart.
+            SimpleCart cart = SimpleCart.rideable().carrying(SimpleBystander.player("Ada"));
+            SimpleCartVisit visit = SimpleCartVisit.at(
+                            RAIL, "iron_block", BlockFace.SOUTH, "", "[Print]", "Everybody out", "")
+                    .cart(cart)
+                    .build();
+
+            ejector.onCart(visit);
+
+            assertThat(cart.isOccupied()).isFalse();
+        }
+
+        @Test
+        void doesNothingToAnEmptyCart() {
+            SimpleCartVisit visit = SimpleCartVisit.at(
+                            RAIL, "iron_block", BlockFace.SOUTH, "", "[Eject]", "", "")
+                    .cart(SimpleCart.rideable())
+                    .build();
+
+            assertThat(ejector.onCart(visit)).isFalse();
+        }
+
+        @Test
+        void leavesACartAloneWhileItIsStillCrossingOneBlock() {
+            SimpleCart cart = SimpleCart.rideable().carrying(SimpleBystander.player("Ada"));
+            SimpleCartVisit visit = SimpleCartVisit.at(
+                            RAIL, "iron_block", BlockFace.SOUTH, "", "[Eject]", "", "")
+                    .cart(cart)
+                    .minor()
+                    .build();
+
+            ejector.onCart(visit);
+
+            assertThat(cart.isOccupied()).isTrue();
+        }
+
+        @Test
+        void isBuiltFromAnIronBlock() {
+            assertThat(ejector.appliesTo(
+                    SimpleCartVisit.at(RAIL, "iron_block").build().mechanism(), Settings.DEFAULTS))
+                    .isTrue();
+            assertThat(ejector.appliesTo(
+                    SimpleCartVisit.at(RAIL, "iron_ore").build().mechanism(), Settings.DEFAULTS))
+                    .isFalse();
+        }
+    }
+
+    @Nested
     @DisplayName("choosing which mechanic is built here")
     class ChoosingWhichMechanicIsBuiltHere {
 

@@ -34,7 +34,7 @@ public final class CartSignRules {
     /** Every name a cart mechanic's sign may carry. */
     private static final List<String> NAMES = List.of(
             "Station", "Sort", "CartLift", "Launch", "Delay", "Print",
-            "Collect", "Deposit", "Craft", "Dispenser");
+            "Collect", "Deposit", "Craft", "Dispenser", "Eject", "Reverse");
 
     private CartSignRules() {}
 
@@ -71,6 +71,7 @@ public final class CartSignRules {
         return switch (name) {
             case "Delay" -> delayProblem(lines);
             case "Sort", "CartLift", "Launch" -> filterProblem(lines, world);
+            case "Eject" -> ejectProblem(lines, world);
             case "Station" -> stationProblem(lines);
             case "Collect", "Deposit" -> itemProblem(lines, world);
             case "Craft" -> recipeProblem(lines, world);
@@ -102,6 +103,15 @@ public final class CartSignRules {
             }
         }
         return Optional.empty();
+    }
+
+    /** An ejector may name the carts it empties, and empties everything if it does not. */
+    private static Optional<String> ejectProblem(SignLines lines, CartWorld world) {
+        String written = lines.trimmedText(THIRD_LINE);
+        if (written.isEmpty() || CartFilter.isWellFormed(written, world::resolveItem)) {
+            return Optional.empty();
+        }
+        return Optional.of("Line 3 is not a cart filter: " + written);
     }
 
     /** A station names itself on line 3 and says nothing anywhere else. */

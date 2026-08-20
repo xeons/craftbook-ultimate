@@ -12,6 +12,9 @@ import org.jspecify.annotations.NullMarked;
  * anything can stop the cart on it; and the ones that move goods or people last, since they never
  * change where the cart is going.
  *
+ * <p>The ejector is last of all, after the printer: somebody turned out onto a platform should
+ * have read whatever the sign beside them had to say first.
+ *
  * <p>Every applicable mechanic runs even after one has asked for the cart to be held, matching how
  * each of them used to watch carts independently of the others.
  */
@@ -23,6 +26,7 @@ public final class CartMechanics {
             CartSpeed.delay(),
             CartSpeed.launcher(),
             CartRouting.sorter(),
+            CartRouting.reverser(),
             CartRouting.lift(),
             CartRouting.direction(),
             CartRouting.station(),
@@ -31,7 +35,8 @@ public final class CartMechanics {
             CartCargo.depositor(),
             CartCrafting.crafter(),
             CartCargo.loader(),
-            CartMessages.printer());
+            CartMessages.printer(),
+            CartRiders.ejector());
 
     private CartMechanics() {}
 

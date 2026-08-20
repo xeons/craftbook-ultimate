@@ -99,6 +99,38 @@ class CartSignRulesTest {
     }
 
     @Nested
+    @DisplayName("an ejector")
+    class AnEjector {
+
+        @Test
+        void acceptsSayingNothingAtAllBecauseItThenEmptiesEverything() {
+            assertThat(check("Eject", "", "[Eject]", "", "")).isEmpty();
+        }
+
+        @Test
+        void acceptsAFilterNamingTheCartsToEmpty() {
+            assertThat(check("Eject", "", "[Eject]", "storage", "")).isEmpty();
+        }
+
+        @Test
+        void refusesAFilterItDoesNotUnderstand() {
+            assertThat(check("Eject", "", "[Eject]", "aeroplane", "")).get()
+                    .asString()
+                    .contains("Line 3");
+        }
+    }
+
+    @Nested
+    @DisplayName("a reverser")
+    class AReverser {
+
+        @Test
+        void asksNothingOfItsSignAtAll() {
+            assertThat(check("Reverse", "", "[Reverse]", "", "")).isEmpty();
+        }
+    }
+
+    @Nested
     @DisplayName("a station")
     class AStation {
 

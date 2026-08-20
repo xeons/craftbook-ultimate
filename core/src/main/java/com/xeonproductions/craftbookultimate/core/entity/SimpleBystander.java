@@ -181,6 +181,15 @@ public final class SimpleBystander implements Bystander {
     }
 
     @Override
+    public boolean moveTo(Vec3d position) {
+        if (!present) {
+            return false;
+        }
+        this.position = position;
+        return true;
+    }
+
+    @Override
     public boolean damage(double amount) {
         if (!present) {
             return false;

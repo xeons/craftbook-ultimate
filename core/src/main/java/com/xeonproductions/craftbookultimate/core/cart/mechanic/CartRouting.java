@@ -118,6 +118,17 @@ public final class CartRouting {
         return new StationClear();
     }
 
+    /**
+     * Turns a cart around.
+     *
+     * <p>Without a sign it reverses whatever crosses it, which is what a builder puts at the end
+     * of a spur. With a sign it reverses only a cart that is not already travelling the way the
+     * sign looks, which makes it a one-way: come at it the wrong way and you are sent back.
+     */
+    public static CartMechanic reverser() {
+        return new Reverser();
+    }
+
     /** Bends the rail ahead of a cart. */
     private record Sorter() implements CartMechanic {
 
@@ -409,6 +420,61 @@ public final class CartRouting {
                     .filter(stations::clearDestination)
                     .ifPresent(cleared -> rider.tell(Component.text(
                             "Your destination has been forgotten.", NamedTextColor.GREEN)));
+        }
+    }
+
+    /** Turns a cart around. */
+    private record Reverser() implements CartMechanic {
+
+        @Override
+        public String name() {
+            return "Reverse";
+        }
+
+        @Override
+        public boolean requiresSign() {
+            return false;
+        }
+
+        @Override
+        public boolean onCart(CartVisit visit) {
+            if (!visit.hasArrived() || allowedThrough(visit)) {
+                return false;
+            }
+            visit.cart().setVelocity(visit.cart().velocity().multiply(-1));
+            return false;
+        }
+
+        /**
+         * Whether the cart may carry on the way it was going.
+         *
+         * <p>Always no without a sign naming this mechanic, since a plain reverser turns back
+         * everything. With one, a cart already heading the way the sign looks is left alone.
+         */
+        private static boolean allowedThrough(CartVisit visit) {
+            if (!visit.mechanism().isNamed("Reverse")) {
+                return false;
+            }
+            BlockFace wanted = visit.mechanism().sign().orElseThrow().facing();
+            return headingOf(visit.cart()).filter(wanted::equals).isPresent();
+        }
+
+        /**
+         * Which way a cart is travelling, as a direction.
+         *
+         * <p>The axis it is moving along fastest, so a cart coming off a curve counts as going
+         * whichever way it has most nearly settled into. Nothing at all for a cart standing
+         * still, which has no way to be going.
+         */
+        private static Optional<BlockFace> headingOf(Cart cart) {
+            Vec3d velocity = cart.velocity();
+            if (Math.abs(velocity.x()) > Math.abs(velocity.z())) {
+                return Optional.of(velocity.x() > 0 ? BlockFace.EAST : BlockFace.WEST);
+            }
+            if (velocity.z() != 0) {
+                return Optional.of(velocity.z() > 0 ? BlockFace.SOUTH : BlockFace.NORTH);
+            }
+            return Optional.empty();
         }
     }
 

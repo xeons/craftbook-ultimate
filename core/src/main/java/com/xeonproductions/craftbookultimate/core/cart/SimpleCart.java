@@ -125,6 +125,16 @@ public final class SimpleCart implements Cart {
     }
 
     @Override
+    public List<Bystander> ejectRiders() {
+        if (!present) {
+            return List.of();
+        }
+        List<Bystander> aboard = List.copyOf(riders);
+        riders.clear();
+        return aboard;
+    }
+
+    @Override
     public boolean isPresent() {
         return present;
     }

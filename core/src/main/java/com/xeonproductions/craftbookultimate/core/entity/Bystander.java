@@ -130,6 +130,17 @@ public interface Bystander {
     boolean isPresent();
 
     /**
+     * Sets it down somewhere else in the same world.
+     *
+     * <p>The same world deliberately: this is for putting a rider on the platform beside the cart
+     * they were in, not for carrying anybody anywhere. Whichever way they were looking, they go on
+     * looking that way.
+     *
+     * @return whether it was still there to move
+     */
+    boolean moveTo(Vec3d position);
+
+    /**
      * Hurts it, ignoring armour.
      *
      * @param amount how many half-hearts to take

@@ -73,6 +73,15 @@ public final class ICDocs {
                 fills itself in: line 1 becomes the chip's shorthand, so you can read at a glance
                 what a wall of signs is doing.
 
+                Lines 3 and 4 are what the chip is told, and they mean something different for
+                every chip. Each entry below says what they are for, and a dash means that chip
+                reads nothing there.
+
+                A line marked **required** is one the chip cannot work without. Leaving it blank is
+                refused as you write the sign, rather than leaving you a chip that looks built and
+                does nothing. Everything else has a sensible default and the entry says what it is;
+                leaving one of those blank is fine and you are told what you have defaulted to.
+
                 ### Naming it by its shorthand instead
 
                 You can name a chip by its shorthand rather than its number, and then it goes after
@@ -187,6 +196,8 @@ public final class ICDocs {
 
             page.append("| | |\n| --- | --- |\n");
             row(page, "Write on the sign", "`[" + chip.model() + "]`, or `=" + chip.shorthand() + "`");
+            row(page, "Line 3", lineOf(chip, ICDefinition.THIRD_LINE));
+            row(page, "Line 4", lineOf(chip, ICDefinition.FOURTH_LINE));
             row(page, "Wiring", wiringOf(chip.defaultLayout()));
             chip.selfTriggeringModel().ifPresent(model ->
                     row(page, "Runs on its own as", "`[" + model + "]`"));
@@ -210,6 +221,18 @@ public final class ICDocs {
     /** One row of a chip's table of facts. */
     private static void row(StringBuilder page, String what, String value) {
         page.append("| **").append(what).append("** | ").append(value).append(" |\n");
+    }
+
+    /**
+     * How one of a chip's configurable lines reads.
+     *
+     * <p>A chip that reads nothing there says so with a dash rather than being left out, so the
+     * table has the same shape for every chip and a blank line is visibly deliberate.
+     */
+    private static String lineOf(ICDefinition chip, int index) {
+        return chip.lineSpec(index)
+                .map(spec -> spec.meaning() + (spec.required() ? " *(required)*" : ""))
+                .orElse("—");
     }
 
     /** How a layout reads to somebody who has to wire it up. */

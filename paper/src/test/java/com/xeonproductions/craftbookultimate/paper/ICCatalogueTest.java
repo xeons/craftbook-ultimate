@@ -228,6 +228,53 @@ class ICCatalogueTest {
     }
 
     @Test
+    void saysWhatEveryChipsLinesAreFor() {
+        // Said outright, including "this chip reads neither", so a chip nobody has documented is
+        // distinguishable from one with nothing to document. Without this the catalogue page
+        // would show a blank line for both and a builder could not tell them apart.
+        assertThat(REGISTRY.definitions())
+                .allSatisfy(definition -> assertThat(definition.linesDocumented())
+                        .as(definition.model() + " says what its lines are for")
+                        .isTrue());
+    }
+
+    @Test
+    void asksForALineOnlyWhereTheChipCannotWorkWithoutIt() {
+        // A required line refuses a sign that leaves it blank, so a wrong one here blocks a
+        // build that would have worked. Every chip that reads a line at all must have said
+        // something about it rather than leaving the meaning empty.
+        assertThat(REGISTRY.definitions())
+                .allSatisfy(definition -> {
+                    definition.thirdLine().ifPresent(spec ->
+                            assertThat(spec.meaning()).as(definition.model()).isNotBlank());
+                    definition.fourthLine().ifPresent(spec ->
+                            assertThat(spec.meaning()).as(definition.model()).isNotBlank());
+                });
+    }
+
+    @Test
+    void asksTheChipsThatDoNothingWithoutALineForOne() {
+        // Each of these returns before doing anything when its line will not resolve, and says
+        // so to nobody. They are the reason the check exists.
+        for (String model : new String[] {"MCU700", "MCX251", "MCX205", "MC1110", "MC1111"}) {
+            assertThat(REGISTRY.byModel(model).orElseThrow().thirdLine())
+                    .as(model + " needs its third line")
+                    .get()
+                    .satisfies(spec -> assertThat(spec.required()).isTrue());
+        }
+    }
+
+    @Test
+    void leavesTheChipsThatDefaultSensiblyAlone() {
+        // A mob zapper with a blank third line removes hostile mobs; a rain sensor reads nothing
+        // at all. Refusing those signs would be refusing signs that work.
+        assertThat(REGISTRY.byModel("MCX130").orElseThrow().thirdLine())
+                .get()
+                .satisfies(spec -> assertThat(spec.required()).isFalse());
+        assertThat(REGISTRY.byModel("MCX230").orElseThrow().readsAnyLine()).isFalse();
+    }
+
+    @Test
     void givesEveryChipADescription() {
         assertThat(REGISTRY.definitions()).allSatisfy(definition -> {
             assertThat(definition.name()).isNotBlank();

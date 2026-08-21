@@ -4,12 +4,15 @@ import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICLine;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
+import com.xeonproductions.craftbookultimate.core.ic.LineSpec;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
 import com.xeonproductions.craftbookultimate.paper.mechanic.PlayerActor;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
 import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -100,11 +103,17 @@ public final class ICSignListener implements Listener {
             return;
         }
 
+        SignLines written = SignLines.of(event.lines());
+
+        if (refusedForMissingLines(event, definition, written, player)) {
+            return;
+        }
+
         // Asked of a throwaway logic instance: the chip itself is not made until the sign has
         // been written, and a chip naming something that is not there should never be made at all.
         Optional<String> problem = definition
                 .newLogic()
-                .reviewSign(SignLines.of(event.lines()), manager.services(), new PlayerActor(player));
+                .reviewSign(written, manager.services(), new PlayerActor(player));
         if (problem.isPresent()) {
             player.sendMessage(Component.text(problem.get(), NamedTextColor.RED));
             event.setCancelled(true);
@@ -124,6 +133,50 @@ public final class ICSignListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         manager.unload(event.getBlock());
+    }
+
+    /**
+     * Checks the sign against what the chip says its lines are for.
+     *
+     * <p>A blank line the chip cannot work without refuses the sign, because the alternative is a
+     * chip that looks built and does nothing — a melody with no file named returns before it plays
+     * a note, and says so to nobody. A blank line the chip has a default for is allowed and
+     * mentioned, so a builder who meant to fill it in finds out while they are still standing
+     * there.
+     *
+     * <p>Only signs being written now are ever seen here. A sign already in the world is read
+     * through the chip manager on chunk load and never comes past this, so nothing existing can be
+     * refused by a rule added later.
+     *
+     * @return true if the sign was refused
+     */
+    private static boolean refusedForMissingLines(
+            SignChangeEvent event, ICDefinition definition, SignLines written, Player player) {
+
+        List<String> missing = new ArrayList<>();
+        List<String> defaulted = new ArrayList<>();
+
+        for (int index : new int[] {ICDefinition.THIRD_LINE, ICDefinition.FOURTH_LINE}) {
+            Optional<LineSpec> spec = definition.lineSpec(index);
+            if (spec.isEmpty() || !written.isBlank(index)) {
+                continue;
+            }
+            String said = "Line " + (index + 1) + " is " + spec.get().meaning() + ".";
+            (spec.get().required() ? missing : defaulted).add(said);
+        }
+
+        if (!missing.isEmpty()) {
+            player.sendMessage(Component.text(
+                    "The " + definition.name() + " chip needs more than that.", NamedTextColor.RED));
+            missing.forEach(said ->
+                    player.sendMessage(Component.text("  " + said, NamedTextColor.RED)));
+            event.setCancelled(true);
+            return true;
+        }
+
+        defaulted.forEach(said ->
+                player.sendMessage(Component.text("  " + said, NamedTextColor.YELLOW)));
+        return false;
     }
 
     /**

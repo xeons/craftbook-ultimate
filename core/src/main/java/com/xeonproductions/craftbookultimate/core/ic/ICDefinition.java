@@ -29,6 +29,10 @@ import org.jspecify.annotations.NullMarked;
  *     the creating player's own unique id
  * @param aliases other model numbers that resolve to this same chip
  * @param selfTriggeringModel a separate model number meaning the self-triggering variant
+ * @param thirdLine what the sign's third line is for, absent when the chip reads none
+ * @param fourthLine what the sign's fourth line is for, absent when the chip reads none
+ * @param linesDocumented whether somebody has said what this chip's lines mean, which is how a
+ *     chip that reads no lines is told apart from one nobody has got to yet
  * @param logicFactory builds a fresh logic instance for one chip
  */
 @NullMarked
@@ -43,6 +47,9 @@ public record ICDefinition(
         OptionalInt playerIdentityLine,
         Set<String> aliases,
         Optional<String> selfTriggeringModel,
+        Optional<LineSpec> thirdLine,
+        Optional<LineSpec> fourthLine,
+        boolean linesDocumented,
         Supplier<ICLogic> logicFactory) {
 
     /** Model numbers are letters and digits only, matching what the sign grammar accepts. */
@@ -117,6 +124,31 @@ public record ICDefinition(
         return newLogic() instanceof SelfTriggeringICLogic;
     }
 
+    /** The sign line a chip's third line occupies, counting from zero. */
+    public static final int THIRD_LINE = 2;
+
+    /** The sign line a chip's fourth line occupies, counting from zero. */
+    public static final int FOURTH_LINE = 3;
+
+    /**
+     * What one of the configurable lines is for.
+     *
+     * @param index the line, which is {@link #THIRD_LINE} or {@link #FOURTH_LINE}
+     * @return what it means, or empty if this chip reads nothing there
+     */
+    public Optional<LineSpec> lineSpec(int index) {
+        return switch (index) {
+            case THIRD_LINE -> thirdLine;
+            case FOURTH_LINE -> fourthLine;
+            default -> Optional.empty();
+        };
+    }
+
+    /** Whether this chip reads either of its configurable lines. */
+    public boolean readsAnyLine() {
+        return thirdLine.isPresent() || fourthLine.isPresent();
+    }
+
     /** The canonical sign text for this chip, such as {@code [MC1000]}. */
     public String modelReference() {
         return "[" + model + "]";
@@ -168,6 +200,9 @@ public record ICDefinition(
         private OptionalInt playerIdentityLine = OptionalInt.empty();
         private final Set<String> aliases = new LinkedHashSet<>();
         private Optional<String> selfTriggeringModel = Optional.empty();
+        private Optional<LineSpec> thirdLine = Optional.empty();
+        private Optional<LineSpec> fourthLine = Optional.empty();
+        private boolean linesDocumented;
         private Supplier<ICLogic> logicFactory =
                 () -> {
                     throw new IllegalStateException("No logic supplied");
@@ -251,6 +286,37 @@ public record ICDefinition(
             return this;
         }
 
+        /**
+         * Says what the sign's third line is for.
+         *
+         * <p>Use {@link LineSpec#required} where the chip does nothing at all without it, and
+         * {@link LineSpec#optional} where it has a default. The first refuses a sign that leaves
+         * the line blank; the second tells the builder what they have defaulted to.
+         */
+        public Builder thirdLine(LineSpec spec) {
+            this.thirdLine = Optional.of(spec);
+            this.linesDocumented = true;
+            return this;
+        }
+
+        /** Says what the sign's fourth line is for, as {@link #thirdLine} does for the third. */
+        public Builder fourthLine(LineSpec spec) {
+            this.fourthLine = Optional.of(spec);
+            this.linesDocumented = true;
+            return this;
+        }
+
+        /**
+         * Says that this chip reads neither of its configurable lines.
+         *
+         * <p>Said outright rather than left to silence, so that a chip nobody has documented is
+         * distinguishable from one with nothing to document. A gate needs this; a melody does not.
+         */
+        public Builder noLines() {
+            this.linesDocumented = true;
+            return this;
+        }
+
         /** Sets how a logic instance for one chip is built. */
         public Builder logic(Supplier<ICLogic> factory) {
             this.logicFactory = factory;
@@ -269,6 +335,9 @@ public record ICDefinition(
                     playerIdentityLine,
                     aliases,
                     selfTriggeringModel,
+                    thirdLine,
+                    fourthLine,
+                    linesDocumented,
                     logicFactory);
         }
     }

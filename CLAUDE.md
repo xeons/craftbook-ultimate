@@ -73,7 +73,7 @@ to a hand and to redstone.**
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1924 tests passing**.
+**1928 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -241,6 +241,34 @@ Everything else there is **written**, because what a mechanic does is not held a
 generate from. `docs/pipes.md` is the pattern: what the thing is, how to build one, the frozen
 grammar in full, worked examples, what to check when it does not work, and a section for operators
 at the end. `docs/variables.md` and `docs/testbed.md` follow it.
+
+## What a chip's lines mean
+
+Every chip says what its third and fourth sign lines are for, as a `LineSpec` on its
+`ICDefinition`. That one piece of data serves two purposes, which is why it lives in the catalogue
+rather than as prose in a document: `docs/ics.md` is generated from it, and `ICSignListener` checks
+a sign against it as the sign is written.
+
+The distinction that carries the weight is **required** against **optional**. A required line is
+one the chip does nothing at all without — a melody with no file named returns before it plays a
+note, and says so to nobody — and a sign leaving one blank is refused with a reason. An optional
+line has a sensible default, the sign is created, and the builder is told what they defaulted to.
+Refusing a chip that would have worked is the failure mode to avoid, so `required` was set only
+where the chip's own code bails when the line will not resolve.
+
+Refusing is safe because review only happens on `SignChangeEvent`. A sign already in the world is
+read through `ICManager#describe` on chunk load and never comes past the listener, so a rule added
+later cannot invalidate anything already built.
+
+Every chip declares this, including `noLines()` for the gates that read neither. Said outright
+rather than left to silence, so that a chip nobody has documented is distinguishable from one with
+nothing to document — `ICCatalogueTest` fails the build on a chip that says nothing, which is what
+stops the page going quietly half-written as chips are added.
+
+Upstream has a `getLineHelp()` of its own and it was **not** ported. It describes upstream's
+grammar, which often differs: its bridge reads `onID{:onData-offID:offData}` where this one takes a
+block and then `width:length`. Documenting grammar the code does not accept is worse than
+documenting none, so every entry was read off this codebase's own gates instead.
 
 ## The variables
 

@@ -25,6 +25,8 @@
 #      heartbeat
 #      true
 #
+#  Run /craftbook reload after editing this file; the shows are reread.
+#
 #  Three pairs, climbing, and one alone. Eleven seconds, then it stops.
 # =============================================================================
 

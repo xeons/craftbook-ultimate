@@ -376,6 +376,9 @@ public final class CraftBookPlugin extends JavaPlugin {
      * chip a setting has just switched off has to stop, and one it has just switched on has to
      * start. The signs themselves are never touched.
      *
+     * <p>The firework scripts are reread too, since they are settings in every sense that matters
+     * to whoever is writing one.
+     *
      * <p>The exchange happens chunk by chunk on the region owning each chunk. Every chip that is
      * loaded is in a chunk that is loaded, so going through the chunks reaches all of them without
      * this thread stopping a chip belonging to another.
@@ -385,6 +388,13 @@ public final class CraftBookPlugin extends JavaPlugin {
             return Component.text("Could not read the settings; nothing has changed.",
                     NamedTextColor.RED);
         }
+
+        // Scripts are small text files, so rereading them costs an operator's command the time to
+        // list a folder. That is worth it: writing a display is an edit-and-look-at-it business,
+        // and a restart between every attempt makes it a different and much worse one. The songs
+        // are deliberately not reread here — a folder of MIDI files is far too slow to convert on
+        // the thread this runs on.
+        loadFireworkShows();
 
         adoptAlreadyLoadedChunks(icManager);
         // A narrowed limit shortens a pipe, so what was worked out under the old one is no longer

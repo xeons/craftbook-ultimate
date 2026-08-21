@@ -13,6 +13,8 @@
 #      victory
 #      true
 #
+#  Run /craftbook reload after editing this file; the shows are reread.
+#
 #  Wants about fifteen blocks of air above and six to either side.
 # =============================================================================
 

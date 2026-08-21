@@ -12,6 +12,8 @@
 #      aurora
 #      true
 #
+#  Run /craftbook reload after editing this file; the shows are reread.
+#
 #  Wants about twenty blocks of air above and ten to either side.
 #  Nineteen rockets over about forty seconds — a third of what finale spends,
 #  spread over longer.

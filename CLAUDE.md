@@ -240,7 +240,7 @@ nothing. Do not edit that page by hand.
 Everything else there is **written**, because what a mechanic does is not held as data anywhere to
 generate from. `docs/pipes.md` is the pattern: what the thing is, how to build one, the frozen
 grammar in full, worked examples, what to check when it does not work, and a section for operators
-at the end. `docs/variables.md` and `docs/testbed.md` follow it.
+at the end. `docs/variables.md`, `docs/testbed.md` and `docs/fireworks.md` follow it.
 
 ## What a chip's lines mean
 
@@ -492,6 +492,13 @@ reappearing after somebody removed it is worse than an example nobody asked for 
 `BundledFireworkShowsTest` reads each of them the way the unpacker does and checks it survived
 parsing. That test exists because the failure mode here is silent: a typo in a shipped script makes
 a quieter display, not an error, and nothing else would ever say so.
+
+`/craftbook reload` rereads the scripts, because writing a display is an edit-and-look-at-it
+business and a restart between attempts makes it a different and much worse one. The songs are
+deliberately not reread with them: a folder of MIDI files is far too slow to convert on the thread
+the command runs on, which is the same reason they are read once at start-up in the first place.
+
+`docs/fireworks.md` is the builder's guide to all of it.
 
 ## Folia and regions
 

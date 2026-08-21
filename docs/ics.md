@@ -29,6 +29,26 @@ refused as you write the sign, rather than leaving you a chip that looks built a
 does nothing. Everything else has a sensible default and the entry says what it is;
 leaving one of those blank is fine and you are told what you have defaulted to.
 
+### A chip whose sign says too little
+
+A chip that was already standing before its lines were written down here cannot be
+refused — it is in the world already. Instead **its first line is written in red**,
+so that a sign doing nothing looks like one from across the room. Fill the missing
+line in and the red comes off again, so a red title always means a chip that is
+broken now.
+
+Only a required line does that. A blank line the chip has a default for leaves a
+working chip and is not marked.
+
+An operator can ask for the list rather than walking the map:
+
+```
+/craftbook check
+```
+
+It names every loaded chip that cannot work and says which line each is short of.
+It writes nothing.
+
 ### Naming it by its shorthand instead
 
 You can name a chip by its shorthand rather than its number, and then it goes after

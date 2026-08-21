@@ -16,6 +16,12 @@ permissions:
   craftbook.reload:
     description: Reread the settings file and start every chip again under it.
     default: op
+  craftbook.check:
+    description: Ask which loaded chips cannot work as their signs are written.
+    default: op
+  craftbook.testbed:
+    description: Build a test bed carrying a rig for every chip.
+    default: op
   craftbook.music.list:
     description: List the songs and playlists a melody chip can name.
     default: true

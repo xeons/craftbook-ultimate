@@ -19,6 +19,7 @@ import com.xeonproductions.craftbookultimate.core.pipe.PipeNetworks;
 import com.xeonproductions.craftbookultimate.paper.command.AreaCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CartCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CatalogueCommands;
+import com.xeonproductions.craftbookultimate.paper.command.CheckCommands;
 import com.xeonproductions.craftbookultimate.paper.command.ConfigCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
 import com.xeonproductions.craftbookultimate.paper.command.MusicCommands;
@@ -212,6 +213,9 @@ public final class CraftBookPlugin extends JavaPlugin {
         declareVariablePermissions(manager);
         declare(manager, TestbedCommands.BUILD,
                 "Build a test bed carrying a rig for every chip.", PermissionDefault.OP);
+        declare(manager, CheckCommands.CHECK,
+                "Ask which loaded chips cannot work as their signs are written.",
+                PermissionDefault.OP);
 
         for (ICDefinition definition : icRegistry.definitions()) {
             Permission node = new Permission(
@@ -307,7 +311,8 @@ public final class CraftBookPlugin extends JavaPlugin {
                         new MusicCommands(chipServices.songs()),
                         new AreaCommands(areaTarget(), selections, chipServices.configuration()),
                         new VariableCommands(chipServices.variables(), this::saveSharedState),
-                        new TestbedCommands(icRegistry, new TestbedBuilder(icManagerTarget(), schedulersTarget())))
+                        new TestbedCommands(icRegistry, new TestbedBuilder(icManagerTarget(), schedulersTarget())),
+                        new CheckCommands(icManagerTarget()))
                 .registerOn(this);
     }
 

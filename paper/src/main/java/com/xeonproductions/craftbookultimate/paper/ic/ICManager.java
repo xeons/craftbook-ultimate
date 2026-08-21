@@ -2,11 +2,13 @@ package com.xeonproductions.craftbookultimate.paper.ic;
 
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
+import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICLine;
 import com.xeonproductions.craftbookultimate.core.ic.ICMode;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
+import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
@@ -84,30 +86,67 @@ public final class ICManager {
             return Optional.empty();
         }
 
-        Optional<ICInstance> created = describe(block);
+        Optional<Sign> sign = Signs.at(block);
+        if (sign.isEmpty()) {
+            return Optional.empty();
+        }
+
+        SignLines lines = Signs.read(sign.get());
+        Optional<ICInstance> created = describe(block, lines);
         created.ifPresent(instance -> {
             bySign.put(key, instance);
             for (BlockKey pin : instance.pinKeys()) {
                 byPin.computeIfAbsent(pin, ignored -> ConcurrentHashMap.newKeySet()).add(instance);
             }
             instance.load(schedulers.at(block.getLocation()));
+            markTitle(block, key, lines, instance.definition());
         });
         return created;
+    }
+
+    /**
+     * Says on the sign itself whether the chip can work, where it does not already say so.
+     *
+     * <p>This is the only warning a chip built before its lines were spelled out ever gets. A sign
+     * written now that leaves out a line its chip cannot work without is refused as it is written,
+     * but one already standing in the world never comes past that check, and whoever built it is
+     * long gone.
+     *
+     * <p>Nothing is written while the chunk is still arriving. The comparison is made here, on
+     * lines already read for the chip itself, and only a sign that is actually wrong costs a task
+     * and a write — so a world of working chips loads exactly as it did before.
+     */
+    private void markTitle(Block block, BlockKey key, SignLines lines, ICDefinition definition) {
+        if (!ChipTitle.wouldChange(lines, definition)) {
+            return;
+        }
+
+        schedulers.at(block.getLocation()).runLater(() -> {
+            if (bySign.containsKey(key)) {
+                Signs.at(block).ifPresent(current -> ChipTitle.mark(current, definition));
+            }
+        }, 1);
     }
 
     /**
      * Works out which chip a sign describes, without starting it.
      *
      * <p>Used both to load a chip and to check whether a sign would produce one.
+     */
+    public Optional<ICInstance> describe(Block block) {
+        return Signs.at(block).flatMap(sign -> describe(block, Signs.read(sign)));
+    }
+
+    /**
+     * Works out which chip a sign already read describes.
      *
      * <p>A sign in a world the settings exclude, or naming a chip they switch off, describes
      * nothing. The sign itself is untouched, so putting the setting back brings the chip straight
      * back to life.
      */
-    public Optional<ICInstance> describe(Block block) {
-        Optional<Sign> sign = Signs.at(block);
+    private Optional<ICInstance> describe(Block block, SignLines lines) {
         Optional<BlockFace> facing = Signs.facing(block);
-        if (sign.isEmpty() || facing.isEmpty()) {
+        if (facing.isEmpty()) {
             return Optional.empty();
         }
 
@@ -116,7 +155,7 @@ public final class ICManager {
             return Optional.empty();
         }
 
-        String identifier = Signs.read(sign.get()).text(IDENTIFIER_LINE);
+        String identifier = lines.text(IDENTIFIER_LINE);
         return resolve(identifier)
                 .filter(resolution -> settings.allowsChip(resolution.definition().allModels()))
                 .map(resolution -> new ICInstance(

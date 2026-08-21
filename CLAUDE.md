@@ -73,7 +73,7 @@ to a hand and to redstone.**
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1928 tests passing**.
+**1926 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -259,6 +259,25 @@ where the chip's own code bails when the line will not resolve.
 Refusing is safe because review only happens on `SignChangeEvent`. A sign already in the world is
 read through `ICManager#describe` on chunk load and never comes past the listener, so a rule added
 later cannot invalidate anything already built.
+
+That safety is also the gap. A chip built before its lines were written down is never refused and
+so is never told about, and a builder has no way to tell one from a wiring fault. `ChipTitle` is
+the answer: a loaded chip missing a required line has **its first line written red**, and the mark
+comes off again once the line is filled in, so a red title always means broken now rather than
+broken once. Line 1 is the plugin's own — it is overwritten with the chip's shorthand as the sign
+is created — so nothing a builder wrote is at stake, and only its colour changes.
+
+Three things keep that off the chunk-load hot path. The reading is the same `LineReview` the
+listener uses, made from `SignLines` that `ICManager#load` had already read for the chip itself, so
+the check itself costs a comparison. Nothing is written unless the colour actually differs, which
+means a world of working chips writes nothing at all and a marked one is not marked twice. And the
+write that does happen is deferred a tick and dropped if the chip has gone, so no block is written
+while its chunk is still arriving.
+
+`/craftbook check` is the same question asked of everything loaded at once, for an operator who
+would rather not walk the map. It writes nothing whatever — every answer comes from sign text
+already in memory — which is what makes it, rather than a repainting sweep, the right tool for
+"what is broken across my server".
 
 Every chip declares this, including `noLines()` for the gates that read neither. Said outright
 rather than left to silence, so that a chip nobody has documented is distinguishable from one with

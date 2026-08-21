@@ -4,15 +4,14 @@ import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICLine;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
-import com.xeonproductions.craftbookultimate.core.ic.LineSpec;
+import com.xeonproductions.craftbookultimate.core.ic.LineReview;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
 import com.xeonproductions.craftbookultimate.paper.mechanic.PlayerActor;
+import com.xeonproductions.craftbookultimate.paper.ic.ChipTitle;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
 import java.util.Locale;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -42,7 +41,7 @@ public final class ICSignListener implements Listener {
     private static final int IDENTIFIER_LINE = ICManager.IDENTIFIER_LINE;
 
     /** The line the chip's shorthand is written to. */
-    private static final int TITLE_LINE = 0;
+    private static final int TITLE_LINE = ChipTitle.LINE;
 
     /** What a player writes to mean their own unique id. */
     private static final String OWN_IDENTITY = "uuid";
@@ -153,29 +152,19 @@ public final class ICSignListener implements Listener {
     private static boolean refusedForMissingLines(
             SignChangeEvent event, ICDefinition definition, SignLines written, Player player) {
 
-        List<String> missing = new ArrayList<>();
-        List<String> defaulted = new ArrayList<>();
+        LineReview review = LineReview.of(definition, written);
 
-        for (int index : new int[] {ICDefinition.THIRD_LINE, ICDefinition.FOURTH_LINE}) {
-            Optional<LineSpec> spec = definition.lineSpec(index);
-            if (spec.isEmpty() || !written.isBlank(index)) {
-                continue;
-            }
-            String said = "Line " + (index + 1) + " is " + spec.get().meaning() + ".";
-            (spec.get().required() ? missing : defaulted).add(said);
-        }
-
-        if (!missing.isEmpty()) {
+        if (review.broken()) {
             player.sendMessage(Component.text(
                     "The " + definition.name() + " chip needs more than that.", NamedTextColor.RED));
-            missing.forEach(said ->
-                    player.sendMessage(Component.text("  " + said, NamedTextColor.RED)));
+            review.missing().forEach(blank ->
+                    player.sendMessage(Component.text("  " + blank.said(), NamedTextColor.RED)));
             event.setCancelled(true);
             return true;
         }
 
-        defaulted.forEach(said ->
-                player.sendMessage(Component.text("  " + said, NamedTextColor.YELLOW)));
+        review.defaulted().forEach(blank ->
+                player.sendMessage(Component.text("  " + blank.said(), NamedTextColor.YELLOW)));
         return false;
     }
 

@@ -27,6 +27,7 @@ public final class CraftBookCommands {
     private final AreaCommands areas;
     private final VariableCommands variables;
     private final TestbedCommands testbed;
+    private final CheckCommands check;
 
     public CraftBookCommands(
             CatalogueCommands catalogue,
@@ -36,7 +37,8 @@ public final class CraftBookCommands {
             MusicCommands music,
             AreaCommands areas,
             VariableCommands variables,
-            TestbedCommands testbed) {
+            TestbedCommands testbed,
+            CheckCommands check) {
         this.catalogue = catalogue;
         this.switches = switches;
         this.config = config;
@@ -45,6 +47,7 @@ public final class CraftBookCommands {
         this.areas = areas;
         this.variables = variables;
         this.testbed = testbed;
+        this.check = check;
     }
 
     /** Registers everything against a plugin. */
@@ -57,6 +60,7 @@ public final class CraftBookCommands {
                             .then(config.reloadCommand())
                             .then(music.musicCommand())
                             .then(testbed.testbedCommand())
+                            .then(check.checkCommand())
                             .build(),
                     "Reads the integrated circuit catalogue.",
                     List.of("cb"));

@@ -3,6 +3,7 @@ package com.xeonproductions.craftbookultimate.paper.adapter;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import java.util.Optional;
+import net.kyori.adventure.text.Component;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.WallSign;
@@ -57,8 +58,20 @@ public final class Signs {
      * @param text the replacement text
      */
     public static void writeLine(Sign sign, int index, String text) {
+        writeLine(sign, index, Component.text(text));
+    }
+
+    /**
+     * Replaces one line on the front of a sign and saves it, keeping whatever formatting the
+     * replacement carries.
+     *
+     * @param sign the sign state to update
+     * @param index the line number, from zero to three
+     * @param text the replacement text
+     */
+    public static void writeLine(Sign sign, int index, Component text) {
         SignSide front = sign.getSide(Side.FRONT);
-        front.line(index, net.kyori.adventure.text.Component.text(text));
+        front.line(index, text);
         sign.update(false, false);
     }
 

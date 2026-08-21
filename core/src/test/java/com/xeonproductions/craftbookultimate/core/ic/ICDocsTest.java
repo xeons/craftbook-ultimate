@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Brandon Scott
+
 package com.xeonproductions.craftbookultimate.core.ic;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,7 +80,7 @@ class ICDocsTest {
         void saysHowManyPinsItsWiringHas() {
             String page = pageFor(chip("MC1000", "ONE").layout(PinLayout.SISO).build());
 
-            assertThat(page).contains("`SISO` — 1 input, 1 output");
+            assertThat(page).contains("`SISO`, 1 input, 1 output");
         }
 
         @Test
@@ -91,14 +94,14 @@ class ICDocsTest {
         void namesTheNumberItsSelfTriggeringFormAnswersTo() {
             String page = pageFor(chip("MC1000", "ONE").selfTriggeringModel("MC0000").build());
 
-            assertThat(page).contains("**Runs on its own as** | `[MC0000]`");
+            assertThat(page).contains("**Runs on its own as** — `[MC0000]`");
         }
 
         @Test
         void namesTheRetiredNumbersItStillAnswersTo() {
             String page = pageFor(chip("MC1000", "ONE").aliases("MC1200").build());
 
-            assertThat(page).contains("**Also answers to** | `MC1200`");
+            assertThat(page).contains("**Also answers to** — `MC1200`");
         }
 
         @Test

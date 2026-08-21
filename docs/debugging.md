@@ -8,7 +8,7 @@ ever going to set it off.
 
 There are two ways in and they do the same things through the same code.
 
-| | |
+| Way in | How you use it |
 | --- | --- |
 | **The stick** | Point it at a chip's sign and right-click. Best at a workbench. |
 | **The commands** | `/craftbook debug …` acts on the chip you are looking at. Best bound to a key, and the only one that works from a command block. |
@@ -102,7 +102,7 @@ Each is also a command:
 
 Only chips that can say what area they work on have anything to show here. Those are:
 
-| | |
+| Chip | What its area covers |
 | --- | --- |
 | `MCX116`, `MCX117` | Player Above and Player Below — the column each watches |
 | `MCX140` | In Area — the box, offset and all |

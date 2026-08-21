@@ -125,7 +125,7 @@ launch:x,y,z ; duration ; shape ; r,g,b ; r,g,b [; twinkle | trail]
 wait:ticks
 ```
 
-| | |
+| Field | What it means |
 | --- | --- |
 | `x,y,z` | where it goes up from, relative to the sign |
 | `duration` | how long the fuse burns — see [fuses](#fuses) |

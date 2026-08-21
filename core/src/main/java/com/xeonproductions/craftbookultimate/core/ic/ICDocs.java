@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Brandon Scott
+
 package com.xeonproductions.craftbookultimate.core.ic;
 
 import java.util.ArrayList;
@@ -74,8 +77,8 @@ public final class ICDocs {
                 what a wall of signs is doing.
 
                 Lines 3 and 4 are what the chip is told, and they mean something different for
-                every chip. Each entry below says what they are for, and a dash means that chip
-                reads nothing there.
+                every chip. Each entry below says what they are for, and one reading **nothing**
+                is a line that chip does not read at all.
 
                 A line marked **required** is one the chip cannot work without. Leaving it blank is
                 refused as you write the sign, rather than leaving you a chip that looks built and
@@ -214,7 +217,6 @@ public final class ICDocs {
             page.append("### ").append(chip.model()).append(" — ").append(chip.name()).append("\n\n");
             page.append(chip.description()).append("\n\n");
 
-            page.append("| | |\n| --- | --- |\n");
             row(page, "Write on the sign", "`[" + chip.model() + "]`, or `=" + chip.shorthand() + "`");
             row(page, "Line 3", lineOf(chip, ICDefinition.THIRD_LINE));
             row(page, "Line 4", lineOf(chip, ICDefinition.FOURTH_LINE));
@@ -226,11 +228,11 @@ public final class ICDocs {
             }
             row(page, "Permission", "`" + chip.permission() + "`");
             if (chip.restricted()) {
-                row(page, "Restricted", "Yes — not granted to everybody by default.");
+                row(page, "Restricted", "not granted to everybody by default");
             }
             if (chip.requiresAuthorisation()) {
                 row(page, "Needs arming",
-                        "Yes — it is created inert and does nothing until its area is clear.");
+                        "created inert, and does nothing until its area is clear");
             }
             chip.playerIdentityLine().ifPresent(line -> row(page, "Names you",
                     "Writing `uuid` on line " + (line + 1) + " is replaced by your own player id."));
@@ -238,26 +240,32 @@ public final class ICDocs {
         }
     }
 
-    /** One row of a chip's table of facts. */
+    /**
+     * One of a chip's facts.
+     *
+     * <p>A list rather than a table, because five labelled values are a record and not a grid: a
+     * table of them needs a header row that can only say "field" and "value", which is an empty
+     * band above every chip on the page.
+     */
     private static void row(StringBuilder page, String what, String value) {
-        page.append("| **").append(what).append("** | ").append(value).append(" |\n");
+        page.append("- **").append(what).append("** — ").append(value).append('\n');
     }
 
     /**
      * How one of a chip's configurable lines reads.
      *
-     * <p>A chip that reads nothing there says so with a dash rather than being left out, so the
-     * table has the same shape for every chip and a blank line is visibly deliberate.
+     * <p>A chip that reads nothing there says so rather than being left out, so the entry has the
+     * same shape for every chip and a blank line is visibly deliberate.
      */
     private static String lineOf(ICDefinition chip, int index) {
         return chip.lineSpec(index)
                 .map(spec -> spec.meaning() + (spec.required() ? " *(required)*" : ""))
-                .orElse("—");
+                .orElse("nothing");
     }
 
     /** How a layout reads to somebody who has to wire it up. */
     private static String wiringOf(PinLayout layout) {
-        return "`" + layout.code() + "` — " + count(layout.inputCount(), "input")
+        return "`" + layout.code() + "`, " + count(layout.inputCount(), "input")
                 + ", " + count(layout.outputCount(), "output");
     }
 

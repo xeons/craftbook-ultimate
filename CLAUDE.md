@@ -71,7 +71,7 @@ to a hand and to redstone.**
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1779 tests passing**.
+**1794 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -223,6 +223,22 @@ list of one.
 The settings are `carts.habits` in `config.yml`, held in `CartHabits`. Two of them are numbers
 rather than switches, and each turns its own habit off at zero: waiting no time before taking an
 empty cart away, and climbing at no speed, both mean not doing it.
+
+## Documentation
+
+`docs/` holds what a builder reads. Two kinds live there and they are kept in different ways.
+
+`docs/ics.md` is **generated**: `./gradlew generateIcDocs` writes it from `ICCatalogue` through
+`ICDocs`, and `IcDocsAreCurrentTest` fails the build when the committed page and the catalogue
+disagree. A hundred and more chips, each with a number, a shorthand, a wiring and a permission, is
+more than anybody keeps in step by remembering to, and a wrong model number reads exactly like a
+right one — so the build notices rather than a builder finding out by writing a sign that does
+nothing. Do not edit that page by hand.
+
+Everything else there is **written**, because what a mechanic does is not held as data anywhere to
+generate from. `docs/pipes.md` is the pattern: what the thing is, how to build one, the frozen
+grammar in full, worked examples, what to check when it does not work, and a section for operators
+at the end.
 
 ## The pipes
 

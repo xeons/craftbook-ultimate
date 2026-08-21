@@ -1,0 +1,1396 @@
+# Integrated circuits
+
+An integrated circuit — a chip — is a sign on a wall that does something when
+redstone reaches it. Write a model number on the second line of a sign, put the
+sign on a wall, and the block behind it becomes a component you can wire into.
+
+> This page is generated from the catalogue itself. Do not edit it by hand: run
+> `./gradlew generateIcDocs` instead.
+
+## Writing the sign
+
+```
+Line 1   the shorthand, filled in for you
+Line 2   [MC1000]        the model number, in brackets
+Line 3   whatever the chip needs told
+Line 4   whatever else it needs told
+```
+
+Line 2 is the whole declaration. Write the model number in brackets and the rest of
+the sign fills itself in: line 1 becomes the chip's shorthand, so you can read at a
+glance what a wall of signs is doing.
+
+You can write the shorthand in brackets instead of the number — `[REPEATER]` for
+`[MC1000]` — and it resolves to the same chip.
+
+### Choosing the wiring
+
+Put an equals sign and a layout code after the model to change where the chip's
+pins sit: `[MC1000=SISO]`. Every chip has a layout it uses when the sign does not
+say, given in its entry below.
+
+| Code | Inputs | Outputs | Where they sit |
+| --- | --- | --- | --- |
+| `SISO` | 1 | 1 | One in, one out. The plain arrangement. |
+| `3ISO` | 3 | 1 | Three in, one out. What the logic gates use. |
+| `AISO` | 4 | 1 | Four in, around the sign. Any of them sets the chip off. |
+| `UISO` | 4 | 1 | Four in, clustered in front. For a chip in a floor or a ceiling. |
+| `AIZO` | 3 | 0 | Three in, none out. For a chip whose whole effect is on the world. |
+| `SI3O` | 1 | 3 | One in, three out. |
+| `SI5O` | 1 | 5 | One in, five out. |
+| `3I3O` | 3 | 3 | Three in, three out. The adders and subtractors. |
+| `3I5O` | 3 | 5 | Three in, five out. The demultiplexer. |
+
+### Chips that run on their own
+
+Some chips act on their own rather than waiting for redstone — a clock, a sensor
+watching for somebody to walk past. Those have a second model number for the
+self-triggering form, given as **runs on its own** in their entry.
+
+There are **114 chips**, answering to **143 model numbers**. 48 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
+
+## Every chip
+
+| Model | Shorthand | Name | What it does |
+| --- | --- | --- | --- |
+| [`MC1000`](#mc1000--repeater) | `REPEATER` | Repeater | Repeats a redstone signal. |
+| [`MC1001`](#mc1001--inverter) | `INVERTER` | Inverter | Inverts a redstone signal. |
+| [`MC1017`](#mc1017--toggle-flip-flop-re) | `RE T FLIP` | Toggle Flip Flop RE | Toggles output on high. |
+| [`MC1018`](#mc1018--toggle-flip-flop-fe) | `FE T FLIP` | Toggle Flip Flop FE | Toggles output on low. |
+| [`MC1020`](#mc1020--random-bit) | `RANDOM BIT` | Random Bit | Randomly sets the output high. |
+| [`MC1025`](#mc1025--world-time-modulus) | `TIME MODULUS` | World Time Modulus | Outputs high when the world time mod X is at least Y. |
+| [`MC1026`](#mc1026--unix-time-modulus) | `UNIX TIME` | Unix Time Modulus | Outputs high when unix time mod X is at least Y. |
+| [`MC1110`](#mc1110--wireless-transmitter) | `TRANSMITTER` | Wireless Transmitter | Transmits a wireless redstone signal. |
+| [`MC1111`](#mc1111--wireless-receiver) | `RECEIVER` | Wireless Receiver | Receives a wireless redstone signal. |
+| [`MC1203`](#mc1203--zeus-bolt) | `ZEUS BOLT` | Zeus Bolt *(restricted)* | Strikes an area with lightning, at a chance per block. |
+| [`MC1205`](#mc1205--set-block-above) | `SET ABOVE` | Set Block Above *(restricted)* | Sets a block above the IC block. |
+| [`MC1206`](#mc1206--set-block-below) | `SET BELOW` | Set Block Below *(restricted)* | Sets a block below the IC block. |
+| [`MC1207`](#mc1207--flex-set-admin) | `FLEX SET ADMIN` | Flex Set Admin *(restricted)* | Sets a block at a specified location, without paying for it. |
+| [`MC1230`](#mc1230--daylight-sensor) | `SENSE DAY` | Daylight Sensor | Outputs high while the world time is within the day. |
+| [`MC1240`](#mc1240--arrow-shooter) | `ARROW SHOOTER` | Arrow Shooter *(restricted)* | Shoots a single arrow out of the back of the sign. |
+| [`MC1241`](#mc1241--arrow-barrage) | `ARROW BARRAGE` | Arrow Barrage *(restricted)* | Shoots five arrows out of the back of the sign. |
+| [`MC1249`](#mc1249--block-replacer) | `BLOCK REPLACER` | Block Replacer *(restricted)* | Swaps a block between two kinds and lets the change spread outward. |
+| [`MC1250`](#mc1250--fireworks) | `FIREWORKS` | Fireworks *(restricted)* | Sets off a firework. |
+| [`MC1253`](#mc1253--programmable-firework-display) | `FIREWORK` | Programmable Firework Display *(restricted)* | Plays a firework display from a script. |
+| [`MC1260`](#mc1260--water-sensor) | `SENSE WATER` | Water Sensor | Outputs high if water is detected. |
+| [`MC1261`](#mc1261--lava-sensor) | `SENSE LAVA` | Lava Sensor | Outputs high if lava is detected. |
+| [`MC1262`](#mc1262--light-sensor) | `SENSE LIGHT` | Light Sensor | Outputs high if the specified light level is detected. |
+| [`MC1420`](#mc1420--clock) | `CLOCK` | Clock | Toggles its output every X ticks. |
+| [`MC1500`](#mc1500--player-online) | `PLAYER ONLINE?` | Player Online | Outputs high while a named player is logged in. |
+| [`MC1510`](#mc1510--player-messenger) | `MESSAGE PLAYER` | Player Messenger *(restricted)* | Says something to one named player, wherever they are. |
+| [`MC1511`](#mc1511--message-all) | `MESSAGE ALL` | Message All *(restricted)* | Says something to everybody online. |
+| [`MC2020`](#mc2020--random-3-bit) | `RANDOM 3` | Random 3-Bit | Randomly sets the outputs high. |
+| [`MC2022`](#mc2022--bit-shift) | `BITSHIFT` | Bit Shift | Remembers a row of bits and rotates them along. |
+| [`MC2999`](#mc2999--marquee) | `MARQUEE` | Marquee | Moves one raised output along its three outputs, a step per pulse. |
+| [`MC3002`](#mc3002--and-gate) | `AND` | And Gate | Outputs high if all inputs are high. |
+| [`MC3003`](#mc3003--nand-gate) | `NAND` | Nand Gate | Outputs high if any input is low. |
+| [`MC3020`](#mc3020--xor-gate) | `XOR` | Xor Gate | Outputs high if the inputs are different. |
+| [`MC3021`](#mc3021--xnor-gate) | `XNOR` | Xnor Gate | Outputs high if the inputs are the same. |
+| [`MC3030`](#mc3030--rs-nor-latch) | `RS-NOR` | RS-Nor Latch | A compact RS-Nor latch. |
+| [`MC3031`](#mc3031--inverse-rs-nand-latch) | `INV RS-NAND` | Inverse RS-Nand Latch | A compact inverse RS-Nand latch. |
+| [`MC3032`](#mc3032--jk-flip-flop) | `JK FLIP` | JK Flip Flop | A compact JK flip flop. |
+| [`MC3033`](#mc3033--rs-nand-latch) | `RS-NAND` | RS-Nand Latch | A compact RS-Nand latch. |
+| [`MC3034`](#mc3034--edge-trigger-d-flip-flop) | `EDGE-D` | Edge-Trigger D Flip Flop | A compact edge-triggered D flip flop. |
+| [`MC3036`](#mc3036--level-trigger-d-flip-flop) | `LEVEL-D` | Level-Trigger D Flip Flop | A compact level-triggered D flip flop. |
+| [`MC3040`](#mc3040--multiplexer) | `MULTIPLEXER` | Multiplexer | Outputs input 1 or 2 depending on the state of input 0. |
+| [`MC3050`](#mc3050--combination-lock) | `COMBO` | Combination Lock | Outputs high if the correct combination is entered. |
+| [`MC3101`](#mc3101--down-counter) | `DOWN COUNTER` | Down Counter | Decrements on redstone signal, outputs high on reaching zero. |
+| [`MC3102`](#mc3102--counter) | `COUNTER` | Counter | Increments on redstone signal, outputs high on reaching the limit. |
+| [`MC3231`](#mc3231--time-control-advanced) | `T CONTROL ADV` | Time Control Advanced *(restricted)* | Moves the world to the next morning or night when clocked. |
+| [`MC3456`](#mc3456--marquee-transmitter) | `MARQUEETRANSMIT` | Marquee Transmitter | Steps along a run of numbered bands, one at a time. |
+| [`MC4000`](#mc4000--full-adder) | `FULL ADDER` | Full Adder | A compact full adder. |
+| [`MC4010`](#mc4010--half-adder) | `HALF ADDER` | Half Adder | A compact half adder. |
+| [`MC4040`](#mc4040--demultiplexer-2-bit) | `DEMULTIPLEXER` | Demultiplexer 2-Bit | Raises the output selected by the input. |
+| [`MC4100`](#mc4100--full-subtractor) | `FULL SUBTR` | Full Subtractor | A compact full subtractor. |
+| [`MC4110`](#mc4110--half-subtractor) | `HALF SUBTR` | Half Subtractor | A compact half subtractor. |
+| [`MC4200`](#mc4200--dispatcher) | `DISPATCH` | Dispatcher | Outputs the centre input on the selected outputs. |
+| [`MC6020`](#mc6020--random-5-bit) | `RANDOM 5` | Random 5-Bit | Randomly sets the outputs high. |
+| [`MC6543`](#mc6543--analog-transmitter) | `REDCODER` | Analog Transmitter | Transmits a band per redstone power level. |
+| [`MCM116`](#mcm116--mob-above) | `MOB ABOVE?` | Mob Above | Outputs high while a creature is standing above the sign's support. |
+| [`MCT233`](#mct233--weather-control) | `WEATHER CTRL ADV` | Weather Control *(restricted)* | Sets rain and thunder using three inputs. |
+| [`MCU113`](#mcu113--destination) | `DESTINATION` | Destination *(restricted)* | Receives whoever a transporter sends to its name. |
+| [`MCU440`](#mcu440--monoflop) | `^MONOFLOP` | Monoflop | Waits out a countdown, then turns on. |
+| [`MCU700`](#mcu700--melody) | `MELODY` | Melody *(restricted)* | Plays a MIDI file through an adjacent note block. |
+| [`MCU705`](#mcu705--tune) | `TUNE` | Tune *(restricted)* | Plays a tune written on the sign, through an adjacent note block. |
+| [`MCU706`](#mcu706--jukebox) | `JUKEBOX` | Jukebox *(restricted)* | Plays a record through an adjacent jukebox. |
+| [`MCX010`](#mcx010--pulse) | `PULSE` | Pulse | Sends a burst of pulses when triggered. |
+| [`MCX011`](#mcx011--signal-extender) | `SIGNAL EXTENDER` | Signal Extender | Holds the output high for a while after the input ends. |
+| [`MCX027`](#mcx027--between-time) | `BETWEEN TIME` | Between Time | Outputs high if the time is between the specified ticks. |
+| [`MCX112`](#mcx112--transporter) | `TRANSPORTER` | Transporter *(restricted)* | Sends whoever is standing on it to a named destination. |
+| [`MCX116`](#mcx116--player-above) | `PLAYER ABOVE?` | Player Above | Outputs high while a player is standing above the sign's support. |
+| [`MCX117`](#mcx117--player-below) | `PLAYER BELOW?` | Player Below | Outputs high while a player is standing below the sign's support. |
+| [`MCX118`](#mcx118--player-near) | `PLAYER NEAR?` | Player Near | Outputs high while a player is within range. |
+| [`MCX119`](#mcx119--mob-near) | `MOB NEAR?` | Mob Near | Outputs high while a creature is within range. |
+| [`MCX120`](#mcx120--command-controlled) | `COMMAND CTRL` | Command Controlled | Follows a switch that anyone may throw by command. |
+| [`MCX121`](#mcx121--password-controlled) | `PASSWORD CTRL` | Password Controlled | Follows a switch that takes a password to throw. |
+| [`MCX130`](#mcx130--mob-zapper) | `MOB ZAPPER` | Mob Zapper *(restricted)* | Removes creatures within range. |
+| [`MCX131`](#mcx131--hit-player-above) | `HIT PLAYER ABV` | Hit Player Above *(restricted)* | Hurts players standing above it. |
+| [`MCX132`](#mcx132--hit-mob-above) | `HIT MOB ABOVE` | Hit Mob Above *(restricted)* | Hurts creatures standing above it. |
+| [`MCX133`](#mcx133--humans-only) | `HUMANS ONLY` | Humans Only *(restricted)* | Removes everything but players from within range. |
+| [`MCX138`](#mcx138--item-near) | `ITEM NEAR?` | Item Near *(restricted)* | Outputs high while a matching stack is lying within range. |
+| [`MCX139`](#mcx139--held-item-near) | `HELD ITEM NEAR?` | Held Item Near *(restricted)* | Outputs high while a player within range is holding a matching item. |
+| [`MCX140`](#mcx140--in-area) | `IN AREA` | In Area *(restricted)* | Outputs high while something is inside a box measured from the sign. |
+| [`MCX146`](#mcx146--potion-area) | `POTION AREA` | Potion Area *(restricted)* | Gives potion effects to whatever is in an area. |
+| [`MCX200`](#mcx200--entity-spawner) | `ENTITY SPAWNER` | Entity Spawner *(restricted)* | Spawns creatures above itself. |
+| [`MCX201`](#mcx201--item-spawner) | `ITEM SPAWNER` | Item Spawner *(restricted)* | Drops items above itself, out of nothing. |
+| [`MCX202`](#mcx202--chest-dispenser) | `CHEST DISPENSER` | Chest Dispenser | Drops items taken out of a nearby container. |
+| [`MCX203`](#mcx203--chest-collector) | `CHEST COLLECTOR` | Chest Collector | Picks up dropped items and puts them in a nearby container. |
+| [`MCX205`](#mcx205--block-detector) | `DETECT BLOCK` | Block Detector | Detects a block above or below. |
+| [`MCX206`](#mcx206--flex-set) | `FLEX SET` | Flex Set | Sets a block at a specified location. |
+| [`MCX207`](#mcx207--bridge) | `BRIDGE` | Bridge | Places a set type and amount of blocks. |
+| [`MCX208`](#mcx208--door) | `DOOR` | Door | Places a set type and amount of blocks. |
+| [`MCX209`](#mcx209--bridge) | `BRIDGE+` | Bridge+ *(restricted)* | Places blocks, replacing whatever is already there. |
+| [`MCX210`](#mcx210--door) | `DOOR+` | Door+ *(restricted)* | Places blocks, replacing whatever is already there. |
+| [`MCX211`](#mcx211--toggle-block) | `TOGGLE BLOCK` | Toggle Block | Swaps one block between two kinds as its input changes. |
+| [`MCX213`](#mcx213--harvester) | `HARVESTER` | Harvester | Gathers a grown crop out of an area into nearby containers. |
+| [`MCX215`](#mcx215--area-planter) | `AREA PLANTER` | Area Planter | Plants dropped seeds across a field of ground. |
+| [`MCX216`](#mcx216--planter) | `PLANTER` | Planter | Plants a dropped seed above the block the sign hangs on. |
+| [`MCX230`](#mcx230--rain-sensor) | `IS IT RAIN` | Rain Sensor | Outputs high while it is raining. |
+| [`MCX231`](#mcx231--storm-sensor) | `IS IT A STORM` | Storm Sensor | Outputs high while a thunderstorm is running. |
+| [`MCX233`](#mcx233--simple-weather-control) | `WEATHER CONTROL` | Simple Weather Control *(restricted)* | Turns the weather on for a set duration while the input is held. |
+| [`MCX235`](#mcx235--false-weather) | `FALSE WEATHER` | False Weather *(restricted)* | Shows rain to people it is not raining on. |
+| [`MCX236`](#mcx236--distance-false-weather) | `DIST FALSE RAIN` | Distance False Weather *(restricted)* | Shows rain to everybody standing within a distance of the sign. |
+| [`MCX237`](#mcx237--hide-weather) | `HIDE WEATHER` | Hide Weather *(restricted)* | Hides the rain from people it is raining on. |
+| [`MCX238`](#mcx238--distance-hide-weather) | `DIST HIDE RAIN` | Distance Hide Weather *(restricted)* | Hides the rain from everybody standing within a distance of the sign. |
+| [`MCX242`](#mcx242--snow-shooter) | `SNOW SHOOTER` | Snow Shooter *(restricted)* | Throws a single snowball. |
+| [`MCX243`](#mcx243--snow-barrage) | `SNOW BARRAGE` | Snow Barrage *(restricted)* | Throws five snowballs. |
+| [`MCX244`](#mcx244--egg-shooter) | `EGG SHOOTER` | Egg Shooter *(restricted)* | Throws a single egg. |
+| [`MCX245`](#mcx245--egg-barrage) | `EGG BARRAGE` | Egg Barrage *(restricted)* | Throws five eggs. |
+| [`MCX246`](#mcx246--fireball) | `FIREBALL` | Fireball *(restricted)* | Launches a ghast fireball, aimed by the sign. |
+| [`MCX250`](#mcx250--particle) | `PARTICLE` | Particle | Shows a particle, optionally offset from the sign. |
+| [`MCX251`](#mcx251--sound-effect) | `SOUND EFFECT` | Sound Effect *(restricted)* | Plays one sound, named in full or by its shorthand. |
+| [`MCX255`](#mcx255--lightning) | `LIGHTNING` | Lightning *(restricted)* | Strikes one place with lightning. |
+| [`MCX256`](#mcx256--holy-smite) | `HOLY SMITE` | Holy Smite *(restricted)* | Strikes everything within range with lightning. |
+| [`MCX295`](#mcx295--trigger-reader) | `TRIGGER READER` | Trigger Reader | Mirrors the redstone at somewhere else in the world. |
+| [`MCX512`](#mcx512--message-nearby) | `MESSAGENEARBY` | Message Nearby *(restricted)* | Says something to everybody standing within range. |
+| [`MCX513`](#mcx513--message-named-nearby) | `NAMED NEARBY` | Message Named Nearby *(restricted)* | Says something to everybody within range, naming the nearest. |
+| [`MCX515`](#mcx515--server-log) | `SERVER LOG` | Server Log *(restricted)* | Writes a line to the server's log. |
+| [`MCX516`](#mcx516--server-log-nearby) | `S-LOG NEARBY` | Server Log Nearby *(restricted)* | Writes a line to the log naming the nearest player. |
+| [`MCX517`](#mcx517--server-log-nearby) | `S-LOG NEARBY+` | Server Log Nearby+ *(restricted)* | Writes a line to the log naming everybody in range and how far off. |
+
+## The chips in detail
+
+### MC1000 — Repeater
+
+Repeats a redstone signal.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1000]` or `[REPEATER]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc1000` |
+
+### MC1001 — Inverter
+
+Inverts a redstone signal.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1001]` or `[INVERTER]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc1001` |
+
+### MC1017 — Toggle Flip Flop RE
+
+Toggles output on high.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1017]` or `[RE T FLIP]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc1017` |
+
+### MC1018 — Toggle Flip Flop FE
+
+Toggles output on low.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1018]` or `[FE T FLIP]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc1018` |
+
+### MC1020 — Random Bit
+
+Randomly sets the output high.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1020]` or `[RANDOM BIT]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc1020` |
+
+### MC1025 — World Time Modulus
+
+Outputs high when the world time mod X is at least Y.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1025]` or `[TIME MODULUS]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc1025` |
+
+### MC1026 — Unix Time Modulus
+
+Outputs high when unix time mod X is at least Y.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1026]` or `[UNIX TIME]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc1026` |
+
+### MC1110 — Wireless Transmitter
+
+Transmits a wireless redstone signal.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1110]` or `[TRANSMITTER]` |
+| **Wiring** | `AIZO` — 3 inputs, no outputs |
+| **Permission** | `craftbook.ic.safe.mc1110` |
+| **Names you** | Writing `uuid` on line 4 is replaced by your own player id. |
+
+### MC1111 — Wireless Receiver
+
+Receives a wireless redstone signal.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1111]` or `[RECEIVER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MC0111]` |
+| **Permission** | `craftbook.ic.safe.mc1111` |
+| **Names you** | Writing `uuid` on line 4 is replaced by your own player id. |
+
+### MC1203 — Zeus Bolt
+
+Strikes an area with lightning, at a chance per block.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1203]` or `[ZEUS BOLT]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mc1203` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MC1205 — Set Block Above
+
+Sets a block above the IC block.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1205]` or `[SET ABOVE]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mc1205` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MC1206 — Set Block Below
+
+Sets a block below the IC block.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1206]` or `[SET BELOW]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mc1206` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MC1207 — Flex Set Admin
+
+Sets a block at a specified location, without paying for it.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1207]` or `[FLEX SET ADMIN]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mc1207` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MC1230 — Daylight Sensor
+
+Outputs high while the world time is within the day.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1230]` or `[SENSE DAY]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MC0230]` |
+| **Permission** | `craftbook.ic.safe.mc1230` |
+
+### MC1240 — Arrow Shooter
+
+Shoots a single arrow out of the back of the sign.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1240]` or `[ARROW SHOOTER]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mc1240` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MC1241 — Arrow Barrage
+
+Shoots five arrows out of the back of the sign.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1241]` or `[ARROW BARRAGE]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mc1241` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MC1249 — Block Replacer
+
+Swaps a block between two kinds and lets the change spread outward.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1249]` or `[BLOCK REPLACER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mc1249` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MC1250 — Fireworks
+
+Sets off a firework.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1250]` or `[FIREWORKS]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mc1250` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MC1253 — Programmable Firework Display
+
+Plays a firework display from a script.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1253]` or `[FIREWORK]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mc1253` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MC1260 — Water Sensor
+
+Outputs high if water is detected.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1260]` or `[SENSE WATER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc1260` |
+
+### MC1261 — Lava Sensor
+
+Outputs high if lava is detected.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1261]` or `[SENSE LAVA]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc1261` |
+
+### MC1262 — Light Sensor
+
+Outputs high if the specified light level is detected.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1262]` or `[SENSE LIGHT]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc1262` |
+
+### MC1420 — Clock
+
+Toggles its output every X ticks.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1420]` or `[CLOCK]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MC0420]` |
+| **Permission** | `craftbook.ic.safe.mc1420` |
+
+### MC1500 — Player Online
+
+Outputs high while a named player is logged in.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1500]` or `[PLAYER ONLINE?]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MC0500]` |
+| **Permission** | `craftbook.ic.safe.mc1500` |
+
+### MC1510 — Player Messenger
+
+Says something to one named player, wherever they are.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1510]` or `[MESSAGE PLAYER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mc1510` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MC1511 — Message All
+
+Says something to everybody online.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC1511]` or `[MESSAGE ALL]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mc1511` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MC2020 — Random 3-Bit
+
+Randomly sets the outputs high.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC2020]` or `[RANDOM 3]` |
+| **Wiring** | `SI3O` — 1 input, 3 outputs |
+| **Permission** | `craftbook.ic.safe.mc2020` |
+
+### MC2022 — Bit Shift
+
+Remembers a row of bits and rotates them along.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC2022]` or `[BITSHIFT]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc2022` |
+
+### MC2999 — Marquee
+
+Moves one raised output along its three outputs, a step per pulse.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC2999]` or `[MARQUEE]` |
+| **Wiring** | `SI3O` — 1 input, 3 outputs |
+| **Permission** | `craftbook.ic.safe.mc2999` |
+
+### MC3002 — And Gate
+
+Outputs high if all inputs are high.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3002]` or `[AND]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3002` |
+
+### MC3003 — Nand Gate
+
+Outputs high if any input is low.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3003]` or `[NAND]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3003` |
+
+### MC3020 — Xor Gate
+
+Outputs high if the inputs are different.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3020]` or `[XOR]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3020` |
+
+### MC3021 — Xnor Gate
+
+Outputs high if the inputs are the same.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3021]` or `[XNOR]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3021` |
+
+### MC3030 — RS-Nor Latch
+
+A compact RS-Nor latch.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3030]` or `[RS-NOR]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3030` |
+
+### MC3031 — Inverse RS-Nand Latch
+
+A compact inverse RS-Nand latch.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3031]` or `[INV RS-NAND]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3031` |
+
+### MC3032 — JK Flip Flop
+
+A compact JK flip flop.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3032]` or `[JK FLIP]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3032` |
+
+### MC3033 — RS-Nand Latch
+
+A compact RS-Nand latch.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3033]` or `[RS-NAND]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3033` |
+
+### MC3034 — Edge-Trigger D Flip Flop
+
+A compact edge-triggered D flip flop.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3034]` or `[EDGE-D]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3034` |
+
+### MC3036 — Level-Trigger D Flip Flop
+
+A compact level-triggered D flip flop.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3036]` or `[LEVEL-D]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3036` |
+
+### MC3040 — Multiplexer
+
+Outputs input 1 or 2 depending on the state of input 0.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3040]` or `[MULTIPLEXER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3040` |
+
+### MC3050 — Combination Lock
+
+Outputs high if the correct combination is entered.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3050]` or `[COMBO]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3050` |
+
+### MC3101 — Down Counter
+
+Decrements on redstone signal, outputs high on reaching zero.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3101]` or `[DOWN COUNTER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3101` |
+
+### MC3102 — Counter
+
+Increments on redstone signal, outputs high on reaching the limit.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3102]` or `[COUNTER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3102` |
+
+### MC3231 — Time Control Advanced
+
+Moves the world to the next morning or night when clocked.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3231]` or `[T CONTROL ADV]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mc3231` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MC3456 — Marquee Transmitter
+
+Steps along a run of numbered bands, one at a time.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC3456]` or `[MARQUEETRANSMIT]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc3456` |
+| **Names you** | Writing `uuid` on line 4 is replaced by your own player id. |
+
+### MC4000 — Full Adder
+
+A compact full adder.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC4000]` or `[FULL ADDER]` |
+| **Wiring** | `3I3O` — 3 inputs, 3 outputs |
+| **Permission** | `craftbook.ic.safe.mc4000` |
+
+### MC4010 — Half Adder
+
+A compact half adder.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC4010]` or `[HALF ADDER]` |
+| **Wiring** | `3I3O` — 3 inputs, 3 outputs |
+| **Permission** | `craftbook.ic.safe.mc4010` |
+
+### MC4040 — Demultiplexer 2-Bit
+
+Raises the output selected by the input.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC4040]` or `[DEMULTIPLEXER]` |
+| **Wiring** | `3I5O` — 3 inputs, 5 outputs |
+| **Permission** | `craftbook.ic.safe.mc4040` |
+
+### MC4100 — Full Subtractor
+
+A compact full subtractor.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC4100]` or `[FULL SUBTR]` |
+| **Wiring** | `3I3O` — 3 inputs, 3 outputs |
+| **Permission** | `craftbook.ic.safe.mc4100` |
+
+### MC4110 — Half Subtractor
+
+A compact half subtractor.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC4110]` or `[HALF SUBTR]` |
+| **Wiring** | `3I3O` — 3 inputs, 3 outputs |
+| **Permission** | `craftbook.ic.safe.mc4110` |
+
+### MC4200 — Dispatcher
+
+Outputs the centre input on the selected outputs.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC4200]` or `[DISPATCH]` |
+| **Wiring** | `3I3O` — 3 inputs, 3 outputs |
+| **Permission** | `craftbook.ic.safe.mc4200` |
+
+### MC6020 — Random 5-Bit
+
+Randomly sets the outputs high.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC6020]` or `[RANDOM 5]` |
+| **Wiring** | `SI5O` — 1 input, 5 outputs |
+| **Permission** | `craftbook.ic.safe.mc6020` |
+
+### MC6543 — Analog Transmitter
+
+Transmits a band per redstone power level.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MC6543]` or `[REDCODER]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mc6543` |
+| **Names you** | Writing `uuid` on line 4 is replaced by your own player id. |
+
+### MCM116 — Mob Above
+
+Outputs high while a creature is standing above the sign's support.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCM116]` or `[MOB ABOVE?]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCO116]` |
+| **Permission** | `craftbook.ic.safe.mcm116` |
+
+### MCT233 — Weather Control
+
+Sets rain and thunder using three inputs.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCT233]` or `[WEATHER CTRL ADV]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mct233` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCU113 — Destination
+
+Receives whoever a transporter sends to its name.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCU113]` or `[DESTINATION]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcu113` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCU440 — Monoflop
+
+Waits out a countdown, then turns on.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCU440]` or `[^MONOFLOP]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcu440` |
+
+### MCU700 — Melody
+
+Plays a MIDI file through an adjacent note block.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCU700]` or `[MELODY]` |
+| **Wiring** | `UISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcu700` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCU705 — Tune
+
+Plays a tune written on the sign, through an adjacent note block.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCU705]` or `[TUNE]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcu705` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCU706 — Jukebox
+
+Plays a record through an adjacent jukebox.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCU706]` or `[JUKEBOX]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcu706` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX010 — Pulse
+
+Sends a burst of pulses when triggered.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX010]` or `[PULSE]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcx010` |
+
+### MCX011 — Signal Extender
+
+Holds the output high for a while after the input ends.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX011]` or `[SIGNAL EXTENDER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcx011` |
+
+### MCX027 — Between Time
+
+Outputs high if the time is between the specified ticks.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX027]` or `[BETWEEN TIME]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcx027` |
+
+### MCX112 — Transporter
+
+Sends whoever is standing on it to a named destination.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX112]` or `[TRANSPORTER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx112` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX116 — Player Above
+
+Outputs high while a player is standing above the sign's support.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX116]` or `[PLAYER ABOVE?]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCZ116]` |
+| **Permission** | `craftbook.ic.safe.mcx116` |
+
+### MCX117 — Player Below
+
+Outputs high while a player is standing below the sign's support.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX117]` or `[PLAYER BELOW?]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCZ117]` |
+| **Permission** | `craftbook.ic.safe.mcx117` |
+
+### MCX118 — Player Near
+
+Outputs high while a player is within range.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX118]` or `[PLAYER NEAR?]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCZ118]` |
+| **Permission** | `craftbook.ic.safe.mcx118` |
+
+### MCX119 — Mob Near
+
+Outputs high while a creature is within range.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX119]` or `[MOB NEAR?]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCZ119]` |
+| **Permission** | `craftbook.ic.safe.mcx119` |
+
+### MCX120 — Command Controlled
+
+Follows a switch that anyone may throw by command.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX120]` or `[COMMAND CTRL]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCZ120]` |
+| **Permission** | `craftbook.ic.safe.mcx120` |
+
+### MCX121 — Password Controlled
+
+Follows a switch that takes a password to throw.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX121]` or `[PASSWORD CTRL]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCZ121]` |
+| **Permission** | `craftbook.ic.safe.mcx121` |
+
+### MCX130 — Mob Zapper
+
+Removes creatures within range.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX130]` or `[MOB ZAPPER]` |
+| **Wiring** | `SISO` — 1 input, 1 output |
+| **Runs on its own as** | `[MCZ130]` |
+| **Permission** | `craftbook.ic.restricted.mcx130` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX131 — Hit Player Above
+
+Hurts players standing above it.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX131]` or `[HIT PLAYER ABV]` |
+| **Wiring** | `UISO` — 4 inputs, 1 output |
+| **Runs on its own as** | `[MCU131]` |
+| **Permission** | `craftbook.ic.restricted.mcx131` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX132 — Hit Mob Above
+
+Hurts creatures standing above it.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX132]` or `[HIT MOB ABOVE]` |
+| **Wiring** | `UISO` — 4 inputs, 1 output |
+| **Runs on its own as** | `[MCU132]` |
+| **Permission** | `craftbook.ic.restricted.mcx132` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX133 — Humans Only
+
+Removes everything but players from within range.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX133]` or `[HUMANS ONLY]` |
+| **Wiring** | `SISO` — 1 input, 1 output |
+| **Runs on its own as** | `[MCZ133]` |
+| **Permission** | `craftbook.ic.restricted.mcx133` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX138 — Item Near
+
+Outputs high while a matching stack is lying within range.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX138]` or `[ITEM NEAR?]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCZ138]` |
+| **Permission** | `craftbook.ic.restricted.mcx138` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX139 — Held Item Near
+
+Outputs high while a player within range is holding a matching item.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX139]` or `[HELD ITEM NEAR?]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCZ139]` |
+| **Permission** | `craftbook.ic.restricted.mcx139` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX140 — In Area
+
+Outputs high while something is inside a box measured from the sign.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX140]` or `[IN AREA]` |
+| **Wiring** | `UISO` — 4 inputs, 1 output |
+| **Runs on its own as** | `[MCU140]` |
+| **Permission** | `craftbook.ic.restricted.mcx140` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX146 — Potion Area
+
+Gives potion effects to whatever is in an area.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX146]` or `[POTION AREA]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Runs on its own as** | `[MCU146]` |
+| **Permission** | `craftbook.ic.restricted.mcx146` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX200 — Entity Spawner
+
+Spawns creatures above itself.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX200]` or `[ENTITY SPAWNER]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Also answers to** | `MC1200` |
+| **Permission** | `craftbook.ic.restricted.mcx200` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX201 — Item Spawner
+
+Drops items above itself, out of nothing.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX201]` or `[ITEM SPAWNER]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Also answers to** | `MC1201` |
+| **Permission** | `craftbook.ic.restricted.mcx201` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX202 — Chest Dispenser
+
+Drops items taken out of a nearby container.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX202]` or `[CHEST DISPENSER]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Also answers to** | `MC1202` |
+| **Permission** | `craftbook.ic.safe.mcx202` |
+
+### MCX203 — Chest Collector
+
+Picks up dropped items and puts them in a nearby container.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX203]` or `[CHEST COLLECTOR]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Runs on its own as** | `[MCZ203]` |
+| **Permission** | `craftbook.ic.safe.mcx203` |
+
+### MCX205 — Block Detector
+
+Detects a block above or below.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX205]` or `[DETECT BLOCK]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcx205` |
+
+### MCX206 — Flex Set
+
+Sets a block at a specified location.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX206]` or `[FLEX SET]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcx206` |
+
+### MCX207 — Bridge
+
+Places a set type and amount of blocks.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX207]` or `[BRIDGE]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcx207` |
+| **Needs arming** | Yes — it is created inert and does nothing until its area is clear. |
+
+### MCX208 — Door
+
+Places a set type and amount of blocks.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX208]` or `[DOOR]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcx208` |
+| **Needs arming** | Yes — it is created inert and does nothing until its area is clear. |
+
+### MCX209 — Bridge+
+
+Places blocks, replacing whatever is already there.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX209]` or `[BRIDGE+]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx209` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX210 — Door+
+
+Places blocks, replacing whatever is already there.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX210]` or `[DOOR+]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx210` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX211 — Toggle Block
+
+Swaps one block between two kinds as its input changes.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX211]` or `[TOGGLE BLOCK]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcx211` |
+
+### MCX213 — Harvester
+
+Gathers a grown crop out of an area into nearby containers.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX213]` or `[HARVESTER]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcx213` |
+| **Needs arming** | Yes — it is created inert and does nothing until its area is clear. |
+
+### MCX215 — Area Planter
+
+Plants dropped seeds across a field of ground.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX215]` or `[AREA PLANTER]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Runs on its own as** | `[MCZ215]` |
+| **Permission** | `craftbook.ic.safe.mcx215` |
+
+### MCX216 — Planter
+
+Plants a dropped seed above the block the sign hangs on.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX216]` or `[PLANTER]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Runs on its own as** | `[MCZ216]` |
+| **Permission** | `craftbook.ic.safe.mcx216` |
+
+### MCX230 — Rain Sensor
+
+Outputs high while it is raining.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX230]` or `[IS IT RAIN]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcx230` |
+
+### MCX231 — Storm Sensor
+
+Outputs high while a thunderstorm is running.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX231]` or `[IS IT A STORM]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcx231` |
+
+### MCX233 — Simple Weather Control
+
+Turns the weather on for a set duration while the input is held.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX233]` or `[WEATHER CONTROL]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx233` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX235 — False Weather
+
+Shows rain to people it is not raining on.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX235]` or `[FALSE WEATHER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx235` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX236 — Distance False Weather
+
+Shows rain to everybody standing within a distance of the sign.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX236]` or `[DIST FALSE RAIN]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCZ236]` |
+| **Permission** | `craftbook.ic.restricted.mcx236` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX237 — Hide Weather
+
+Hides the rain from people it is raining on.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX237]` or `[HIDE WEATHER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx237` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX238 — Distance Hide Weather
+
+Hides the rain from everybody standing within a distance of the sign.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX238]` or `[DIST HIDE RAIN]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCZ238]` |
+| **Permission** | `craftbook.ic.restricted.mcx238` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX242 — Snow Shooter
+
+Throws a single snowball.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX242]` or `[SNOW SHOOTER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx242` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX243 — Snow Barrage
+
+Throws five snowballs.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX243]` or `[SNOW BARRAGE]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx243` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX244 — Egg Shooter
+
+Throws a single egg.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX244]` or `[EGG SHOOTER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx244` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX245 — Egg Barrage
+
+Throws five eggs.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX245]` or `[EGG BARRAGE]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx245` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX246 — Fireball
+
+Launches a ghast fireball, aimed by the sign.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX246]` or `[FIREBALL]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx246` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX250 — Particle
+
+Shows a particle, optionally offset from the sign.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX250]` or `[PARTICLE]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.safe.mcx250` |
+
+### MCX251 — Sound Effect
+
+Plays one sound, named in full or by its shorthand.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX251]` or `[SOUND EFFECT]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx251` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX255 — Lightning
+
+Strikes one place with lightning.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX255]` or `[LIGHTNING]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx255` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX256 — Holy Smite
+
+Strikes everything within range with lightning.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX256]` or `[HOLY SMITE]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCZ256]` |
+| **Permission** | `craftbook.ic.restricted.mcx256` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX295 — Trigger Reader
+
+Mirrors the redstone at somewhere else in the world.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX295]` or `[TRIGGER READER]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Runs on its own as** | `[MCZ295]` |
+| **Permission** | `craftbook.ic.safe.mcx295` |
+
+### MCX512 — Message Nearby
+
+Says something to everybody standing within range.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX512]` or `[MESSAGENEARBY]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx512` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX513 — Message Named Nearby
+
+Says something to everybody within range, naming the nearest.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX513]` or `[NAMED NEARBY]` |
+| **Wiring** | `AISO` — 4 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx513` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX515 — Server Log
+
+Writes a line to the server's log.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX515]` or `[SERVER LOG]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx515` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX516 — Server Log Nearby
+
+Writes a line to the log naming the nearest player.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX516]` or `[S-LOG NEARBY]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx516` |
+| **Restricted** | Yes — not granted to everybody by default. |
+
+### MCX517 — Server Log Nearby+
+
+Writes a line to the log naming everybody in range and how far off.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[MCX517]` or `[S-LOG NEARBY+]` |
+| **Wiring** | `3ISO` — 3 inputs, 1 output |
+| **Permission** | `craftbook.ic.restricted.mcx517` |
+| **Restricted** | Yes — not granted to everybody by default. |
+

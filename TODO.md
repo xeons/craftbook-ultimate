@@ -177,7 +177,7 @@ get a section of their own is a decision for when the boats arrive.
 | Storage | The saved areas live in `areas/`, two files each, in the game's own structure format. Nothing else a mechanic uses is written down. |
 | Commands | `/craftbook` reads the catalogue and the switch commands drive `MCX120` and `MCX121`, all through Brigadier. The per-mechanic commands come with their mechanics. |
 | Permissions | Every chip's permission is registered under `craftbook.ic.safe.*` or `craftbook.ic.restricted.*` and checked on creation. The sign mechanics register a pair each, `craftbook.<name>` to build and `craftbook.<name>.use` to work, and both are checked. Nothing checks a chip at run time. |
-| Documentation generator | The legacy code generated its own IC documentation. |
+| Documentation generator | `./gradlew generateIcDocs` writes `docs/ics.md` from the catalogue, and a test fails the build if the committed page has drifted from it. The mechanics have no generator: what they do is not held as data anywhere, so `docs/pipes.md` and its like are written by hand. |
 
 ## Verification
 

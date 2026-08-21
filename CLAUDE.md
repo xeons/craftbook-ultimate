@@ -70,10 +70,11 @@ to a hand and to redstone.**
 | Toggled areas, saved in the game's own structure format | Done |
 | Variables, and the three upstream chips that read them | Done |
 | Test bed: a rig per chip, built from the catalogue | Done |
+| Debugging: the IC stick, the commands, the report | Done |
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1947 tests passing**.
+**1973 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -240,7 +241,8 @@ nothing. Do not edit that page by hand.
 Everything else there is **written**, because what a mechanic does is not held as data anywhere to
 generate from. `docs/pipes.md` is the pattern: what the thing is, how to build one, the frozen
 grammar in full, worked examples, what to check when it does not work, and a section for operators
-at the end. `docs/variables.md`, `docs/testbed.md` and `docs/fireworks.md` follow it.
+at the end. `docs/variables.md`, `docs/testbed.md`, `docs/fireworks.md` and `docs/debugging.md`
+follow it.
 
 ## What a chip's lines mean
 
@@ -499,6 +501,39 @@ deliberately not reread with them: a folder of MIDI files is far too slow to con
 the command runs on, which is the same reason they are read once at start-up in the first place.
 
 `docs/fireworks.md` is the builder's guide to all of it.
+
+## Debugging a chip
+
+A chip that does nothing looks exactly like a chip that is wired wrong, and a builder cannot tell
+which from the blocks. The tools answer that by printing what the **plugin** believes: which pins it
+reads as wired, what each is carrying, which model the sign actually resolved to, and whether
+anything will ever set the chip off. `ChipReport` in core is that answer as a value, so the stick,
+the commands and the tests all say the same things about the same chip.
+
+Two ways in, one implementation under them. `DebugActions` holds what each mode does; the stick
+picks a mode from its own item data, a command names one, and the clickable menu offers them all.
+None of the three knows which way it was reached. The commands act on the block you are looking at,
+which is how `/area pos1` already works.
+
+The stick keeps its mode **in the item**, not against the player: a stick can be handed over, left
+in a chest, or carried in each hand set differently, and one found years later still works. It is
+recognised by its persistent data and never by its name, so renaming it in an anvil does not break
+it and naming an ordinary stick does not make one. There is **no crafting recipe**, unlike the fork's
+three: permission is checked on use, so a recipe would mostly produce sticks that do nothing.
+
+Two narrow seams exist purely for these tools, and no chip's behaviour depends on either.
+`AreaAwareICLogic` says which box a chip works on, which the outline draws — `MCX116`, `MCX117`,
+`MCX140`, `MCX130` and `MCX133` implement it. `BandAwareICLogic` says which wireless channel a chip
+is on, implemented by the transmitter and the receiver, because the two ends of a pair cannot see
+each other and a disagreement about the channel looks exactly like agreement.
+
+The fork drew its area through **WorldEdit CUI**; `AreaOutline` draws particles instead, which keeps
+the no-WorldEdit rule and works for a builder with no client mod. The fork's **debug message
+subscription** was not ported: no chip here emits a commentary, so it would mean threading a
+reporting seam through every one of them, and the report plus live pin state covers most of what it
+was for.
+
+`docs/debugging.md` is the builder's guide.
 
 ## Folia and regions
 

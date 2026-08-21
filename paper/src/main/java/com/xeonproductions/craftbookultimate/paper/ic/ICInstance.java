@@ -96,6 +96,37 @@ public final class ICInstance {
         return BlockKey.of(world, signPosition);
     }
 
+    /** The flags read off the end of this chip's identifier line. */
+    public ICMode mode() {
+        return mode;
+    }
+
+    /**
+     * This chip's own running logic.
+     *
+     * <p>Handed out so that the debugging tools can ask a chip about itself. Nothing should drive
+     * a chip through this: {@link #trigger} and {@link #tick} exist so that the guards against a
+     * chip triggering itself and against an unending chain are applied.
+     */
+    public ICLogic logic() {
+        return logic;
+    }
+
+    /**
+     * A state for reading the chip without running it.
+     *
+     * <p>Reports no triggered input, since nothing triggered this. Reads blocks, so it belongs to
+     * the region owning the sign like everything else here.
+     */
+    public BlockChipState inspectionState() {
+        return newState(-1);
+    }
+
+    /** The registries this chip reaches the rest of the server through. */
+    public ChipServices services() {
+        return services;
+    }
+
     /** Whether this chip ticks on its own. */
     public boolean isSelfTriggering() {
         return selfTriggering;

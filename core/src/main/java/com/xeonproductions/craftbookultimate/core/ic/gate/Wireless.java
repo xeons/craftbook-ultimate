@@ -1,5 +1,6 @@
 package com.xeonproductions.craftbookultimate.core.ic.gate;
 
+import com.xeonproductions.craftbookultimate.core.ic.BandAwareICLogic;
 import com.xeonproductions.craftbookultimate.core.ic.ChipState;
 import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
 import com.xeonproductions.craftbookultimate.core.ic.ICMode;
@@ -55,8 +56,22 @@ public final class Wireless {
      * of the world does not drop out because the transmitter's chunk went out of view.
      */
     public static ICLogic transmitter() {
-        return state -> bandOn(state)
-                .ifPresent(band -> state.radio().transmit(band, state.isAnyInputActive()));
+        return new Transmitter();
+    }
+
+    /** Drives a band while anything is driving the chip. */
+    private static final class Transmitter implements BandAwareICLogic {
+
+        @Override
+        public void trigger(ChipState state) {
+            bandOn(state).ifPresent(
+                    band -> state.radio().transmit(band, state.isAnyInputActive()));
+        }
+
+        @Override
+        public Optional<Band> band(ChipState state) {
+            return bandOn(state);
+        }
     }
 
     /**
@@ -126,7 +141,12 @@ public final class Wireless {
     }
 
     /** Follows a band, whether by ticking or by being clocked. */
-    private static final class Receiver implements SelfTriggeringICLogic {
+    private static final class Receiver implements SelfTriggeringICLogic, BandAwareICLogic {
+
+        @Override
+        public Optional<Band> band(ChipState state) {
+            return bandOn(state);
+        }
 
         @Override
         public void trigger(ChipState state) {

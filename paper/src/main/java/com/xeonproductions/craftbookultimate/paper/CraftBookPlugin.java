@@ -20,6 +20,11 @@ import com.xeonproductions.craftbookultimate.paper.command.AreaCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CartCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CatalogueCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CheckCommands;
+import com.xeonproductions.craftbookultimate.paper.command.DebugCommands;
+import com.xeonproductions.craftbookultimate.paper.debug.AreaOutline;
+import com.xeonproductions.craftbookultimate.paper.debug.DebugActions;
+import com.xeonproductions.craftbookultimate.paper.debug.DebugMode;
+import com.xeonproductions.craftbookultimate.paper.debug.DebugStick;
 import com.xeonproductions.craftbookultimate.paper.command.ConfigCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
 import com.xeonproductions.craftbookultimate.paper.command.MusicCommands;
@@ -43,6 +48,7 @@ import com.xeonproductions.craftbookultimate.paper.listener.PipeListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartSignListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICChunkListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICRedstoneListener;
+import com.xeonproductions.craftbookultimate.paper.listener.DebugStickListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICSignListener;
 import com.xeonproductions.craftbookultimate.paper.listener.LiftMoveListener;
 import com.xeonproductions.craftbookultimate.paper.listener.MechanicInteractListener;
@@ -93,6 +99,7 @@ public final class CraftBookPlugin extends JavaPlugin {
     private final PipeNetworks pipeNetworks = new PipeNetworks();
     private @Nullable StructureVault areas;
     private final Selections selections = new Selections();
+    private @Nullable DebugStick debugSticks;
 
     /**
      * @param icRegistry the chip catalogue, built during bootstrap
@@ -133,6 +140,7 @@ public final class CraftBookPlugin extends JavaPlugin {
         StructureVault areaVault = new StructureVault(
                 getDataPath(), getServer(), regionSchedulers, this::reportSetting);
         this.areas = areaVault;
+        this.debugSticks = new DebugStick(this);
 
         registerPermissions();
         loadPasswords();
@@ -144,6 +152,8 @@ public final class CraftBookPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ICSignListener(manager, regionSchedulers), this);
         getServer().getPluginManager().registerEvents(new ICRedstoneListener(manager), this);
         getServer().getPluginManager().registerEvents(new ICChunkListener(manager), this);
+        getServer().getPluginManager().registerEvents(
+                new DebugStickListener(manager, debugSticksTarget(), debugActions()), this);
         getServer().getPluginManager().registerEvents(
                 new CartListener(carts, chipServices.configuration()), this);
         getServer().getPluginManager().registerEvents(
@@ -216,6 +226,7 @@ public final class CraftBookPlugin extends JavaPlugin {
         declare(manager, CheckCommands.CHECK,
                 "Ask which loaded chips cannot work as their signs are written.",
                 PermissionDefault.OP);
+        declareDebugPermissions(manager);
 
         for (ICDefinition definition : icRegistry.definitions()) {
             Permission node = new Permission(
@@ -312,7 +323,12 @@ public final class CraftBookPlugin extends JavaPlugin {
                         new AreaCommands(areaTarget(), selections, chipServices.configuration()),
                         new VariableCommands(chipServices.variables(), this::saveSharedState),
                         new TestbedCommands(icRegistry, new TestbedBuilder(icManagerTarget(), schedulersTarget())),
-                        new CheckCommands(icManagerTarget()))
+                        new CheckCommands(icManagerTarget()),
+                        new DebugCommands(
+                                icManagerTarget(),
+                                debugActions(),
+                                debugSticksTarget(),
+                                schedulersTarget()))
                 .registerOn(this);
     }
 
@@ -330,6 +346,40 @@ public final class CraftBookPlugin extends JavaPlugin {
             throw new IllegalStateException("The schedulers are not available until enabled");
         }
         return schedulers;
+    }
+
+    /** The debug sticks, which the listener reads and the command hands out. */
+    private DebugStick debugSticksTarget() {
+        if (debugSticks == null) {
+            throw new IllegalStateException("The debug sticks are not available until enabled");
+        }
+        return debugSticks;
+    }
+
+    /**
+     * What the debugging modes do.
+     *
+     * <p>Built fresh for each caller rather than held, since it keeps nothing of its own and
+     * holding one would only be another field to null-check.
+     */
+    private DebugActions debugActions() {
+        return new DebugActions(icManagerTarget(), new AreaOutline(schedulersTarget()));
+    }
+
+    /**
+     * The permissions the debugging tools need.
+     *
+     * <p>One to hold a stick at all and one per mode, so that a server can hand a builder the
+     * report and the area outline without handing them the ability to set every chip on the map
+     * off from a distance.
+     */
+    private void declareDebugPermissions(PluginManager manager) {
+        declare(manager, DebugStick.PERMISSION,
+                "Be given an IC debug stick, and use the debugging commands.",
+                PermissionDefault.OP);
+        for (DebugMode mode : DebugMode.CYCLE) {
+            declare(manager, mode.permission(), mode.description() + ".", PermissionDefault.OP);
+        }
     }
 
     /** The saved areas, which the commands fill and empty. */

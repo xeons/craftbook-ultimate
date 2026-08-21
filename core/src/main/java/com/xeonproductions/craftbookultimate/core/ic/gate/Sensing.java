@@ -4,13 +4,16 @@ import com.xeonproductions.craftbookultimate.core.entity.Bystander;
 import com.xeonproductions.craftbookultimate.core.entity.DroppedItem;
 import com.xeonproductions.craftbookultimate.core.entity.EntitySpec;
 import com.xeonproductions.craftbookultimate.core.entity.ItemCriteria;
+import com.xeonproductions.craftbookultimate.core.ic.AreaAwareICLogic;
 import com.xeonproductions.craftbookultimate.core.ic.ChipState;
 import com.xeonproductions.craftbookultimate.core.ic.SelfTriggeringICLogic;
+import com.xeonproductions.craftbookultimate.core.math.Bounds;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -113,7 +116,9 @@ public final class Sensing {
      * far across to watch, how tall a column, and how far above the standing spot to start.
      */
     public static SelfTriggeringICLogic playerAbove() {
-        return sensor(state -> sensePeopleInColumn(state, false));
+        return sensor(
+                state -> sensePeopleInColumn(state, false),
+                state -> columnBounds(state, false));
     }
 
     /**
@@ -123,7 +128,9 @@ public final class Sensing {
      * standing spot rather than sitting above it and the second number is how deep it runs.
      */
     public static SelfTriggeringICLogic playerBelow() {
-        return sensor(state -> sensePeopleInColumn(state, true));
+        return sensor(
+                state -> sensePeopleInColumn(state, true),
+                state -> columnBounds(state, true));
     }
 
     /**
@@ -234,20 +241,30 @@ public final class Sensing {
      * from its middle on each axis and the offset moves that middle away from the sign.
      */
     public static SelfTriggeringICLogic inArea() {
-        return sensor(state -> {
-            Optional<EntitySpec> wanted = areaSubjectOn(state);
-            if (wanted.isEmpty()) {
-                state.setMainOutput(false);
-                return;
-            }
+        return sensor(
+                state -> {
+                    Optional<EntitySpec> wanted = areaSubjectOn(state);
+                    if (wanted.isEmpty()) {
+                        state.setMainOutput(false);
+                        return;
+                    }
 
-            Area area = Area.on(state);
-            Vec3d middle = Vec3d.middleOf(state.signPosition()).add(Vec3d.of(area.offset()));
-            Vec3d reach = Vec3d.of(area.reach());
+                    Area area = Area.on(state);
+                    Vec3d middle = Vec3d.middleOf(state.signPosition()).add(Vec3d.of(area.offset()));
+                    Vec3d reach = Vec3d.of(area.reach());
 
-            List<Bystander> found = state.world().bystandersIn(middle.subtract(reach), middle.add(reach));
-            state.setMainOutput(anyMatches(found, wanted.get()));
-        });
+                    List<Bystander> found =
+                            state.world().bystandersIn(middle.subtract(reach), middle.add(reach));
+                    state.setMainOutput(anyMatches(found, wanted.get()));
+                },
+                state -> {
+                    Area area = Area.on(state);
+                    Vec3i middle = state.signPosition().add(
+                            area.offset().x(), area.offset().y(), area.offset().z());
+                    return Optional.of(new Bounds(
+                            middle.add(-area.reach().x(), -area.reach().y(), -area.reach().z()),
+                            middle.add(area.reach().x(), area.reach().y(), area.reach().z())));
+                });
     }
 
     /**
@@ -308,17 +325,57 @@ public final class Sensing {
     }
 
     /**
+     * The column one of the two above-and-below sensors is watching.
+     *
+     * <p>Empty when there is nowhere to stand above the chip, which is the same answer the sensor
+     * itself gives: it has nothing to measure from, so it is watching nothing rather than watching
+     * an empty box.
+     */
+    private static Optional<Bounds> columnBounds(ChipState state, boolean below) {
+        Optional<Vec3i> spot = state.world().firstStandingSpotAtOrAbove(state.backPosition());
+        if (spot.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Column column = Column.on(state);
+        Vec3i at = spot.get();
+        int floor = below
+                ? at.y() - BELOW_DROP - column.offset() - column.length()
+                : at.y() + column.offset();
+        int ceiling = below
+                ? at.y() - BELOW_DROP - column.offset()
+                : at.y() + column.offset() + column.length();
+
+        return Optional.of(new Bounds(
+                new Vec3i(at.x() - column.radius(), floor, at.z() - column.radius()),
+                new Vec3i(at.x() + column.radius(), ceiling, at.z() + column.radius())));
+    }
+
+    /**
      * Wraps a reading into a chip that takes it while driven, or on every tick.
      *
      * <p>A sensor nothing is driving keeps whatever it last reported rather than going low, which
      * is how a build reads an answer once and then holds it.
      */
     private static SelfTriggeringICLogic sensor(Consumer<ChipState> reading) {
-        return new Sensor(reading);
+        return new Sensor(reading, ignored -> Optional.empty());
+    }
+
+    /**
+     * A sensor that can also say which box it is watching.
+     *
+     * <p>Used by the ones whose box is decided by their sign, where the commonest fault by far is
+     * a builder having a different box in mind than the chip does. The debugging tools draw it.
+     */
+    private static SelfTriggeringICLogic sensor(
+            Consumer<ChipState> reading, Function<ChipState, Optional<Bounds>> watching) {
+        return new Sensor(reading, watching);
     }
 
     /** One sensor, reading while driven or on every tick. */
-    private record Sensor(Consumer<ChipState> reading) implements SelfTriggeringICLogic {
+    private record Sensor(
+            Consumer<ChipState> reading, Function<ChipState, Optional<Bounds>> watching)
+            implements SelfTriggeringICLogic, AreaAwareICLogic {
 
         @Override
         public void trigger(ChipState state) {
@@ -330,6 +387,11 @@ public final class Sensing {
         @Override
         public void tick(ChipState state) {
             reading.accept(state);
+        }
+
+        @Override
+        public Optional<Bounds> area(ChipState state) {
+            return watching.apply(state);
         }
     }
 

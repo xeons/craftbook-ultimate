@@ -2,8 +2,10 @@ package com.xeonproductions.craftbookultimate.core.ic.gate;
 
 import com.xeonproductions.craftbookultimate.core.entity.Bystander;
 import com.xeonproductions.craftbookultimate.core.entity.EntitySpec;
+import com.xeonproductions.craftbookultimate.core.ic.AreaAwareICLogic;
 import com.xeonproductions.craftbookultimate.core.ic.ChipState;
 import com.xeonproductions.craftbookultimate.core.ic.SelfTriggeringICLogic;
+import com.xeonproductions.craftbookultimate.core.math.Bounds;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
@@ -126,10 +128,20 @@ public final class Combat {
     }
 
     /** Clears everything but people out of a radius, on a pulse or on every tick. */
-    private static final class Sweeper implements SelfTriggeringICLogic {
+    private static final class Sweeper implements SelfTriggeringICLogic, AreaAwareICLogic {
 
         /** The mode letter that turns the sparing on. */
         private static final char SPARING = '-';
+
+        @Override
+        public Optional<Bounds> area(ChipState state) {
+            return Optional.of(Bounds.around(state.signPosition(), rangeOn(state)));
+        }
+
+        private static int rangeOn(ChipState state) {
+            return boundedNumber(
+                    state.sign().trimmedText(AMOUNT_LINE), 1, MAX_ZAP_RANGE, DEFAULT_SWEEP_RANGE);
+        }
 
         @Override
         public void trigger(ChipState state) {
@@ -144,8 +156,7 @@ public final class Combat {
         }
 
         private static void sweep(ChipState state) {
-            int range = boundedNumber(
-                    state.sign().trimmedText(AMOUNT_LINE), 1, MAX_ZAP_RANGE, DEFAULT_SWEEP_RANGE);
+            int range = rangeOn(state);
             boolean sparing = isSparing(state);
 
             boolean removed = false;
@@ -172,7 +183,17 @@ public final class Combat {
     }
 
     /** Clears creatures out of a radius, on a pulse or on every tick. */
-    private static final class Zapper implements SelfTriggeringICLogic {
+    private static final class Zapper implements SelfTriggeringICLogic, AreaAwareICLogic {
+
+        @Override
+        public Optional<Bounds> area(ChipState state) {
+            return Optional.of(Bounds.around(state.signPosition(), rangeOn(state)));
+        }
+
+        private static int rangeOn(ChipState state) {
+            return boundedNumber(
+                    state.sign().trimmedText(AMOUNT_LINE), 1, MAX_ZAP_RANGE, DEFAULT_ZAP_RANGE);
+        }
 
         @Override
         public void trigger(ChipState state) {
@@ -189,9 +210,7 @@ public final class Combat {
         private static void zap(ChipState state) {
             EntitySpec wanted =
                     subjectOn(state, new EntitySpec.Category(EntitySpec.Group.MONSTERS));
-            int range =
-                    boundedNumber(
-                            state.sign().trimmedText(AMOUNT_LINE), 1, MAX_ZAP_RANGE, DEFAULT_ZAP_RANGE);
+            int range = rangeOn(state);
 
             boolean removed = false;
             Vec3d centre = Vec3d.centreOf(state.signPosition());

@@ -22,6 +22,30 @@ permissions:
   craftbook.testbed:
     description: Build a test bed carrying a rig for every chip.
     default: op
+  craftbook.debug:
+    description: Be given an IC debug stick, and use the debugging commands.
+    default: op
+  craftbook.debug.menu:
+    description: Report on a chip, and offer the rest as buttons.
+    default: op
+  craftbook.debug.trigger:
+    description: Set a chip off without touching its inputs.
+    default: op
+  craftbook.debug.area:
+    description: Outline the area a chip works on, in particles.
+    default: op
+  craftbook.debug.fields:
+    description: Show what a chip is holding internally.
+    default: op
+  craftbook.debug.reload:
+    description: Stop a chip and start it again.
+    default: op
+  craftbook.debug.ticking:
+    description: List every chip currently ticking on its own.
+    default: op
+  craftbook.debug.band:
+    description: Show what a wireless chip's band is carrying.
+    default: op
   craftbook.music.list:
     description: List the songs and playlists a melody chip can name.
     default: true

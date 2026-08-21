@@ -82,6 +82,12 @@ public final class TestbedBuilder {
         VariableName shared = VariableName.shared(ChipSetup.SHARED_NAME);
         variables.define(shared, Variables.DEFAULT_VALUE);
 
+        // Everything standing here is about to be overwritten, and a block replaced wholesale
+        // raises no break event. Without this, the chips from a previous bed stay loaded against
+        // signs that no longer exist: still ticking, still holding whatever they had claimed, and
+        // invisible to everything except the sign that is no longer there.
+        manager.unloadWithin(world.getUID(), plan.overwritten());
+
         layFloor(world, plan);
 
         List<Block> signs = new ArrayList<>();

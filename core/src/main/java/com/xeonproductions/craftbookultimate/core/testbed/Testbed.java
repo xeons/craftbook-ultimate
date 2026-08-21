@@ -3,6 +3,7 @@ package com.xeonproductions.craftbookultimate.core.testbed;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
+import com.xeonproductions.craftbookultimate.core.math.Bounds;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -130,6 +131,25 @@ public record Testbed(Vec3i origin, BlockFace facing, int columns, Cell cell, Li
         return new Ground(
                 new Vec3i(minX - 1, origin.y(), minZ - 1),
                 new Vec3i(maxX + 1, origin.y(), maxZ + 1));
+    }
+
+    /**
+     * Everything building this bed writes over: the floor, and all the air the rigs stand up into.
+     *
+     * <p>Whoever builds one has to clear the chips already standing there first, and a block
+     * replaced wholesale raises no break event to do it for them. Measured from the rigs
+     * themselves rather than from a remembered height, so a rig that grows taller cannot quietly
+     * start leaving the previous bed's chips behind.
+     */
+    public Bounds overwritten() {
+        Ground ground = ground();
+        int highest = ground.from().y();
+        for (Rig rig : rigs) {
+            for (Rig.Placement placement : rig.placements()) {
+                highest = Math.max(highest, placement.position().y());
+            }
+        }
+        return new Bounds(ground.from(), new Vec3i(ground.to().x(), highest, ground.to().z()));
     }
 
     /** The floor a plane stands on, as two opposite corners at the same height. */

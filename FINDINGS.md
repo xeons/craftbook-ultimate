@@ -1906,3 +1906,55 @@ letters from `a` to `f`, so an `s` in a suffix could never have meant anything e
 
 **Rewrite:** either case sets the flag. This widens what a sign may say rather than narrowing it, so
 no sign that worked before reads differently now.
+
+### 130. Editing a chip's sign left the old chip running
+
+`ICManager#load` refuses to build a chip on a block that already has one:
+
+```java
+public Optional<ICInstance> load(Block block) {
+    BlockKey key = BlockKey.of(block);
+    if (bySign.containsKey(key)) {
+        return Optional.empty();
+    }
+```
+
+That is right for a chunk arriving twice and wrong for the other caller. `ICSignListener` ran the
+same `load` after a `SignChangeEvent`, so editing the sign of a chip that was already there did
+nothing at all: the sign was rewritten, the builder was told the chip had been created, and the
+chip that went on running was the one built from the old text.
+
+What survives an edit is everything the chip read once and then carried: its pin layout, its mode
+characters, whether it ticks, and whatever state its logic had accumulated. So turning `[MCX120]S`
+back into `[MCX120]` left a chip still ticking every tick, and the sign in front of the builder said
+otherwise. Changing the model number outright left the previous chip in place under a sign naming a
+different one.
+
+The same hole has a second side. A sign edited until it no longer names a chip at all — the model
+number rubbed out, the line replaced with a word — took the early return in the listener, so nothing
+stopped the chip either. It went on running against a sign that no longer described it.
+
+**Rewrite:** `ICManager#reload` unloads whatever is on the block and builds what the sign now
+describes, and the listener calls that on every accepted edit, including the one that leaves no chip
+behind. A refused edit does not reconcile, because a cancelled `SignChangeEvent` leaves the old text
+and so the old chip is still the right one.
+
+### 131. Rebuilding the test bed left the previous bed's chips loaded
+
+The same defect, reached another way. `TestbedBuilder#build` clears its plane and lays a floor over
+whatever was there, then calls `loadAll` on the signs it has just written.
+
+Nothing unloads what it destroyed. Replacing a block wholesale raises no `BlockBreakEvent`, so the
+chips from the previous bed stayed in `bySign` with their tick tasks still scheduled, their pins
+still indexed, and their signs gone. A command-controlled chip among them kept its switch registered,
+which is enough on its own to make `/mcx120 <name> on` report success while nothing anywhere is
+driven — see finding 128.
+
+Building the bed twice therefore left two generations of chips ticking, and only the newer generation
+was reachable from any sign.
+
+**Rewrite:** `ICManager#unloadWithin` stops every chip whose sign stands inside a box, and the
+builder calls it over the stretch it is about to overwrite before laying a block. That stretch comes
+from `Testbed#overwritten`, which measures the rigs rather than assuming a height, and
+`TestbedTest` asserts every block of every rig falls inside it — a rig growing taller would
+otherwise start leaving chips behind with nothing to say so.

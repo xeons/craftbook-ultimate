@@ -62,22 +62,28 @@ public final class ICSignListener implements Listener {
             return;
         }
 
+        Block block = event.getBlock();
+
+        // Whether this sign was already a chip decides two things: what the builder is told, and
+        // whether rubbing the model number out has to stop something.
+        boolean wasChip = manager.at(block).isPresent();
+
         String identifier = PLAIN.serialize(event.line(IDENTIFIER_LINE));
-        Optional<ICLine> parsed = ICLine.parse(identifier);
-        if (parsed.isEmpty()) {
-            return;
-        }
-
-        Optional<ICRegistry.Resolution> resolved = manager.registry().resolve(parsed.get());
+        Optional<ICRegistry.Resolution> resolved =
+                ICLine.parse(identifier).flatMap(line -> manager.registry().resolve(line));
         if (resolved.isEmpty()) {
+            if (wasChip) {
+                reconcile(block);
+            }
             return;
         }
 
+        ICLine parsed = ICLine.parse(identifier).orElseThrow();
         ICDefinition definition = resolved.get().definition();
         Player player = event.getPlayer();
         Settings settings = manager.services().configuration().settings();
 
-        if (!settings.allowsWorld(event.getBlock().getWorld().getName())
+        if (!settings.allowsWorld(block.getWorld().getName())
                 || !settings.allowsChip(definition.allModels())) {
             player.sendMessage(Component.text(
                     "The " + definition.name() + " chip is switched off here.",
@@ -94,7 +100,7 @@ public final class ICSignListener implements Listener {
             return;
         }
 
-        if (Signs.facing(event.getBlock()).isEmpty()) {
+        if (Signs.facing(block).isEmpty()) {
             player.sendMessage(Component.text(
                     "A chip has to be on a wall sign, so that it has a block behind it to work from.",
                     NamedTextColor.RED));
@@ -119,14 +125,27 @@ public final class ICSignListener implements Listener {
             return;
         }
 
-        writeCanonicalLines(event, definition, parsed.get(), resolved.get().selfTriggering());
+        writeCanonicalLines(event, definition, parsed, resolved.get().selfTriggering());
 
-        player.sendMessage(Component.text("Created " + definition.name(), NamedTextColor.YELLOW));
+        player.sendMessage(Component.text(
+                (wasChip ? "Rebuilt " : "Created ") + definition.name(), NamedTextColor.YELLOW));
 
-        // The sign's own state is not written until after this event, so the chip cannot be
-        // started from here. Picking it up on the next tick reads the finished sign.
-        Block block = event.getBlock();
-        schedulers.at(block.getLocation()).runLater(() -> manager.load(block), 1);
+        reconcile(block);
+    }
+
+    /**
+     * Builds the chip this sign now describes, replacing whatever was there.
+     *
+     * <p>Left until the next tick because the sign's own state is not written until after this
+     * event, so reading it here would read the text the builder is replacing.
+     *
+     * <p>Replacing rather than adding is what makes an edit take effect. A chip is built from the
+     * sign as it stood, and carries that reading for as long as it runs — its wiring, its mode,
+     * whether it ticks — so a chip left in place after its sign changed is a chip running under
+     * text nobody can see any more.
+     */
+    private void reconcile(Block block) {
+        schedulers.at(block.getLocation()).runLater(() -> manager.reload(block), 1);
     }
 
     @EventHandler(ignoreCancelled = true)

@@ -7,6 +7,7 @@ import com.xeonproductions.craftbookultimate.core.ic.ICLine;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
+import com.xeonproductions.craftbookultimate.core.math.Bounds;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.testbed.ChipSetup;
 import com.xeonproductions.craftbookultimate.core.testbed.Rig;
@@ -490,6 +491,42 @@ class TestbedTest {
                 assertThat(ChipSetup.forModel(model).thirdLine())
                         .isEqualTo(ChipSetup.SHARED_NAME);
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("The stretch of world a build writes over")
+    class Overwritten {
+
+        @Test
+        void holdsEveryBlockOfEveryRig() {
+            // Whoever builds a bed clears the chips standing in this box first, and a block
+            // replaced wholesale raises no break event to do it for them. A rig reaching outside
+            // the box would leave the previous bed's chip there: unloadable, still ticking, and
+            // attached to a sign that no longer exists.
+            Bounds box = PLAN.overwritten();
+
+            for (Rig rig : PLAN.rigs()) {
+                for (Rig.Placement placement : rig.placements()) {
+                    assertThat(box.contains(placement.position()))
+                            .as("%s at %s", rig.chip().model(), placement.position())
+                            .isTrue();
+                }
+            }
+        }
+
+        @Test
+        void holdsTheWholeFloorItLays() {
+            Bounds box = PLAN.overwritten();
+            Testbed.Ground ground = PLAN.ground();
+
+            assertThat(box.contains(ground.from())).isTrue();
+            assertThat(box.contains(ground.to())).isTrue();
+        }
+
+        @Test
+        void reachesAboveTheFloorRatherThanSittingFlatOnIt() {
+            assertThat(PLAN.overwritten().height()).isGreaterThan(1);
         }
     }
 }

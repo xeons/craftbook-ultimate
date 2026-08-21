@@ -7,6 +7,7 @@ import com.xeonproductions.craftbookultimate.core.ic.ICLine;
 import com.xeonproductions.craftbookultimate.core.ic.ICMode;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
+import com.xeonproductions.craftbookultimate.core.math.Bounds;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
@@ -185,6 +186,46 @@ public final class ICManager {
      */
     public Optional<ICInstance> unload(Block block) {
         return unload(BlockKey.of(block));
+    }
+
+    /**
+     * Brings the block into line with what its sign says now.
+     *
+     * <p>{@link #load} does nothing to a block that already has a chip on it, which is right for a
+     * chunk arriving twice and wrong for a sign that has just been rewritten: the chip there was
+     * built from the old text and holds the old wiring, the old mode, the old ticking decision and
+     * its own accumulated state. Editing a sign has to replace the chip rather than leave it.
+     *
+     * <p>A sign that no longer describes a chip at all leaves nothing behind, which is the other
+     * half of the same problem — a chip whose model number was rubbed out would otherwise go on
+     * ticking against a sign that says nothing.
+     *
+     * @return the chip now running there, or empty if the sign no longer describes one
+     */
+    public Optional<ICInstance> reload(Block block) {
+        unload(block);
+        return load(block);
+    }
+
+    /**
+     * Stops every chip whose sign stands inside a box.
+     *
+     * <p>For whoever is about to overwrite that stretch of world. Blocks replaced wholesale never
+     * raise a break event, so without this the chips that were standing there stay loaded, keep
+     * their tick tasks and keep whatever they had claimed elsewhere, reading a sign that is no
+     * longer there.
+     *
+     * @return how many were stopped
+     */
+    public int unloadWithin(java.util.UUID world, Bounds box) {
+        int unloaded = 0;
+        for (BlockKey key : List.copyOf(bySign.keySet())) {
+            if (key.world().equals(world) && box.contains(key.position())) {
+                unload(key);
+                unloaded++;
+            }
+        }
+        return unloaded;
     }
 
     /** Stops the chip whose sign is at a key, if there is one. */

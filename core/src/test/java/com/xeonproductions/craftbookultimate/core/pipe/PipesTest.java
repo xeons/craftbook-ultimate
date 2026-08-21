@@ -156,6 +156,7 @@ class PipesTest {
         private SimplePipeWorld straightRun() {
             return new SimplePipeWorld()
                     .withPiston(INPUT, "piston", BlockFace.EAST)
+                    .withSignOn(INPUT, "", "[Extractor]", "", "")
                     .withContainer(east(-1))
                     .runFrom(east(1), east(3), "glass_pane")
                     .withContainer(new Vec3i(3, 65, 0));
@@ -201,6 +202,7 @@ class PipesTest {
         void neverPutsItemsBackWhereItTookThemFrom() {
             SimplePipeWorld world = new SimplePipeWorld()
                     .withPiston(INPUT, "piston", BlockFace.EAST)
+                    .withSignOn(INPUT, "", "[Extractor]", "", "")
                     .withContainer(east(-1))
                     .with(east(1), "glass_pane")
                     .with(new Vec3i(-1, 64, 0), "chest");
@@ -232,6 +234,7 @@ class PipesTest {
 
             SimplePipeWorld asPipe = new SimplePipeWorld()
                     .withPiston(INPUT, "piston", BlockFace.EAST)
+                    .withSignOn(INPUT, "", "[Extractor]", "", "")
                     .withContainer(east(-1))
                     .with(east(1), "glass_pane")
                     .with(east(2), "glass_pane")
@@ -239,6 +242,33 @@ class PipesTest {
 
             assertThat(containersOf(Pipes.trace(asPipe, INPUT, SETTINGS)))
                     .containsExactly(new Vec3i(1, 65, 0));
+        }
+
+        @Test
+        void makesNothingOfAPistonWithNoSignOnIt() {
+            // A glass pipe's own way out is a plain piston, and it is powered every time the pipe
+            // runs. Without the sign it stays a way out rather than becoming the head of a second
+            // pipe pulling out of whatever happens to sit behind it.
+            SimplePipeWorld world = new SimplePipeWorld()
+                    .withPiston(INPUT, "piston", BlockFace.EAST)
+                    .withContainer(east(-1))
+                    .with(east(1), "glass_pane")
+                    .withContainer(new Vec3i(1, 65, 0));
+
+            assertThat(Pipes.styleAt(world, INPUT)).isEmpty();
+            assertThat(Pipes.trace(world, INPUT, SETTINGS).reachesAnywhere()).isFalse();
+        }
+
+        @Test
+        void makesAnExtractorOfAPistonTheSignNames() {
+            SimplePipeWorld world = new SimplePipeWorld()
+                    .withPiston(INPUT, "piston", BlockFace.EAST)
+                    .withSignOn(INPUT, "", "[Extractor]", "", "")
+                    .withContainer(east(-1))
+                    .with(east(1), "glass_pane")
+                    .withContainer(new Vec3i(1, 65, 0));
+
+            assertThat(Pipes.styleAt(world, INPUT)).contains(PipeStyle.PANE);
         }
 
         @Test
@@ -338,7 +368,7 @@ class PipesTest {
                     .withContainer(east(-1))
                     .with(east(1), "glass")
                     .withPiston(east(2), "piston", BlockFace.EAST)
-                    .withSignOn(east(2), "", "[Extractor]", "coal", "")
+                    .withSignOn(east(2), "", "[Sort]", "coal", "")
                     .withContainer(east(3));
 
             PipeNetwork network = Pipes.trace(world, INPUT, SETTINGS);

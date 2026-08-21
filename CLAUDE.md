@@ -71,7 +71,7 @@ to a hand and to redstone.**
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1762 tests passing**.
+**1779 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -242,6 +242,11 @@ ever contradicting each other.
 
 `core/pipe/` holds the seam (`PipeWorld`), the two grammars (`PipeStyle`), the filter (`PipeFilter`)
 and the tracer (`Pipes`); `paper/pipe/` binds them and `PipeDispatcher` is the single entry point.
+`docs/pipes.md` is the builder's guide to all of it.
+
+The `[Extractor]` sign is what makes a piston the head of a pane pipe, and it is required, because a
+glass pipe's own ways out are plain pistons and they are powered every time that pipe runs. Filters
+are `[Pipe]` whichever way the pipe was built, since a filter is a filter.
 
 **Nearest first.** A pipe is followed outward a step at a time, so the closest way out is tried
 first. Neither of the mechanics this replaces chose that way — both followed one branch to its end

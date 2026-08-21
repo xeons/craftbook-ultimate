@@ -30,7 +30,6 @@ logs/
 /craftbook-core/
 /gitbook/
 /libs/
-/docs/
 /.gitlab/
 /.gitlab-ci.yml
 /.gitmodules

@@ -41,12 +41,32 @@ public final class Pipes {
      * to it, or if any of it is somewhere this thread may not read.
      */
     public static PipeNetwork trace(PipeWorld world, Vec3i input, PipeSettings settings) {
-        Optional<PipeStyle> style = PipeStyle.startingAt(world.blockAt(input));
+        Optional<PipeStyle> style = styleAt(world, input);
         Optional<BlockFace> facing = world.facingAt(input);
         if (style.isEmpty() || facing.isEmpty() || !world.isLoaded(input)) {
             return PipeNetwork.nothing(style.orElse(PipeStyle.GLASS));
         }
         return new Trace(world, input, style.get(), facing.get(), settings).follow();
+    }
+
+    /**
+     * Which way of building a pipe this block is the head of, if it is the head of one.
+     *
+     * <p>A sticky piston is always the head of a glass pipe. A plain piston is the head of a pane
+     * pipe only where a sign names it an extractor, and is otherwise a way out of a glass pipe, so
+     * a pipe's own outputs are never mistaken for the start of another pipe.
+     */
+    public static Optional<PipeStyle> styleAt(PipeWorld world, Vec3i input) {
+        Key block = world.blockAt(input);
+        if (PipeStyle.GLASS_INPUT.equals(block)) {
+            return Optional.of(PipeStyle.GLASS);
+        }
+        if (!PipeStyle.PISTON.equals(block)) {
+            return Optional.empty();
+        }
+        return world.signOn(input).filter(PipeStyle::marksAnExtractor).isPresent()
+                ? Optional.of(PipeStyle.PANE)
+                : Optional.empty();
     }
 
     /**
@@ -57,8 +77,7 @@ public final class Pipes {
      * pipe and takes from what is behind it.
      */
     public static Optional<Vec3i> sourceFor(PipeWorld world, Vec3i input) {
-        Optional<PipeStyle> style = PipeStyle.startingAt(world.blockAt(input));
-        return style.flatMap(kind -> world.facingAt(input).map(facing ->
+        return styleAt(world, input).flatMap(kind -> world.facingAt(input).map(facing ->
                 kind == PipeStyle.GLASS ? input.offset(facing) : input.offset(facing.opposite())));
     }
 
@@ -199,7 +218,7 @@ public final class Pipes {
         /** What a way out will accept, which is anything unless a sign of its own says otherwise. */
         private PipeFilter filterOn(Vec3i block) {
             return world.signOn(block)
-                    .filter(lines -> lines.trimmedText(1).equalsIgnoreCase(style.signName()))
+                    .filter(PipeStyle::marksAFilter)
                     .map(lines -> PipeFilter.on(lines, world::resolveItem))
                     .orElse(PipeFilter.ANYTHING);
         }

@@ -2,6 +2,7 @@ package com.xeonproductions.craftbookultimate.core.pipe;
 
 import com.xeonproductions.craftbookultimate.core.entity.DyeColours;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
+import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import java.util.List;
 import java.util.Locale;
@@ -65,10 +66,19 @@ public enum PipeStyle {
     /** What a stained pane is called after its colour. */
     private static final String STAINED_PANE = "_stained_glass_pane";
 
-    /** The name on a sign that filters what may pass, and marks a pane pipe's source. */
+    /**
+     * The name on the sign that makes a piston the head of a pane pipe.
+     *
+     * <p>Without it a piston is only ever somewhere a glass pipe hands items out, which is what
+     * keeps the two ways of building a pipe from claiming the same block.
+     */
     public static final String EXTRACTOR_SIGN = "[Extractor]";
 
-    /** The name on a sign that filters what a glass pipe hands out. */
+    /**
+     * The name on a sign that says what a way out will take.
+     *
+     * <p>The same name whichever way the pipe was built, since a filter is a filter.
+     */
     public static final String PIPE_SIGN = "[Pipe]";
 
     /**
@@ -131,18 +141,30 @@ public enum PipeStyle {
         };
     }
 
-    /** The style a block starts a run in, if it starts one at all. */
-    public static Optional<PipeStyle> startingAt(Key block) {
-        if (GLASS_INPUT.equals(block)) {
-            return Optional.of(GLASS);
-        }
-        return PISTON.equals(block) ? Optional.of(PANE) : Optional.empty();
+    /**
+     * Whether a block could be the head of a pipe.
+     *
+     * <p>Only could: a piston is the head of a pane pipe when it carries an {@code [Extractor]}
+     * sign and is a way out of a glass pipe when it does not, and a block on its own cannot say
+     * which. This is the cheap check that comes before reading the sign, so that most of the
+     * redstone on a server is turned away without touching a block entity.
+     */
+    public static boolean couldStartAPipe(Key block) {
+        return GLASS_INPUT.equals(block) || PISTON.equals(block);
     }
 
-    /** The name a sign must carry for a run of this style to be filtered by it. */
-    public String signName() {
-        return this == GLASS ? PIPE_SIGN : EXTRACTOR_SIGN;
+    /** Whether a sign names a piston as the head of a pane pipe. */
+    public static boolean marksAnExtractor(SignLines lines) {
+        return lines.trimmedText(NAME_LINE).equalsIgnoreCase(EXTRACTOR_SIGN);
     }
+
+    /** Whether a sign says what a way out will take. */
+    public static boolean marksAFilter(SignLines lines) {
+        return lines.trimmedText(NAME_LINE).equalsIgnoreCase(PIPE_SIGN);
+    }
+
+    /** The line a mechanic's name goes on, which is the second, in brackets. */
+    public static final int NAME_LINE = 1;
 
     /** Whether a block is glass, plain or stained. */
     public static boolean isGlass(Key block) {

@@ -57,7 +57,7 @@ public final class PipeListener implements Listener {
             return;
         }
         Block block = event.getBlock();
-        if (dispatcher.isInput(block)) {
+        if (dispatcher.couldBeInput(block)) {
             dispatcher.run(block);
         }
     }
@@ -106,9 +106,7 @@ public final class PipeListener implements Listener {
         }
 
         SignLines lines = SignLines.of(event.lines());
-        String name = lines.trimmedText(1);
-        if (!name.equalsIgnoreCase(PipeStyle.PIPE_SIGN)
-                && !name.equalsIgnoreCase(PipeStyle.EXTRACTOR_SIGN)) {
+        if (!PipeStyle.marksAFilter(lines) && !PipeStyle.marksAnExtractor(lines)) {
             return;
         }
 

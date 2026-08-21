@@ -14,6 +14,7 @@ import java.util.Optional;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.inventory.FurnaceInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -46,9 +47,14 @@ public final class PipeDispatcher {
         return networks;
     }
 
-    /** Whether a block is one that starts a pipe. */
-    public boolean isInput(Block block) {
-        return PipeStyle.startingAt(block.getType().getKey()).isPresent();
+    /**
+     * Whether a block could be the head of a pipe.
+     *
+     * <p>The cheap half of the question, asked of every piece of redstone that changes. Whether it
+     * really is one takes reading its sign, which {@link #run} does and this does not.
+     */
+    public boolean couldBeInput(Block block) {
+        return PipeStyle.couldStartAPipe(block.getType().getKey());
     }
 
     /**
@@ -133,12 +139,51 @@ public final class PipeDispatcher {
             if (into.isEmpty()) {
                 continue;
             }
-            carrying = leftoverOf(into.get().addItem(carrying));
+            carrying = into.get() instanceof FurnaceInventory furnace
+                    ? offerToFurnace(furnace, delivery.face(), carrying)
+                    : leftoverOf(into.get().addItem(carrying));
             if (carrying == null) {
                 return null;
             }
         }
         return carrying;
+    }
+
+    /**
+     * Fills a furnace by the side items arrive at, the way a hopper does.
+     *
+     * <p>Down through the top is what is being smelted and in from any side is fuel, so one pipe
+     * over the top of a row of furnaces and another along their side keeps them lit and fed
+     * without either having to say which is which.
+     *
+     * @param arrivingBy the way the items are travelling, so the top is reached by going down
+     * @return what would not fit, or null if all of it did
+     */
+    private static ItemStack offerToFurnace(
+            FurnaceInventory furnace, com.xeonproductions.craftbookultimate.core.math.BlockFace
+                    arrivingBy, ItemStack stack) {
+        boolean smelting =
+                arrivingBy == com.xeonproductions.craftbookultimate.core.math.BlockFace.DOWN;
+        ItemStack held = smelting ? furnace.getSmelting() : furnace.getFuel();
+
+        if (held != null && !held.isEmpty() && !held.isSimilar(stack)) {
+            return stack;
+        }
+
+        int already = held == null || held.isEmpty() ? 0 : held.getAmount();
+        int room = stack.getMaxStackSize() - already;
+        if (room <= 0) {
+            return stack;
+        }
+
+        int fitting = Math.min(room, stack.getAmount());
+        ItemStack put = withAmount(stack, already + fitting);
+        if (smelting) {
+            furnace.setSmelting(put);
+        } else {
+            furnace.setFuel(put);
+        }
+        return fitting == stack.getAmount() ? null : withAmount(stack, stack.getAmount() - fitting);
     }
 
     /** What an inventory would not take, or null if it took the lot. */

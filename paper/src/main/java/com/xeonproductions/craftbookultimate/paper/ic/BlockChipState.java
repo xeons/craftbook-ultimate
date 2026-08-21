@@ -9,6 +9,7 @@ import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import com.xeonproductions.craftbookultimate.core.sign.SignSupport;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
 import com.xeonproductions.craftbookultimate.paper.stock.NearbyStockpiles;
@@ -108,7 +109,7 @@ public final class BlockChipState implements ChipState {
      * <p>Directly behind the sign, one step against its facing.
      */
     public Block backingBlock() {
-        return Positions.toBlock(world, signPosition.offset(front.opposite()));
+        return Positions.toBlock(world, SignSupport.of(signPosition, front));
     }
 
     /** The block at a pin, resolved through the layout and any pin permutation. */

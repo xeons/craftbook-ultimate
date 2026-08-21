@@ -2,6 +2,7 @@ package com.xeonproductions.craftbookultimate.core.testbed;
 
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
+import com.xeonproductions.craftbookultimate.core.sign.SignSupport;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +61,7 @@ public record ChipSetup(
 
         /** Where this is, given a sign. */
         public Vec3i resolve(Vec3i signPosition, BlockFace facing) {
-            return signPosition.offset(facing.opposite()).add(0, up, 0);
+            return SignSupport.of(signPosition, facing).add(0, up, 0);
         }
     }
 

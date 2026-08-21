@@ -74,7 +74,7 @@ to a hand and to redstone.**
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1979 tests passing**.
+**1991 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 

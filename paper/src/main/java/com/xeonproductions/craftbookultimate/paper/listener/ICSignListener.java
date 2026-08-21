@@ -8,6 +8,7 @@ import com.xeonproductions.craftbookultimate.core.ic.LineReview;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import com.xeonproductions.craftbookultimate.core.sign.SignSupport;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
 import com.xeonproductions.craftbookultimate.paper.mechanic.PlayerActor;
@@ -211,7 +212,7 @@ public final class ICSignListener implements Listener {
             if (facing.isEmpty()) {
                 continue;
             }
-            if (Positions.toDomain(candidate).offset(facing.get().opposite()).equals(at)) {
+            if (SignSupport.hangsOn(Positions.toDomain(candidate), facing.get(), at)) {
                 found.add(candidate);
             }
         }

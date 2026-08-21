@@ -5,6 +5,7 @@ import com.xeonproductions.craftbookultimate.core.ic.ICLine;
 import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
+import com.xeonproductions.craftbookultimate.core.sign.SignSupport;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -116,7 +117,7 @@ public record Rig(
         PinLayout layout = chip.defaultLayout();
         List<Placement> placements = new ArrayList<>();
 
-        Vec3i backing = signPosition.offset(facing.opposite());
+        Vec3i backing = SignSupport.of(signPosition, facing);
         placements.add(new Placement(backing, new Fixture.Backing()));
 
         // Every pin, and the sign and its backing, are places a lever may not cling to: a mount

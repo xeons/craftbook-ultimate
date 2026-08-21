@@ -11,6 +11,7 @@ import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.radio.Radio;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import com.xeonproductions.craftbookultimate.core.sign.SignSupport;
 import com.xeonproductions.craftbookultimate.core.transport.Destinations;
 import com.xeonproductions.craftbookultimate.core.variable.Variables;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
@@ -253,7 +254,7 @@ public interface ChipState {
      * than from the sign, so that the sign itself is never in the way of what it is doing.
      */
     default Vec3i backPosition() {
-        return signPosition().offset(facing().opposite());
+        return SignSupport.of(signPosition(), facing());
     }
 
     /**

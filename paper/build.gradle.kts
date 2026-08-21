@@ -14,6 +14,7 @@ dependencies {
     testImplementation(rootProject.libs.junit.jupiter)
     testImplementation(rootProject.libs.assertj)
     testImplementation(rootProject.libs.paper.api)
+    testImplementation(rootProject.libs.mockbukkit)
     testRuntimeOnly(rootProject.libs.junit.platform.launcher)
 }
 

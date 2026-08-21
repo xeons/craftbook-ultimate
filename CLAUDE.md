@@ -74,7 +74,7 @@ to a hand and to redstone.**
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1991 tests passing**.
+**2008 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -534,6 +534,31 @@ reporting seam through every one of them, and the report plus live pin state cov
 was for.
 
 `docs/debugging.md` is the builder's guide.
+
+## Testing the part that touches the world
+
+Most of this plugin is pure and is tested in `core` with no server at all — that is what the two
+modules are for. What is left over is the half that reads and writes blocks: `ICManager` and the
+listeners. None of it was covered, and a fault there was found by somebody standing in the game.
+
+`paper` therefore carries **MockBukkit** (`org.mockbukkit.mockbukkit:mockbukkit-v26.2`, matching the
+`paper-api` line exactly), and `ChipWorld` in the test sources is the whole harness: a mock server,
+one world, and a method that hangs a wall sign on a block. Findings 130 and 132 were both written
+before it existed and neither could be tested; both now have tests that were checked by reverting
+the fix and watching them fail.
+
+The test harness carries one workaround worth knowing about. Forcing a sign state through the mock
+server resets the block to its default data, so a wall sign stops facing wherever it was put and
+faces north instead. A chip reads its entire pin geometry off that facing, so `ChipWorld#write` puts
+the block data back afterwards. Without it every sign in every test would quietly point the same way
+and the geometry would never be exercised.
+
+**Prefer `core` still.** Reach for the harness only where the thing under test genuinely needs a
+block — and where a rule can be lifted out into `core` instead, lift it: `SignSupport` exists
+because "which block holds a wall sign up" was worth stating once and testing directly rather than
+reaching through a mock server to observe it.
+
+Adding MockBukkit moved the whole project to **JUnit 6**, which is what it is built against.
 
 ## Folia and regions
 

@@ -3,6 +3,7 @@ package com.xeonproductions.craftbookultimate.paper.store;
 import com.xeonproductions.craftbookultimate.core.effect.FireworkShow;
 import com.xeonproductions.craftbookultimate.core.effect.FireworkShows;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,12 +21,29 @@ import org.jspecify.annotations.NullMarked;
  * <p>Scripts are read once, when the plugin starts, rather than every time a chunk loads. A show is
  * a file somebody wrote by hand and reading one on the ticking thread is not something a chunk load
  * should have to wait for.
+ *
+ * <p>A few shows ship with the plugin and are written out when the folder is first made, so that a
+ * new server has something to wire a display chip to and something to read before writing one. They
+ * are written only at that moment: an operator who edits one keeps their edit, and one who deletes
+ * one has it stay deleted. Deleting the whole folder brings them all back.
  */
 @NullMarked
 public final class FireworkFiles {
 
     /** What the folder is called inside the plugin's own folder. */
     public static final String FOLDER_NAME = "fireworks";
+
+    /**
+     * The shows that ship with the plugin, written out when the folder is first made.
+     *
+     * <p>Named rather than discovered, because a jar cannot be listed reliably from inside itself,
+     * and because a list somebody has to add to is a list somebody has to think about.
+     */
+    public static final List<String> BUNDLED =
+            List.of("finale.fwk", "aurora.fwk", "victory.fwk", "heartbeat.txt");
+
+    /** Where inside the jar the bundled shows live. */
+    private static final String BUNDLED_PATH = "/" + FOLDER_NAME + "/";
 
     /** The extension of a script written one launch per line. */
     private static final String PLAIN_EXTENSION = ".txt";
@@ -57,7 +75,7 @@ public final class FireworkFiles {
      * @throws IOException if the folder itself cannot be made or listed
      */
     public int load(FireworkShows shows) throws IOException {
-        Files.createDirectories(folder);
+        unpackIfFolderIsNew();
         shows.clear();
 
         int read = 0;
@@ -99,5 +117,34 @@ public final class FireworkFiles {
             }
         }
         return read;
+    }
+
+    /**
+     * Writes the shipped shows out, the once, as the folder is made.
+     *
+     * <p>Gated on the folder not being there rather than on each file, so that a show an operator
+     * has deleted stays deleted. The cost of that is a show added in a later version not reaching a
+     * server that already has the folder, which is the right way round: an unexpected file
+     * reappearing is worse than an example nobody asked for going missing.
+     *
+     * <p>A bundled show that cannot be written is skipped. They are examples, and losing one is
+     * not a reason to stop the plugin starting.
+     */
+    private void unpackIfFolderIsNew() throws IOException {
+        if (Files.isDirectory(folder)) {
+            return;
+        }
+
+        Files.createDirectories(folder);
+        for (String name : BUNDLED) {
+            try (InputStream bundled = FireworkFiles.class.getResourceAsStream(BUNDLED_PATH + name)) {
+                if (bundled == null) {
+                    continue;
+                }
+                Files.copy(bundled, folder.resolve(name));
+            } catch (IOException e) {
+                // An example that will not write is not worth failing a start-up over.
+            }
+        }
     }
 }

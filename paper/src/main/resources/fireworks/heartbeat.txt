@@ -1,0 +1,51 @@
+# =============================================================================
+#  heartbeat — the plain spelling
+#
+#  This one is a .txt rather than a .fwk, which is what tells the plugin to
+#  read it in the plain spelling: one launch to a line, no palette, no names.
+#  Everything the line needs is on the line.
+#
+#      launch:x,y,z ; duration ; shape ; colour ; fade [; twinkle | trail]
+#      wait:ticks
+#
+#  x,y,z     where it goes up from, relative to the sign
+#  duration  how long the fuse burns, roughly in half-seconds
+#  shape     BALL, BALL_LARGE, BURST, CREEPER or STAR
+#  colour    r,g,b of the sparks
+#  fade      r,g,b they turn before dying
+#  last      the word "twinkle" or the word "trail" — one or the other
+#
+#  The plain spelling takes one colour and one fade per firework, and has no
+#  sounds. Anything more than that wants the .fwk spelling: see finale.fwk.
+#
+#  Name it on a sign as:
+#
+#      FIREWORK
+#      [MC1253]
+#      heartbeat
+#      true
+#
+#  Three pairs, climbing, and one alone. Eleven seconds, then it stops.
+# =============================================================================
+
+# First beat: a hard red pair, close together, low.
+launch:0,1,0;0;BALL;220,20,40;90,0,20;trail
+wait:7
+launch:0,1,0;0;BALL;220,20,40;90,0,20;trail
+wait:38
+
+# Second beat, a little higher and a little wider.
+launch:-2,1,0;1;BALL_LARGE;230,30,50;120,0,25;trail
+wait:7
+launch:2,1,0;1;BALL_LARGE;230,30,50;120,0,25;trail
+wait:45
+
+# Third, higher again, and the pair pulls apart.
+launch:-4,1,2;1;BALL_LARGE;240,40,60;140,0,30;trail
+wait:7
+launch:4,1,-2;1;BALL_LARGE;240,40,60;140,0,30;trail
+wait:50
+
+# The last one is single, white, and much higher. Then nothing.
+launch:0,2,0;2;STAR;255,235,235;180,40,60;twinkle
+wait:60

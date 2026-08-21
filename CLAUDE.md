@@ -73,7 +73,7 @@ to a hand and to redstone.**
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1926 tests passing**.
+**1947 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -469,6 +469,29 @@ worth more than surviving a rename.
 
 `/area pos1` and `/area pos2` pick out the block being looked at, which is what stands in for a
 world editor's selection. `/area save`, `delete` and `list` do the rest.
+
+## The firework shows
+
+A display is a script in `fireworks/`, named on line 3 of an `MC1253` sign. Two spellings are
+accepted and the extension picks between them: `.txt` is one launch to a line, `.fwk` builds
+effects by name and then fires them, and only the second can play a sound or send up several
+rockets at once. Both are parsed by `FireworkShow` into a flat list of launches, sounds and waits,
+which is what lets `FireworkDisplay` hand the tail of a show to the region's scheduler at every
+wait rather than blocking on it.
+
+**Four shows ship in the jar** and are written out when the folder is first made: `finale`,
+`aurora`, `victory` and `heartbeat`. A new server has something to wire a chip to before anybody
+has written one, and — because the parser skips what it cannot read rather than refusing it — a
+worked example is the only practical documentation of the grammar.
+
+They are written **only as the folder is created**, never per file. An operator's edit therefore
+survives, and a show they deleted stays deleted; the cost is that a show added in a later version
+does not reach a server that already has the folder. That is the right way round, because a file
+reappearing after somebody removed it is worse than an example nobody asked for going missing.
+
+`BundledFireworkShowsTest` reads each of them the way the unpacker does and checks it survived
+parsing. That test exists because the failure mode here is silent: a typo in a shipped script makes
+a quieter display, not an error, and nothing else would ever say so.
 
 ## Folia and regions
 

@@ -1,0 +1,74 @@
+# =============================================================================
+#  victory — six seconds, and out
+#
+#  Short on purpose. This is the one to wire to something that happens often:
+#  a station a train pulls into, an arena somebody wins, a door that opens
+#  once a puzzle is solved. A forty-second display in that spot stops being a
+#  reward by the third time anybody sees it.
+#
+#  Name it on a sign as:
+#
+#      FIREWORK
+#      [MC1253]
+#      victory
+#      true
+#
+#  Wants about fifteen blocks of air above and six to either side.
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+#  THE PALETTE
+# -----------------------------------------------------------------------------
+
+# Gold and white together. One launch, two rockets.
+start cheer
+set.shape ball_large
+set.color 255,200,40
+set.fade 255,255,200
+set.trail
+set.twinkle
+build
+start cheer
+set.shape star
+set.color 255,255,255
+set.trail
+build
+
+# The single one that finishes it.
+start crown
+set.shape ball_large
+set.color 255,215,80
+set.fade 255,140,0
+set.trail
+set.twinkle
+build
+
+
+# -----------------------------------------------------------------------------
+#  THE WHOLE OF IT
+# -----------------------------------------------------------------------------
+
+duration 8 precise
+
+location -5,0,2
+sound entity.firework_rocket.launch 0,1,0 1.8 1.2
+launch cheer
+wait 9
+
+location 5,0,2
+launch cheer
+wait 9
+
+location 0,0,-4
+launch cheer
+wait 26
+
+duration 14 precise
+location 0,1,0
+sound entity.firework_rocket.launch 0,1,0 2 0.8
+launch crown
+wait 28
+
+sound ui.toast.challenge_complete 0,12,0 1.4 1.0
+wait 40

@@ -1,0 +1,337 @@
+# =============================================================================
+#  finale — a firework display for CraftBook Ultimate
+#
+#  Put this file in            plugins/CraftBookUltimate/fireworks/
+#  and name it on a sign:
+#
+#      FIREWORK
+#      [MC1253]
+#      finale
+#      true
+#
+#  Line 3 is the file name without its extension. Line 4 says that dropping
+#  the input cuts the show short; leave it blank and the show always runs to
+#  the end. Run /craftbook reload after adding or editing the file.
+#
+#  Everything below is placed relative to the sign, so the same script works
+#  wherever you build it. Give it clear air: about twenty-five blocks up, and
+#  twelve to either side.
+#
+#  Sixty-six rockets over about half a minute.
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+#  THE PALETTE
+#
+#  Nothing here fires. Each block between "start" and "build" describes one
+#  burst and files it under a name; the show below sets them off by name.
+#
+#  Two blocks filed under the SAME name become one launch that sends up both
+#  at once. That is how the salvos and the closing wall are built.
+# -----------------------------------------------------------------------------
+
+# A lone white spark. The opening note, and deliberately small.
+start spark
+set.shape star
+set.color 255,255,255
+set.fade 180,200,255
+set.trail
+build
+
+# Warm orange falling to deep red.
+start ember
+set.shape ball
+set.color 255,140,0
+set.fade 200,30,0
+set.trail
+build
+
+# Cold teal that flashes out to white.
+start seafoam
+set.shape ball
+set.color 0,220,200
+set.fade 255,255,255
+set.twinkle
+build
+
+# Purple, opening into pink.
+start violet
+set.shape star
+set.color 150,60,230
+set.fade 255,120,200
+set.trail
+build
+
+# The big one. Gold, wide, with a tail.
+start gold
+set.shape ball_large
+set.color 255,200,40
+set.fade 255,255,200
+set.trail
+set.twinkle
+build
+
+# Pale blue, ragged edged.
+start ice
+set.shape burst
+set.color 190,235,255
+set.fade 255,255,255
+set.trail
+build
+
+# Everybody's favourite.
+start creeper
+set.shape creeper
+set.color 0,220,60
+set.fade 0,90,20
+build
+
+# Three bursts under one name: red, white and blue together.
+start salvo
+set.shape ball_large
+set.color 230,30,40
+set.fade 120,0,10
+set.trail
+build
+start salvo
+set.shape star
+set.color 255,255,255
+set.trail
+build
+start salvo
+set.shape ball
+set.color 40,90,240
+set.fade 150,200,255
+set.twinkle
+build
+
+# Five bursts under one name. One launch of this is the closing wall.
+start wall
+set.shape ball_large
+set.color 255,200,40
+set.fade 255,120,0
+set.trail
+set.twinkle
+build
+start wall
+set.shape burst
+set.color 255,255,255
+set.trail
+build
+start wall
+set.shape star
+set.color 230,30,40
+set.fade 255,180,0
+set.trail
+build
+start wall
+set.shape ball
+set.color 0,220,200
+set.fade 255,255,255
+set.twinkle
+build
+start wall
+set.shape ball_large
+set.color 150,60,230
+set.fade 255,120,200
+set.trail
+build
+
+
+# -----------------------------------------------------------------------------
+#  ONE  ·  a single rocket
+#
+#  A display that begins quietly is worth more than one that begins loudly:
+#  people look up before the rest of it arrives.
+# -----------------------------------------------------------------------------
+
+duration 14 precise
+location 0,1,0
+sound entity.firework_rocket.launch 0,1,0 2 1.0
+launch spark
+wait 34
+
+sound block.note_block.bell 0,6,0 1.6 1.5
+wait 26
+
+
+# -----------------------------------------------------------------------------
+#  TWO  ·  the two towers
+#
+#  Pairs climbing alternately, left and right, drawing in towards the middle.
+# -----------------------------------------------------------------------------
+
+duration 10 precise
+
+location -10,0,4
+launch ember
+wait 7
+location 10,0,4
+launch ember
+wait 12
+
+location -8,0,-3
+launch violet
+wait 7
+location 8,0,-3
+launch violet
+wait 12
+
+duration 13 precise
+
+location -6,1,2
+launch seafoam
+wait 7
+location 6,1,2
+launch seafoam
+wait 16
+
+sound entity.firework_rocket.twinkle 0,8,0 1.4 1.2
+wait 20
+
+
+# -----------------------------------------------------------------------------
+#  THREE  ·  the sweep
+#
+#  One line of colour walking across the sky, left to right and back again.
+#  Short waits, so four or five are always in the air at once.
+# -----------------------------------------------------------------------------
+
+duration 9 precise
+
+location -12,0,0
+launch ice
+wait 5
+location -8,0,0
+launch seafoam
+wait 5
+location -4,0,0
+launch violet
+wait 5
+location 0,0,0
+launch ember
+wait 5
+location 4,0,0
+launch violet
+wait 5
+location 8,0,0
+launch seafoam
+wait 5
+location 12,0,0
+launch ice
+wait 18
+
+duration 12 precise
+
+location 10,0,-6
+launch ember
+wait 5
+location 5,0,-6
+launch gold
+wait 5
+location 0,0,-6
+launch ember
+wait 5
+location -5,0,-6
+launch gold
+wait 5
+location -10,0,-6
+launch ember
+wait 30
+
+
+# -----------------------------------------------------------------------------
+#  FOUR  ·  the interlude
+#
+#  A pause, a hiss, and one green face. Timed so the hiss lands with the burst
+#  rather than with the launch — the fuse is twenty ticks, so the sound waits.
+# -----------------------------------------------------------------------------
+
+duration 10 precise
+location 0,1,-2
+launch creeper
+wait 20
+sound entity.creeper.primed 0,10,-2 1.4 0.8
+wait 40
+
+
+# -----------------------------------------------------------------------------
+#  FIVE  ·  the salvos
+#
+#  Each "launch salvo" sends up three rockets together. Five of them, marching
+#  outward from the middle.
+# -----------------------------------------------------------------------------
+
+duration 11 precise
+
+location 0,0,0
+sound entity.firework_rocket.launch 0,0,0 2 0.9
+launch salvo
+wait 14
+
+location -7,0,3
+launch salvo
+wait 14
+
+location 7,0,3
+launch salvo
+wait 14
+
+location -11,0,-4
+launch salvo
+wait 14
+
+location 11,0,-4
+launch salvo
+wait 40
+
+
+# -----------------------------------------------------------------------------
+#  SIX  ·  the wall
+#
+#  Five bursts at a time, six times over, in under three seconds. This is the
+#  loudest part of the show and it is meant to be.
+# -----------------------------------------------------------------------------
+
+duration 8 precise
+
+location -12,0,2
+launch wall
+wait 6
+location -7,0,-3
+launch wall
+wait 6
+location -2,0,3
+launch wall
+wait 6
+location 3,0,-3
+launch wall
+wait 6
+location 8,0,3
+launch wall
+wait 6
+location 12,0,-2
+launch wall
+wait 24
+
+
+# -----------------------------------------------------------------------------
+#  SEVEN  ·  the crown
+#
+#  One rocket, straight up, higher and slower than anything before it, and
+#  then nothing. A display needs an ending as much as it needs a middle.
+# -----------------------------------------------------------------------------
+
+duration 22 precise
+location 0,2,0
+sound entity.firework_rocket.launch 0,2,0 2 0.7
+launch gold
+wait 44
+
+sound entity.firework_rocket.large_blast 0,20,0 2 1.0
+wait 10
+sound block.note_block.chime 0,20,0 1.2 1.8
+wait 20
+sound block.note_block.chime 0,20,0 0.8 1.5
+wait 40

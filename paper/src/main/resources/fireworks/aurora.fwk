@@ -1,0 +1,176 @@
+# =============================================================================
+#  aurora — a slow, cold display
+#
+#  The opposite of "finale": long gaps, few rockets, nothing loud. Meant for
+#  somewhere people are already standing — a garden, a terrace, the end of a
+#  railway — where a display is scenery rather than an event.
+#
+#  Name it on a sign as:
+#
+#      FIREWORK
+#      [MC1253]
+#      aurora
+#      true
+#
+#  Wants about twenty blocks of air above and ten to either side.
+#  Nineteen rockets over about forty seconds — a third of what finale spends,
+#  spread over longer.
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+#  THE PALETTE
+#
+#  Cold colours only, and every one of them fading to something paler. A burst
+#  that fades looks like it is dissolving rather than stopping.
+# -----------------------------------------------------------------------------
+
+# Green drifting to white. The colour the whole show is built around.
+start drift
+set.shape ball_large
+set.color 60,230,140
+set.fade 220,255,240
+set.twinkle
+build
+
+# The same idea, colder.
+start glacier
+set.shape ball_large
+set.color 90,180,255
+set.fade 235,245,255
+set.twinkle
+build
+
+# Violet, and the only one with a tail.
+start dusk
+set.shape ball
+set.color 130,90,220
+set.fade 200,180,255
+set.trail
+build
+
+# Small, white, sharp. Used alone, never in company.
+start star
+set.shape star
+set.color 255,255,255
+set.fade 200,220,255
+build
+
+# Two together, green over blue, for the three moments the show swells.
+start curtain
+set.shape ball_large
+set.color 60,230,140
+set.fade 220,255,240
+set.twinkle
+build
+start curtain
+set.shape ball_large
+set.color 90,180,255
+set.fade 235,245,255
+set.twinkle
+build
+
+
+# -----------------------------------------------------------------------------
+#  ONE  ·  it begins before you notice
+# -----------------------------------------------------------------------------
+
+duration 16 precise
+
+location -7,0,5
+launch drift
+wait 55
+
+location 8,0,-4
+launch glacier
+wait 60
+
+location -3,0,-6
+launch dusk
+wait 45
+
+
+# -----------------------------------------------------------------------------
+#  TWO  ·  the first swell
+#
+#  Two at once, then a single white star well after — late enough that it
+#  reads as an afterthought rather than as part of the pair.
+# -----------------------------------------------------------------------------
+
+location 0,1,0
+sound block.note_block.harp 0,10,0 0.7 0.6
+launch curtain
+wait 50
+
+duration 20 precise
+location 5,0,6
+launch star
+wait 70
+
+
+# -----------------------------------------------------------------------------
+#  THREE  ·  the drift
+#
+#  Six bursts walking slowly across, alternating warm-cold. The waits are long
+#  enough that each one is nearly gone before the next arrives.
+# -----------------------------------------------------------------------------
+
+duration 15 precise
+
+location -10,0,2
+launch drift
+wait 42
+location -6,0,-3
+launch glacier
+wait 42
+location -1,0,4
+launch dusk
+wait 42
+location 4,0,-2
+launch drift
+wait 42
+location 8,0,3
+launch glacier
+wait 42
+location 11,0,-3
+launch dusk
+wait 55
+
+
+# -----------------------------------------------------------------------------
+#  FOUR  ·  the second swell
+# -----------------------------------------------------------------------------
+
+duration 18 precise
+location -4,1,0
+sound block.note_block.harp -4,12,0 0.7 0.8
+launch curtain
+wait 30
+
+location 4,1,0
+launch curtain
+wait 65
+
+
+# -----------------------------------------------------------------------------
+#  FIVE  ·  it ends before you notice either
+#
+#  Three stars, each smaller and further off than the last, and then nothing.
+#  No bang at the end: that is the whole point of this one.
+# -----------------------------------------------------------------------------
+
+duration 14 precise
+location 0,0,0
+launch star
+wait 50
+
+duration 18 precise
+location -9,0,7
+launch star
+wait 60
+
+duration 22 precise
+location 12,0,-9
+sound block.note_block.harp 12,14,-9 0.5 1.2
+launch star
+wait 60

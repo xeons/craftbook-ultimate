@@ -101,6 +101,20 @@ class PipesTest {
         }
 
         @Test
+        void endsABranchAtAPistonEvenWhereThePistonFillsNothing() {
+            // A piston is where a run hands over, so items do not carry on past one. Put in the
+            // middle of a run, it is the end of that branch rather than a block items travel
+            // through.
+            SimplePipeWorld world = straightRun("glass")
+                    .withPiston(east(2), "piston", BlockFace.UP)
+                    .with(new Vec3i(2, 65, 0), "stone");
+
+            PipeNetwork network = Pipes.trace(world, INPUT, SETTINGS);
+
+            assertThat(network.reachesAnywhere()).isFalse();
+        }
+
+        @Test
         void reachesTheNearestWayOutFirst() {
             SimplePipeWorld world = straightRun("glass")
                     .with(new Vec3i(1, 65, 0), "glass")
@@ -128,6 +142,38 @@ class PipesTest {
             void refusesToPassFromOneColourToAnother() {
                 SimplePipeWorld world = straightRun("red_stained_glass")
                         .with(east(2), "blue_stained_glass");
+
+                PipeNetwork network = Pipes.trace(world, INPUT, SETTINGS);
+
+                assertThat(network.reachesAnywhere()).isFalse();
+            }
+
+            @Test
+            void passesFromPlainGlassIntoAnyColour() {
+                SimplePipeWorld world = straightRun("glass").with(east(2), "red_stained_glass");
+
+                PipeNetwork network = Pipes.trace(world, INPUT, SETTINGS);
+
+                assertThat(containersOf(network)).containsExactly(east(5));
+            }
+
+            @Test
+            void holdsAStainedPaneToItsOwnColourAndStillSendsItStraightOn() {
+                SimplePipeWorld world = straightRun("red_stained_glass")
+                        .with(east(2), "red_stained_glass_pane")
+                        .with(new Vec3i(2, 65, 0), "red_stained_glass")
+                        .withPiston(new Vec3i(2, 66, 0), "piston", BlockFace.UP)
+                        .withContainer(new Vec3i(2, 67, 0));
+
+                PipeNetwork network = Pipes.trace(world, INPUT, SETTINGS);
+
+                assertThat(containersOf(network)).containsExactly(east(5));
+            }
+
+            @Test
+            void stopsAtAPaneOfTheWrongColour() {
+                SimplePipeWorld world = straightRun("red_stained_glass")
+                        .with(east(2), "blue_stained_glass_pane");
 
                 PipeNetwork network = Pipes.trace(world, INPUT, SETTINGS);
 

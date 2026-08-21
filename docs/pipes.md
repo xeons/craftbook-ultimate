@@ -1,7 +1,7 @@
 # Pipes
 
-A pipe carries items from one container to another along a run of glass. Power the block at its
-head and it moves what it finds; the rest is the shape you build.
+A pipe carries items from one container to another along a run of glass or of glass panes. Power
+the block at its head and it moves what it finds; the rest is the shape you build.
 
 There are two ways to build one. They are different mechanics with different rules, and both work.
 Which one you get is decided by the block at the head of the run, and that decision then governs
@@ -55,6 +55,9 @@ touches glass. Put a piston at the end of each branch and the pipe fills both.
 A stack goes to the **nearest** way out that will take it. If that one is full, what it would not
 take carries on to the next. If nothing anywhere will take it, the stack stays in the chest it
 started in — a pipe never spills items on the floor.
+
+A piston is where a run **ends**, not something items travel through. Put one in the middle of a
+run and that branch stops there, whether or not it is pointing at anything that will hold items.
 
 ### Crossing without mixing
 
@@ -114,8 +117,8 @@ A pane pipe is for feeding **many** containers from one place without building a
  source   faces the panes    [furnace]
 ```
 
-Every pane spreads in all six directions, so the run is a web rather than a line, and any container
-it touches is somewhere items can go. There is no output block to place.
+Every pane carries on into every side but the one it came in by, so the run is a web rather than a
+line, and any container it touches is somewhere items can go. There is no output block to place.
 
 > The `[Extractor]` sign is required. Without it a piston is just a way out of a glass pipe — which
 > is exactly what stops a glass pipe's own outputs from being mistaken for the head of a second
@@ -185,7 +188,8 @@ So one pipe over the top of a row of furnaces and another along their side will 
 lit, and neither pipe has to say which is which.
 
 Any other container takes items into the first slot with room: chests, barrels, hoppers, droppers,
-dispensers, and anything a future version of the game adds that holds items.
+dispensers, and anything a future version of the game adds that holds items. A double chest counts
+as one container, so a pipe filling either half fills the whole thing.
 
 ---
 

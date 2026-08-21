@@ -5,12 +5,17 @@ import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICLine;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.core.ic.LineReview;
+import com.xeonproductions.craftbookultimate.core.math.BlockFace;
+import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
 import com.xeonproductions.craftbookultimate.paper.mechanic.PlayerActor;
 import com.xeonproductions.craftbookultimate.paper.ic.ChipTitle;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
@@ -33,6 +38,9 @@ import org.jspecify.annotations.NullMarked;
  * The sign is tidied as it is created: the first line becomes the chip's shorthand, and the
  * identifier line is rewritten in its canonical spelling so that later reads do not have to cope
  * with however the player typed it.
+ *
+ * <p>Rewriting such a sign replaces the chip on it, and breaking the sign — or the block it hangs
+ * on — destroys the chip and says so to whoever did it.
  */
 @NullMarked
 public final class ICSignListener implements Listener {
@@ -42,6 +50,13 @@ public final class ICSignListener implements Listener {
 
     /** The line the chip's shorthand is written to. */
     private static final int TITLE_LINE = ChipTitle.LINE;
+
+    /** The sides of a block a wall sign can hang on. */
+    private static final List<org.bukkit.block.BlockFace> AROUND = List.of(
+            org.bukkit.block.BlockFace.NORTH,
+            org.bukkit.block.BlockFace.EAST,
+            org.bukkit.block.BlockFace.SOUTH,
+            org.bukkit.block.BlockFace.WEST);
 
     /** What a player writes to mean their own unique id. */
     private static final String OWN_IDENTITY = "uuid";
@@ -148,9 +163,59 @@ public final class ICSignListener implements Listener {
         schedulers.at(block.getLocation()).runLater(() -> manager.reload(block), 1);
     }
 
-    @EventHandler(ignoreCancelled = true)
+    /**
+     * Stops a chip whose sign a player has just broken, and says so.
+     *
+     * <p>Two ways to break one and both count. Breaking the sign itself is the obvious one.
+     * Breaking the block the sign hangs on is the one that surprises people: the sign pops off a
+     * moment later, so a chip can be destroyed by somebody who never touched it and, until now,
+     * was never told.
+     *
+     * <p>Runs last among the handlers that may cancel, so a break a protection plugin refuses does
+     * not report a chip destroyed that is still standing.
+     */
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onBlockBreak(BlockBreakEvent event) {
-        manager.unload(event.getBlock());
+        Player player = event.getPlayer();
+        Block broken = event.getBlock();
+
+        manager.unload(broken).ifPresent(chip -> reportDestroyed(player, chip.definition(), false));
+
+        for (Block hanging : chipSignsHangingOn(broken)) {
+            manager.unload(hanging)
+                    .ifPresent(chip -> reportDestroyed(player, chip.definition(), true));
+        }
+    }
+
+    /** Tells whoever broke it what they broke. */
+    private static void reportDestroyed(Player player, ICDefinition chip, boolean throughItsSupport) {
+        player.sendMessage(Component.text(
+                "Destroyed the " + chip.name() + " chip"
+                        + (throughItsSupport ? ", by taking away what its sign hung on." : "."),
+                NamedTextColor.RED));
+    }
+
+    /**
+     * The wall signs carrying a chip that hang on a block.
+     *
+     * <p>A wall sign faces away from what it hangs on, so a sign one step from the broken block
+     * belongs to it exactly when the sign faces that way. Up to four can, and all four go.
+     */
+    private List<Block> chipSignsHangingOn(Block support) {
+        List<Block> found = new ArrayList<>();
+        Vec3i at = Positions.toDomain(support);
+
+        for (org.bukkit.block.BlockFace side : AROUND) {
+            Block candidate = support.getRelative(side);
+            Optional<BlockFace> facing = Signs.facing(candidate);
+            if (facing.isEmpty()) {
+                continue;
+            }
+            if (Positions.toDomain(candidate).offset(facing.get().opposite()).equals(at)) {
+                found.add(candidate);
+            }
+        }
+        return found;
     }
 
     /**

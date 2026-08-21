@@ -1958,3 +1958,33 @@ builder calls it over the stretch it is about to overwrite before laying a block
 from `Testbed#overwritten`, which measures the rigs rather than assuming a height, and
 `TestbedTest` asserts every block of every rig falls inside it — a rig growing taller would
 otherwise start leaving chips behind with nothing to say so.
+
+### 132. A chip destroyed through its supporting block was never stopped, and nobody was told
+
+`ICSignListener` unloaded the chip on whatever block a `BlockBreakEvent` named:
+
+```java
+public void onBlockBreak(BlockBreakEvent event) {
+    manager.unload(event.getBlock());
+}
+```
+
+A wall sign is destroyed by breaking the block it hangs on as surely as by breaking the sign, and
+that raises the event for the **supporting** block. No chip is loaded there, so nothing was
+unloaded; the sign popped off a moment later and the chip stayed in `bySign` with its tick task
+still scheduled, its pins still indexed, and its sign gone.
+
+That is the same leak as findings 130 and 131 reached a third way, and it carries the same
+consequence for anything a chip had claimed elsewhere: a command controlled chip destroyed like this
+kept its switch registered, which is enough on its own to make the command report success while
+nothing is driven — finding 128.
+
+Neither break said anything either. A chip is a build somebody made, often somebody else, and
+knocking out a stone block two blocks from a sign you never looked at is an easy way to destroy one
+without ever knowing you had.
+
+**Rewrite:** the handler unloads the chip on the broken block and on every wall sign hanging from
+it — up to four — and tells whoever broke it what they broke, saying so differently when it went
+through the supporting block, since that is the case where they may not realise a chip was involved
+at all. It runs at `HIGHEST` with `ignoreCancelled`, so a break a protection plugin refuses does not
+report a chip destroyed that is still standing.

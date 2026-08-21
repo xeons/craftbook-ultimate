@@ -1,5 +1,8 @@
 package com.xeonproductions.craftbookultimate.core.ic;
 
+import com.xeonproductions.craftbookultimate.core.mechanic.Actor;
+import com.xeonproductions.craftbookultimate.core.sign.SignLines;
+import java.util.Optional;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -57,5 +60,28 @@ public interface ICLogic {
      */
     default void unload(ChipState state) {
         // Most chips hold nothing that needs releasing.
+    }
+
+    /**
+     * Checks a sign as it is being written, before the chip is made.
+     *
+     * <p>Most chips have nothing to check. A chip configured badly says so the first time somebody
+     * uses it, and by then they are standing next to it. The chips that need this are the ones
+     * naming something kept outside the world — a variable, say — where a sign naming one that
+     * does not exist would be silently dead and its builder would have no way to tell that from a
+     * wiring fault.
+     *
+     * <p>This is the same reasoning, and the same answer, as
+     * {@link com.xeonproductions.craftbookultimate.core.mechanic.SignMechanic#review}. It is asked
+     * of a throwaway logic instance built for the purpose, so an implementation must not expect
+     * this to be the same object that later runs, and must not keep anything from it.
+     *
+     * @param lines what the builder has written
+     * @param services the registries the chip would run against
+     * @param builder whoever is writing it
+     * @return why the sign is being refused, or empty to accept it
+     */
+    default Optional<String> reviewSign(SignLines lines, ChipServices services, Actor builder) {
+        return Optional.empty();
     }
 }

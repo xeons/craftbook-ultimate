@@ -1770,3 +1770,91 @@ which is thrown from inside the extractor's own tick.
 picture of the world that must be kept true. A block changing forgets every answer that mentioned
 it and the next pulse works it out again, so there is nothing to drift, nothing to reconcile, and
 nothing that has to be right for the server to keep running.
+
+
+### 125. Deleting a variable broke every chip that mentioned it, once a tick
+
+All three of upstream's variable chips read their variable like this:
+
+```java
+double existing = Double.parseDouble(VariableManager.instance.getVariable(var, key));
+```
+
+`getVariable` is a map lookup and answers `null` for a variable that is not there, so this is
+`Double.parseDouble(null)` — a `NullPointerException`, not a `NumberFormatException`.
+
+Each of the three then fails to catch it. `ItemCounter.trigger` has no `try` at all.
+`NumericModifier.trigger` has one, but it catches `NumberFormatException`, which is the exception
+this cannot throw. `IsAtLeast` is the worst of the three, because it is self-triggering: the read
+is in `think`, so once the variable is gone the chip throws on **every tick** rather than once.
+
+Getting there takes one command. A sign naming an unknown variable is refused when it is written,
+which is what makes this look unreachable — but nothing stops the variable being erased
+afterwards, and `/var erase` does not go looking for the signs that named it. It clears the IC
+cache and leaves the chips in the world.
+
+**Rewrite:** a variable is read through `Variables#number`, which answers `OptionalDouble` and is
+empty both for a variable that does not exist and for one holding something that is not a number.
+A chip cannot usefully tell those apart, and each decides what to do with nothing: the modifier
+reports failure on its output, the comparison goes low, and the item counter still reports what it
+found in the chest and simply does not record it.
+
+### 126. Asking for a remainder by zero poisoned a variable permanently
+
+`MathFunction.parseNumber` guards division:
+
+```java
+case DIVIDE :
+    if (amount == 0) {
+        return initial;
+    }
+    initial /= amount;
+    break;
+```
+
+and then does not guard the modulo directly beneath it:
+
+```java
+case MOD :
+    initial %= amount;
+    break;
+```
+
+In Java `x % 0` is `NaN`. What happens next is what makes this worth recording rather than merely
+noting. `String.valueOf(NaN)` is `"NaN"`, which is stored; `Double.parseDouble("NaN")` succeeds and
+returns `NaN`, so nothing downstream ever reports a problem; and every arithmetic operation on
+`NaN` is `NaN`, so no function a builder can write will move the variable off it again. The value
+also passes `VARIABLE_VALUE_PATTERN`, so it is written to `variables.yml` and survives a restart.
+
+A single `[VAR100]` sign reading `%:0` therefore destroys a variable for good, silently, and the
+only repair is a command.
+
+**Rewrite:** both zero cases leave the number alone, for the same reason: neither has an answer,
+and a counter that stayed where it was is something a build can carry on from. Beyond that, the
+store refuses to hold a value that is not finite at all, so nothing can put a variable into a state
+no arithmetic will move it out of.
+
+### 127. A whole number came back with a decimal point on it, and a large one in scientific notation
+
+Both chips that write a number back do this:
+
+```java
+String val = String.valueOf(currentValue);
+if (val.endsWith(".0"))
+    val = StringUtils.replace(val, ".0", "");
+```
+
+`StringUtils.replace` replaces **every** occurrence, not the trailing one, so `10.05` — which does
+not end in `.0` and so is not meant to be touched at all — is safe only because of the guard above
+it. The guard is what makes the line correct, and it is doing work the call it guards should be
+doing itself.
+
+The larger problem is what it does not cover. `String.valueOf(1.0E20)` is `"1.0E20"`, which does
+not end in `.0`, so a variable that grows past the point where `Double.toString` switches notation
+starts reading back as something no player would recognise as a number, on a sign or in a chat
+message.
+
+**Rewrite:** `Variables#format` writes through `BigDecimal.stripTrailingZeros().toPlainString()`, so
+a whole number is written without a decimal part and a large one is written as its digits. A value
+is always something somebody could have typed, which matters because these are the values a
+scoreboard puts in front of people.

@@ -25,6 +25,7 @@ public final class CraftBookCommands {
     private final CartCommands carts;
     private final MusicCommands music;
     private final AreaCommands areas;
+    private final VariableCommands variables;
 
     public CraftBookCommands(
             CatalogueCommands catalogue,
@@ -32,13 +33,15 @@ public final class CraftBookCommands {
             ConfigCommands config,
             CartCommands carts,
             MusicCommands music,
-            AreaCommands areas) {
+            AreaCommands areas,
+            VariableCommands variables) {
         this.catalogue = catalogue;
         this.switches = switches;
         this.config = config;
         this.carts = carts;
         this.music = music;
         this.areas = areas;
+        this.variables = variables;
     }
 
     /** Registers everything against a plugin. */
@@ -53,6 +56,11 @@ public final class CraftBookCommands {
                             .build(),
                     "Reads the integrated circuit catalogue.",
                     List.of("cb"));
+
+            commands.register(
+                    variables.command().build(),
+                    "Makes and changes the variables the VAR chips read.",
+                    List.of("variable"));
 
             commands.register(
                     switches.openSwitchCommand().build(),

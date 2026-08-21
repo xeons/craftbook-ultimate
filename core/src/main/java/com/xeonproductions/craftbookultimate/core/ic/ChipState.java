@@ -12,6 +12,7 @@ import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
 import com.xeonproductions.craftbookultimate.core.radio.Radio;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.core.transport.Destinations;
+import com.xeonproductions.craftbookultimate.core.variable.Variables;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
 import java.util.Set;
@@ -201,6 +202,11 @@ public interface ChipState {
     /** Which destination answers to each name. */
     default Destinations destinations() {
         return services().destinations();
+    }
+
+    /** The named values chips and commands share. */
+    default Variables variables() {
+        return services().variables();
     }
 
     /** The switches anyone may throw by command. */

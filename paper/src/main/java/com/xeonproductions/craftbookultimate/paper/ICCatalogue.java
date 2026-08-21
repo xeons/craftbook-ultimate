@@ -24,6 +24,7 @@ import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensors;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Transport;
+import com.xeonproductions.craftbookultimate.core.ic.gate.VariableChips;
 import com.xeonproductions.craftbookultimate.core.ic.gate.WeatherIllusions;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Wireless;
 import com.xeonproductions.craftbookultimate.core.ic.gate.WeatherChips;
@@ -74,8 +75,39 @@ public final class ICCatalogue {
         registerMessages(registry);
         registerWeatherIllusions(registry);
         registerMusic(registry);
+        registerVariables(registry);
 
         return registry;
+    }
+
+    /**
+     * The chips that read and change the values everything on the server shares.
+     *
+     * <p>These three come from upstream rather than from the fork this rewrite is otherwise
+     * porting, so their model numbers are upstream's. Their sign grammar is upstream's too, which
+     * is what lets a world built against it keep working.
+     */
+    private static void registerVariables(ICRegistry registry) {
+        registry.register(ICDefinition.builder("VAR100", "VAR MODIFIER")
+                .name("Variable Modifier")
+                .description("Does a sum to a variable, such as adding one to it.")
+                .layout(PinLayout.SISO)
+                .logic(VariableChips::modifier)
+                .build());
+
+        registry.register(ICDefinition.builder("VAR170", "IS AT LEAST")
+                .name("Is At Least")
+                .description("Outputs high while a variable has reached a number.")
+                .layout(PinLayout.SISO)
+                .logic(VariableChips::isAtLeast)
+                .build());
+
+        registry.register(ICDefinition.builder("VAR200", "ITEM COUNTER")
+                .name("Item Counter")
+                .description("Counts what is in the container above it into a variable.")
+                .layout(PinLayout.SISO)
+                .logic(VariableChips::itemCounter)
+                .build());
     }
 
     private static void registerSensing(ICRegistry registry) {

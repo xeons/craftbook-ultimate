@@ -9,9 +9,9 @@ import org.jspecify.annotations.NullMarked;
 /**
  * Where the registries chips share are kept between restarts.
  *
- * <p>Three files, one per registry, each a plain list somebody can read and edit. What goes in
+ * <p>Four files, one per registry, each a plain list somebody can read and edit. What goes in
  * them is what a player set on purpose and would notice losing: which way each commanded switch is
- * thrown, and what each wireless band is carrying.
+ * thrown, what each wireless band is carrying, and what each variable holds.
  *
  * <p>Nothing a chip keeps on its own sign is here, because a sign is saved with the world already.
  * Nor is anything a chip works out afresh when it loads: a destination republishes itself, and a
@@ -23,6 +23,7 @@ public final class SharedStateFiles {
     private final StateFile switches;
     private final StateFile guardedSwitches;
     private final StateFile bands;
+    private final StateFile variables;
 
     public SharedStateFiles(Path directory) {
         this.switches = new StateFile(directory, "switches.txt", List.of(
@@ -33,6 +34,10 @@ public final class SharedStateFiles {
                 "# Which way each switch driven by the MCX121 chip is thrown.",
                 "# The passwords guarding them are in switch-passwords.txt.",
                 "# One switch a line: true or false, a space, then the switch's name."));
+        this.variables = new StateFile(directory, "variables.txt", List.of(
+                "# The named values the VAR chips and the /var commands share.",
+                "# One variable a line: its namespace, its name, then its value.",
+                "# The shared namespace is called global. None of the three may contain a space."));
         this.bands = new StateFile(directory, "wireless-bands.txt", List.of(
                 "# What each wireless band was last carrying.",
                 "# One band a line: true or false, the namespace, then the channel name.",
@@ -48,7 +53,8 @@ public final class SharedStateFiles {
     public int load(ChipServices services) throws IOException {
         return services.switchboard().load(switches.read())
                 + services.guardedSwitchboard().load(guardedSwitches.read())
-                + services.radio().load(bands.read());
+                + services.radio().load(bands.read())
+                + services.variables().load(variables.read());
     }
 
     /**
@@ -60,5 +66,6 @@ public final class SharedStateFiles {
         switches.write(services.switchboard().save());
         guardedSwitches.write(services.guardedSwitchboard().save());
         bands.write(services.radio().save());
+        variables.write(services.variables().save());
     }
 }

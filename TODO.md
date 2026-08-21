@@ -90,7 +90,26 @@ Note that `MC1421` is upstream's clock, so it cannot be taken at its own number 
 | Sensors | `MC1265` inv sns itm, `MC1267` sense move |
 | World control | `MC1232` time set, `MC1237` fake time |
 | Radio | `MC1276` radio station, `MC1277` radio player |
-| Variables | `VAR100` num mod, `VAR170` at least, `VAR200` item count. These read the `Variables` mechanic, which is itself unported. |
+
+## Variables: what is left of them
+
+The store, the `/var` commands and upstream's three chips — `VAR100`, `VAR170`, `VAR200` — are
+done; see `docs/variables.md`. Two pieces of both forks' `Variables` mechanic are **not**:
+
+- **`%name%` substitution in text.** Both forks expand `%score%` and `%alice|score%` inside chat
+  and commands — the legacy fork against
+  `Pattern.compile("%(?:([a-zA-Z0-9_]+)\|)*([a-zA-Z0-9]+)%")`, upstream through
+  `ParsingUtil.parseVariables`. Nothing in the rewrite reads a variable outside a chip and a
+  command. This is the larger half of the mechanic and is a decision as much as a task: it means
+  every chat message on the server going through a substitution pass.
+- **Upstream's packet-level `override-all-text`.** Rewrites variables in outgoing packets, and
+  needs ProtocolLib. Out of scope on the same grounds as the vendored bStats.
+
+The namespace model was also simplified deliberately. Upstream keys namespaces on a CraftBookID and
+resolves player names to UUIDs through `squirrelid`, with per-namespace, per-variable and `.self`
+permission nodes underneath. The rewrite keeps plain namespaces, `global` as the shared one, and a
+single `craftbook.variables.use.other` — the same trade the toggled areas made, and for the same
+reason: one readable thing a builder and an operator can both act on beats surviving a rename.
 
 ## Mechanics
 
@@ -158,7 +177,9 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 `Ammeter`, `BetterPhysics`, `BetterPlants`, `Bookshelf`, `BounceBlocks`, `Chairs`, `CommandSigns`,
 `CookingPot`, `GlowStone`, `HeadDrops`, `HiddenSwitch`, `JackOLantern`, `LightStone`,
 `LightSwitch`, `Marquee`, `Netherrack`, `PaintingSwitcher`, `RedstoneJukebox`,
-`SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `Variables`, `XPStorer`, `DispenserRecipes`,
+`SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `XPStorer`, `DispenserRecipes`,
+`Variables` (store, commands and the three chips are done — the `%name%` substitution in chat and
+commands is what is left of it; see **Variables: what is left of them** above),
 and the `boat` set — `LandBoats`, `WaterPlaceOnly`, `SpeedModifiers`, and boat-going copies of
 `EmptyDecay`, `ExitRemover` and `RemoveEntities`. Those three are separate classes from the
 minecart ones now ported, and the same habits applied to boats; whether they join `CartHabits` or

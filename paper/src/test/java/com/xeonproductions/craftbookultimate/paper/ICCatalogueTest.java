@@ -202,6 +202,32 @@ class ICCatalogueTest {
     }
 
     @Test
+    void resolvesTheVariableChips() {
+        assertThat(REGISTRY.resolve("[VAR100]")).isPresent();
+        assertThat(REGISTRY.resolve("[VAR170]")).isPresent();
+        assertThat(REGISTRY.resolve("[VAR200]")).isPresent();
+    }
+
+    @Test
+    void letsTheComparisonChipTickWithoutGivingItASecondModelNumber() {
+        // Upstream has no separate self-triggering number for VAR170, so the S suffix is the
+        // only way to ask for one and inventing a number to go alongside it would be wrong.
+        assertThat(REGISTRY.byModel("VAR170").orElseThrow().supportsSelfTriggering()).isTrue();
+        assertThat(REGISTRY.byModel("VAR170").orElseThrow().selfTriggeringModel()).isEmpty();
+        assertThat(REGISTRY.resolve("[VAR170]S").orElseThrow().selfTriggering()).isTrue();
+        assertThat(REGISTRY.resolve("[VAR170]").orElseThrow().selfTriggering()).isFalse();
+    }
+
+    @Test
+    void leavesTheVariableChipsUnrestricted() {
+        // None of the three touches the world. What they may reach is governed by which
+        // variables exist, and making one of those is the permission that matters.
+        for (String model : new String[] {"VAR100", "VAR170", "VAR200"}) {
+            assertThat(REGISTRY.byModel(model).orElseThrow().restricted()).isFalse();
+        }
+    }
+
+    @Test
     void givesEveryChipADescription() {
         assertThat(REGISTRY.definitions()).allSatisfy(definition -> {
             assertThat(definition.name()).isNotBlank();

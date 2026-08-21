@@ -30,7 +30,7 @@ to a hand and to redstone.**
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (114 chips) | Done |
+| IC catalogue wiring (117 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
@@ -68,10 +68,11 @@ to a hand and to redstone.**
 | Bridge, door and gate, with the gate's six materials | Done |
 | Lifts, including the two-way sign, buttons and jump pads | Done |
 | Toggled areas, saved in the game's own structure format | Done |
+| Variables, and the three upstream chips that read them | Done |
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1794 tests passing**.
+**1894 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -238,7 +239,33 @@ nothing. Do not edit that page by hand.
 Everything else there is **written**, because what a mechanic does is not held as data anywhere to
 generate from. `docs/pipes.md` is the pattern: what the thing is, how to build one, the frozen
 grammar in full, worked examples, what to check when it does not work, and a section for operators
-at the end.
+at the end. `docs/variables.md` follows it.
+
+## The variables
+
+A variable is a named number the whole server shares, kept in `Variables` alongside the wireless
+bands and the commanded switches and persisted the same way. `VAR100`, `VAR170` and `VAR200` are the
+three chips that read and change one, and `/var` is where variables are made.
+
+These three come from **upstream** rather than from the fork being ported, so their model numbers,
+their shorthands and their sign grammar are upstream's. The namespace grammar is `namespace|name`,
+defaulting to `global`, which is the same shape as a wireless `Band` and is written the same way on
+a sign and in a command.
+
+Two decisions are worth keeping:
+
+**A variable must exist before a sign may name one.** The chips refuse such a sign as it is
+written, through `ICLogic#reviewSign`. That hook is new, and it is the IC counterpart of
+`SignMechanic#review` for exactly the reason that one exists: what a variable is called lives in the
+store rather than in the blocks beside the sign, so a sign naming one nobody has made would be
+silently dead and its builder would have nothing to tell that from a wiring fault. Almost no chip
+needs it; these three do.
+
+**A variable that goes away afterwards is not an error.** It cannot be — a chip cannot be refused
+retrospectively, and throwing from inside one that ticks would take the region with it. So
+`Variables#number` answers `OptionalDouble`, empty both for a variable that is gone and for one
+holding something that is not a number, and each chip decides what to do with nothing. Upstream
+instead threw a `NullPointerException` once per tick; see findings 125 to 127.
 
 ## The pipes
 

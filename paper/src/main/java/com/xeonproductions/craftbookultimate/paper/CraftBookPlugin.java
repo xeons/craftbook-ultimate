@@ -5,6 +5,7 @@ import com.xeonproductions.craftbookultimate.core.cart.mechanic.CartMechanics;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
+import com.xeonproductions.craftbookultimate.core.ic.gate.VariableChips;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanic;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanics;
@@ -22,6 +23,7 @@ import com.xeonproductions.craftbookultimate.paper.command.ConfigCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
 import com.xeonproductions.craftbookultimate.paper.command.MusicCommands;
 import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
+import com.xeonproductions.craftbookultimate.paper.command.VariableCommands;
 import com.xeonproductions.craftbookultimate.paper.config.ConfigFile;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitAnnouncer;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitIllusions;
@@ -205,6 +207,7 @@ public final class CraftBookPlugin extends JavaPlugin {
         declareAreaPermissions(manager);
         declare(manager, PipeListener.BUILD,
                 "Write a filter on a pipe's sign.", PermissionDefault.TRUE);
+        declareVariablePermissions(manager);
 
         for (ICDefinition definition : icRegistry.definitions()) {
             Permission node = new Permission(
@@ -246,6 +249,23 @@ public final class CraftBookPlugin extends JavaPlugin {
                 "Make an area sign using somebody else's areas.", PermissionDefault.OP);
     }
 
+    /**
+     * Declares the permissions the variables need.
+     *
+     * <p>Reading and listing are ordinary; making, changing and removing are not, because a
+     * variable is shared and a chip somebody else built may be reading it. Reaching into a
+     * namespace that is not your own is separate again, and governs signs as well as commands.
+     */
+    private static void declareVariablePermissions(PluginManager manager) {
+        declare(manager, VariableCommands.GET, "Read a variable.", PermissionDefault.TRUE);
+        declare(manager, VariableCommands.LIST, "List the variables.", PermissionDefault.TRUE);
+        declare(manager, VariableCommands.DEFINE, "Make a variable.", PermissionDefault.OP);
+        declare(manager, VariableCommands.SET, "Change a variable.", PermissionDefault.OP);
+        declare(manager, VariableCommands.DELETE, "Remove a variable.", PermissionDefault.OP);
+        declare(manager, VariableChips.OTHER_NAMESPACE_PERMISSION,
+                "Use a variable belonging to somebody else.", PermissionDefault.OP);
+    }
+
     /** Declares a permission, leaving one the server already knows about alone. */
     private static void declare(
             PluginManager manager, String name, String description, PermissionDefault byDefault) {
@@ -281,7 +301,8 @@ public final class CraftBookPlugin extends JavaPlugin {
                         new ConfigCommands(this::rereadSettings),
                         new CartCommands(cartCommandsTarget()),
                         new MusicCommands(chipServices.songs()),
-                        new AreaCommands(areaTarget(), selections, chipServices.configuration()))
+                        new AreaCommands(areaTarget(), selections, chipServices.configuration()),
+                        new VariableCommands(chipServices.variables(), this::saveSharedState))
                 .registerOn(this);
     }
 

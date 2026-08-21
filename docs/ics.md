@@ -96,7 +96,7 @@ watching for somebody to walk past. Those have a second model number for the
 self-triggering form, given as **runs on its own** in their entry, and `[MC1420]S`
 asks the same of any chip that can do it.
 
-There are **114 chips**, answering to **143 model numbers**. 48 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
+There are **117 chips**, answering to **146 model numbers**. 48 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
 
 ## Every chip
 
@@ -216,6 +216,9 @@ There are **114 chips**, answering to **143 model numbers**. 48 of them are rest
 | [`MCX515`](#mcx515--server-log) | `SERVER LOG` | Server Log *(restricted)* | Writes a line to the server's log. |
 | [`MCX516`](#mcx516--server-log-nearby) | `S-LOG NEARBY` | Server Log Nearby *(restricted)* | Writes a line to the log naming the nearest player. |
 | [`MCX517`](#mcx517--server-log-nearby) | `S-LOG NEARBY+` | Server Log Nearby+ *(restricted)* | Writes a line to the log naming everybody in range and how far off. |
+| [`VAR100`](#var100--variable-modifier) | `VAR MODIFIER` | Variable Modifier | Does a sum to a variable, such as adding one to it. |
+| [`VAR170`](#var170--is-at-least) | `IS AT LEAST` | Is At Least | Outputs high while a variable has reached a number. |
+| [`VAR200`](#var200--item-counter) | `ITEM COUNTER` | Item Counter | Counts what is in the container above it into a variable. |
 
 ## The chips in detail
 
@@ -1442,4 +1445,34 @@ Writes a line to the log naming everybody in range and how far off.
 | **Wiring** | `3ISO` — 3 inputs, 1 output |
 | **Permission** | `craftbook.ic.restricted.mcx517` |
 | **Restricted** | Yes — not granted to everybody by default. |
+
+### VAR100 — Variable Modifier
+
+Does a sum to a variable, such as adding one to it.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[VAR100]`, or `=VAR MODIFIER` |
+| **Wiring** | `SISO` — 1 input, 1 output |
+| **Permission** | `craftbook.ic.safe.var100` |
+
+### VAR170 — Is At Least
+
+Outputs high while a variable has reached a number.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[VAR170]`, or `=IS AT LEAST` |
+| **Wiring** | `SISO` — 1 input, 1 output |
+| **Permission** | `craftbook.ic.safe.var170` |
+
+### VAR200 — Item Counter
+
+Counts what is in the container above it into a variable.
+
+| | |
+| --- | --- |
+| **Write on the sign** | `[VAR200]`, or `=ITEM COUNTER` |
+| **Wiring** | `SISO` — 1 input, 1 output |
+| **Permission** | `craftbook.ic.safe.var200` |
 

@@ -4,7 +4,9 @@ import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICLine;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
+import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
+import com.xeonproductions.craftbookultimate.paper.mechanic.PlayerActor;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
 import java.util.Locale;
@@ -94,6 +96,17 @@ public final class ICSignListener implements Listener {
             player.sendMessage(Component.text(
                     "A chip has to be on a wall sign, so that it has a block behind it to work from.",
                     NamedTextColor.RED));
+            event.setCancelled(true);
+            return;
+        }
+
+        // Asked of a throwaway logic instance: the chip itself is not made until the sign has
+        // been written, and a chip naming something that is not there should never be made at all.
+        Optional<String> problem = definition
+                .newLogic()
+                .reviewSign(SignLines.of(event.lines()), manager.services(), new PlayerActor(player));
+        if (problem.isPresent()) {
+            player.sendMessage(Component.text(problem.get(), NamedTextColor.RED));
             event.setCancelled(true);
             return;
         }

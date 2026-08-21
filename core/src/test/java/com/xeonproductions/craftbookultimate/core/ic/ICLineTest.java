@@ -208,4 +208,21 @@ class ICLineTest {
             assertThat(line.withSelfTriggering().render()).isEqualTo("[MC1000]S!");
         }
     }
+
+    @Test
+    void readsALowerCaseSAsTheSelfTriggeringFlagToo() {
+        // No mode character is an s and no pin permutation can hold one, so the only thing a
+        // lower case s could ever have meant is the ticking chip. Read as a mode it produced a
+        // chip that quietly never ticked.
+        assertThat(ICLine.parse("[MCX120]s").orElseThrow().selfTriggering()).isTrue();
+        assertThat(ICLine.parse("[MCX120]s").orElseThrow().mode()).isEmpty();
+    }
+
+    @Test
+    void stillReadsTheModeAroundALowerCaseSelfTriggeringFlag() {
+        ICLine line = ICLine.parse("[MC1420]s!").orElseThrow();
+
+        assertThat(line.selfTriggering()).isTrue();
+        assertThat(line.mode()).isEqualTo("!");
+    }
 }

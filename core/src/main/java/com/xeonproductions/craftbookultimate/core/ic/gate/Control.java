@@ -111,13 +111,29 @@ public final class Control {
      *
      * @param board which switchboard this chip reads
      */
-    private record SwitchFollower(Function<ChipState, Switchboard> board) implements SelfTriggeringICLogic {
+    private static final class SwitchFollower implements SelfTriggeringICLogic {
+
+        private final Function<ChipState, Switchboard> board;
+
+        /**
+         * The name this chip claimed as it loaded, so that it gives back exactly that.
+         *
+         * <p>Re-reading the sign at unload is not good enough. A chip unloads because its sign has
+         * gone as often as for any other reason, and a sign that has gone reads as four blank
+         * lines — so the name would never be given back and the switch would stay throwable with
+         * nothing following it for as long as the server ran.
+         */
+        private String claimed = "";
+
+        SwitchFollower(Function<ChipState, Switchboard> board) {
+            this.board = board;
+        }
 
         @Override
         public void load(ChipState state) {
-            String name = nameOn(state);
-            if (!name.isEmpty()) {
-                board.apply(state).register(name);
+            claimed = nameOn(state);
+            if (!claimed.isEmpty()) {
+                board.apply(state).register(claimed);
             }
             follow(state);
         }
@@ -134,9 +150,9 @@ public final class Control {
 
         @Override
         public void unload(ChipState state) {
-            String name = nameOn(state);
-            if (!name.isEmpty()) {
-                board.apply(state).forget(name);
+            if (!claimed.isEmpty()) {
+                board.apply(state).forget(claimed);
+                claimed = "";
             }
         }
 

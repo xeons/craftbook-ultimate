@@ -75,6 +75,25 @@ class ControlTest {
         }
 
         @Test
+        void givesUpItsSwitchEvenWhenTheSignHasAlreadyGone() {
+            // A chip unloads because its sign was destroyed as often as for any other reason, and
+            // a sign that has gone reads as four blank lines. Reading the name back off it there
+            // would leave the switch throwable for as long as the server ran, with nothing
+            // following it.
+            SimpleChipState state = chip("door").build();
+            SelfTriggeringICLogic logic = Control.commandControlled();
+            logic.load(state);
+
+            SimpleChipState gone = SimpleChipState.forLayout(PinLayout.THREE_I_SO)
+                    .services(services)
+                    .sign("", "", "", "")
+                    .build();
+            logic.unload(gone);
+
+            assertThat(services.switchboard().isKnown("door")).isFalse();
+        }
+
+        @Test
         void givesUpItsSwitchAsItUnloads() {
             SimpleChipState state = chip("door").build();
             SelfTriggeringICLogic logic = Control.commandControlled();

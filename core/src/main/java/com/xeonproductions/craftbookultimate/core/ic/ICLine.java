@@ -61,6 +61,9 @@ public record ICLine(
     /** Marks the self-triggering variant in a model suffix. */
     private static final char SELF_TRIGGER_FLAG = 'S';
 
+    /** The same flag written in lower case, which a builder means just as often. */
+    private static final char LOWER_SELF_TRIGGER_FLAG = 's';
+
     /** Marks a awaitingAuthorisation chip whose creation was already permission checked. */
     private static final char AUTHORISATION_FLAG = '*';
 
@@ -127,6 +130,11 @@ public record ICLine(
      *
      * <p>Flags are recognised wherever they appear in the suffix, so {@code [MCX207]S*} and
      * {@code [MCX207]*S} mean the same thing. Everything left over is the mode string.
+     *
+     * <p>A lower case {@code s} asks for the ticking chip as surely as an upper case one. No mode
+     * character is an {@code s} and no pin permutation can contain one, so nothing is given up by
+     * reading it that way — where a sign written {@code [MCX120]s} would otherwise have produced a
+     * chip that quietly never ticks and no way for its builder to see why.
      */
     private static ICLine fromSuffix(String modelId, String suffix) {
         boolean selfTriggering = false;
@@ -135,7 +143,7 @@ public record ICLine(
 
         for (int i = 0; i < suffix.length(); i++) {
             char c = suffix.charAt(i);
-            if (c == SELF_TRIGGER_FLAG) {
+            if (c == SELF_TRIGGER_FLAG || c == LOWER_SELF_TRIGGER_FLAG) {
                 selfTriggering = true;
             } else if (c == AUTHORISATION_FLAG) {
                 awaitingAuthorisation = true;

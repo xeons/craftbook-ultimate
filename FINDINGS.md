@@ -1858,3 +1858,51 @@ message.
 a whole number is written without a decimal part and a large one is written as its digits. A value
 is always something somebody could have typed, which matters because these are the values a
 scoreboard puts in front of people.
+
+### 128. A command controlled switch could not be given back once its sign had gone
+
+`Control.SwitchFollower` claimed its switch name by reading line 3 as the chip loaded, and gave it
+back by reading line 3 again as the chip unloaded:
+
+```java
+public void unload(ChipState state) {
+    String name = nameOn(state);       // state.sign().trimmedText(2)
+    if (!name.isEmpty()) {
+        board.apply(state).forget(name);
+    }
+}
+```
+
+Reading the sign at unload assumes the sign is still there to read. It very often is not: a chip
+unloads because its sign was destroyed as readily as for any other reason, and `BlockChipState#sign`
+answers `SignLines.EMPTY` for a block that is no longer a sign. The name then comes back blank,
+`forget` is never reached, and the switchboard goes on believing something is following that name.
+
+The consequence is not just a leaked map entry. `Switchboard#set` refuses a name nothing is
+following, which is what stops a command inventing a switch — so the leak is precisely what makes a
+dead switch look alive. `/mcx120 door on` keeps reporting success, `/mcx120list` keeps listing
+`door`, and nothing anywhere is driven by any of it, for as long as the server runs.
+
+Sign breaks are safe by luck rather than by design: `BlockBreakEvent` fires before the block is
+removed, so the sign is still readable there. Everything else that can take a sign away without
+that event — a piston, water, an explosion, another plugin — leaks.
+
+**Rewrite:** the chip remembers the name it claimed and gives back exactly that. What was claimed is
+a fact about the chip, not about the blocks around it, so it is not something to go and re-read.
+
+### 129. A lower case S on a sign asked for a chip that would never tick
+
+`ICLine#fromSuffix` recognised `S` as the self-triggering flag and passed everything else through as
+the mode string. A sign written `[MCX120]s` therefore resolved to the chip with self-triggering off
+and a mode of `"s"` — and since no behaviour is selected by an `s`, `ICMode#parse` discarded it.
+
+Both halves of that are silent. The chip is created, the sign is accepted, the mode is dropped
+without comment, and what the builder gets is a chip that only ever acts when its inputs change. For
+a chip whose whole purpose is to be driven from somewhere other than its inputs, that is a chip that
+does nothing at all.
+
+Nothing was gained by the strictness. No mode character is an `s`, and a pin permutation is six
+letters from `a` to `f`, so an `s` in a suffix could never have meant anything else.
+
+**Rewrite:** either case sets the flag. This widens what a sign may say rather than narrowing it, so
+no sign that worked before reads differently now.

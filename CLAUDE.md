@@ -69,10 +69,11 @@ to a hand and to redstone.**
 | Lifts, including the two-way sign, buttons and jump pads | Done |
 | Toggled areas, saved in the game's own structure format | Done |
 | Variables, and the three upstream chips that read them | Done |
+| Test bed: a rig per chip, built from the catalogue | Done |
 | Mechanics other than those and the minecart ones | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**1894 tests passing**.
+**1924 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -239,7 +240,7 @@ nothing. Do not edit that page by hand.
 Everything else there is **written**, because what a mechanic does is not held as data anywhere to
 generate from. `docs/pipes.md` is the pattern: what the thing is, how to build one, the frozen
 grammar in full, worked examples, what to check when it does not work, and a section for operators
-at the end. `docs/variables.md` follows it.
+at the end. `docs/variables.md` and `docs/testbed.md` follow it.
 
 ## The variables
 
@@ -266,6 +267,46 @@ retrospectively, and throwing from inside one that ticks would take the region w
 `Variables#number` answers `OptionalDouble`, empty both for a variable that is gone and for one
 holding something that is not a number, and each chip decides what to do with nothing. Upstream
 instead threw a `NullPointerException` once per tick; see findings 125 to 127.
+
+## The test bed
+
+`/craftbook testbed build` lays out a flat plane carrying a working rig for every chip: sign,
+levers, lamps, label. `core/testbed/` holds the geometry — `Rig` wires one chip from its
+`PinLayout`, `Testbed` lays them on a grid, `ChipSetup` says what each sign needs told —
+and `paper/testbed/TestbedBuilder` decides which block plays which part. `docs/testbed.md` is the
+guide.
+
+Built from `ICCatalogue` rather than shipped as a schematic, for the reason `docs/ics.md` is
+generated: a chip added later would be missing from a saved plane and nobody would notice, and a
+rig wired from a remembered layout reads as a broken chip when it is the bed that is wrong.
+
+**Levers on both sides**, because that is what the plugin reads and writes. `BlockChipState`
+decides an input is wired by asking whether the pin block is a power source, and drives an output
+only when the pin already holds a lever, leaving anything else alone. A rig of redstone blocks
+would read as permanently on and one of lamps would never be driven. Each output lever clings to
+its lamp, so the lamp is strongly powered rather than lit by proximity, and a lever whose pin sits
+directly above another — `UISO` stacks two — takes a wall or ceiling instead of a floor.
+
+**A ticking rig is written as the chip's own ticking number** where the catalogue has one —
+`[MC0111]` rather than `[MC1111]S`. Twenty-six chips were catalogued twice, and writing the second
+number is both what a builder does and the only way those numbers appear on the bed at all.
+
+**Ticking is opt-in, per chip, and the list is short.** `ChipSetup#ticks` names the chips whose
+tick only reads — sensors, the wireless receiver, the variable comparison — and those are built
+with `S`. Everything else carries the plain model number. Both halves of that matter: forcing the
+flag on everything killed a server, because `HolySmite.tick` strikes everything in range with no
+input check; leaving it off everything made the receiver read its band only while its own lever
+was held, so a working transmitter and receiver looked broken.
+
+**Only the inputs a chip reads get a lever.** `ChipSetup#usesEveryInput` names the 24 that read
+past input 0, found by grepping the gates for `input(1)`, `input(2)`, `connectedPoweredCount` and
+`inputPower` rather than by reasoning about what each ought to need. An `AISO` chip is set off by
+any of its four inputs, so three of its levers were noise.
+
+`ChipSetup` fills in lines 3 and 4 only where the value was read off the chip's own source. A wrong
+line there is worse than a blank one: a chip configured with grammar it does not accept reads
+exactly like a chip that is broken. Most of the catalogue is deliberately left blank, and only the
+chips wanting a file an operator supplies are reported as unfinished.
 
 ## The pipes
 

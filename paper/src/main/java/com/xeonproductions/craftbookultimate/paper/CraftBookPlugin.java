@@ -23,6 +23,7 @@ import com.xeonproductions.craftbookultimate.paper.command.ConfigCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
 import com.xeonproductions.craftbookultimate.paper.command.MusicCommands;
 import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
+import com.xeonproductions.craftbookultimate.paper.command.TestbedCommands;
 import com.xeonproductions.craftbookultimate.paper.command.VariableCommands;
 import com.xeonproductions.craftbookultimate.paper.config.ConfigFile;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitAnnouncer;
@@ -33,6 +34,7 @@ import com.xeonproductions.craftbookultimate.paper.store.FireworkFiles;
 import com.xeonproductions.craftbookultimate.paper.store.MidiFiles;
 import com.xeonproductions.craftbookultimate.paper.store.PasswordFile;
 import com.xeonproductions.craftbookultimate.paper.store.SharedStateFiles;
+import com.xeonproductions.craftbookultimate.paper.testbed.TestbedBuilder;
 import com.xeonproductions.craftbookultimate.paper.listener.CartListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartRedstoneListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartHabitListener;
@@ -208,6 +210,8 @@ public final class CraftBookPlugin extends JavaPlugin {
         declare(manager, PipeListener.BUILD,
                 "Write a filter on a pipe's sign.", PermissionDefault.TRUE);
         declareVariablePermissions(manager);
+        declare(manager, TestbedCommands.BUILD,
+                "Build a test bed carrying a rig for every chip.", PermissionDefault.OP);
 
         for (ICDefinition definition : icRegistry.definitions()) {
             Permission node = new Permission(
@@ -302,8 +306,25 @@ public final class CraftBookPlugin extends JavaPlugin {
                         new CartCommands(cartCommandsTarget()),
                         new MusicCommands(chipServices.songs()),
                         new AreaCommands(areaTarget(), selections, chipServices.configuration()),
-                        new VariableCommands(chipServices.variables(), this::saveSharedState))
+                        new VariableCommands(chipServices.variables(), this::saveSharedState),
+                        new TestbedCommands(icRegistry, new TestbedBuilder(icManagerTarget(), schedulersTarget())))
                 .registerOn(this);
+    }
+
+    /** The chip manager, which the test bed starts its chips through. */
+    private ICManager icManagerTarget() {
+        if (icManager == null) {
+            throw new IllegalStateException("The chips are not available until enabled");
+        }
+        return icManager;
+    }
+
+    /** The region schedulers, which the test bed builds through. */
+    private RegionSchedulers schedulersTarget() {
+        if (schedulers == null) {
+            throw new IllegalStateException("The schedulers are not available until enabled");
+        }
+        return schedulers;
     }
 
     /** The saved areas, which the commands fill and empty. */

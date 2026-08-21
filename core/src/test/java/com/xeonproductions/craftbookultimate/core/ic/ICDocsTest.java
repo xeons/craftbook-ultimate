@@ -66,9 +66,11 @@ class ICDocsTest {
 
         @Test
         void givesBothWaysOfNamingItOnASign() {
+            // The shorthand goes after an equals sign, not in brackets. [REPEATER] names nothing.
             String page = pageFor(chip("MC1000", "REPEATER").build());
 
-            assertThat(page).contains("`[MC1000]` or `[REPEATER]`");
+            assertThat(page).contains("`[MC1000]`, or `=REPEATER`");
+            assertThat(page).doesNotContain("or `[REPEATER]`");
         }
 
         @Test

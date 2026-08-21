@@ -63,24 +63,72 @@ public final class ICDocs {
                 ## Writing the sign
 
                 ```
-                Line 1   the shorthand, filled in for you
+                Line 1   REPEATER        filled in for you
                 Line 2   [MC1000]        the model number, in brackets
                 Line 3   whatever the chip needs told
                 Line 4   whatever else it needs told
                 ```
 
-                Line 2 is the whole declaration. Write the model number in brackets and the rest of
-                the sign fills itself in: line 1 becomes the chip's shorthand, so you can read at a
-                glance what a wall of signs is doing.
+                Line 2 is the whole declaration. Write the model number in brackets and the rest
+                fills itself in: line 1 becomes the chip's shorthand, so you can read at a glance
+                what a wall of signs is doing.
 
-                You can write the shorthand in brackets instead of the number — `[REPEATER]` for
-                `[MC1000]` — and it resolves to the same chip.
+                ### Naming it by its shorthand instead
 
-                ### Choosing the wiring
+                You can name a chip by its shorthand rather than its number, and then it goes after
+                an **equals sign** rather than in brackets:
 
-                Put an equals sign and a layout code after the model to change where the chip's
-                pins sit: `[MC1000=SISO]`. Every chip has a layout it uses when the sign does not
-                say, given in its entry below.
+                ```
+                =REPEATER            the same chip as [MC1000]
+                =REPEATER ST         the self-triggering form
+                =RE T FLIP           a shorthand may have spaces in it
+                ```
+
+                The sign is rewritten as you place it, so one written `=REPEATER` reads back
+                `[MC1000]` afterwards. Both spellings reach the same chip; the brackets are not
+                interchangeable with the equals sign, and `[REPEATER]` names nothing.
+
+                ### What goes after the brackets
+
+                Anything after the closing bracket modifies the chip. `S` asks for the
+                self-triggering form, and the rest is the mode:
+
+                ```
+                [MC1000]S            self-triggering
+                [MC1000]!            outputs inverted
+                [MC1000]S!           both
+                ```
+
+                | Character | What it does |
+                | --- | --- |
+                | `S` | Run on its own rather than waiting for redstone. |
+                | `!` | Invert every output the chip writes. |
+                | `+` | Say what the chip did to whoever is nearby. |
+                | `1` | Go back to off after acting rather than staying on. |
+                | `=` | Skip the usual step up or down when acting on the world. |
+                | `r` | Run the chip's effect the other way about. |
+                | `t` | Read the weather as a thunderstorm rather than as rain. |
+                | `-` | Leave anything that is not a player alone. |
+                | `p` | Act as a teleport pad. |
+                | `P` | Act as a teleport pad that insists on a pressure plate. |
+
+                Most chips read only one or two of these and ignore the rest; `!` is the one the
+                plugin itself applies, to whatever the chip writes. A character that means nothing
+                is ignored rather than breaking the sign.
+
+                An `*` may appear on a sign you did not write it on. It marks a chip whose creation
+                was already checked, and the plugin puts it there.
+
+                ### Moving the pins about
+
+                Six letters after the brackets rename the chip's pins, so a build can be wired from
+                a different side: `[MC1000]badcfe` swaps them in pairs. The letters run `a` to `f`
+                and stand for the pins in their usual order.
+
+                ### The wiring itself
+
+                Every chip has one arrangement of pins and it is **not** chosen on the sign — each
+                entry below says which its is. The codes mean:
 
                 | Code | Inputs | Outputs | Where they sit |
                 | --- | --- | --- | --- |
@@ -98,7 +146,8 @@ public final class ICDocs {
 
                 Some chips act on their own rather than waiting for redstone — a clock, a sensor
                 watching for somebody to walk past. Those have a second model number for the
-                self-triggering form, given as **runs on its own** in their entry.
+                self-triggering form, given as **runs on its own** in their entry, and `[MC1420]S`
+                asks the same of any chip that can do it.
 
                 """);
 
@@ -137,7 +186,7 @@ public final class ICDocs {
             page.append(chip.description()).append("\n\n");
 
             page.append("| | |\n| --- | --- |\n");
-            row(page, "Write on the sign", "`[" + chip.model() + "]` or `[" + chip.shorthand() + "]`");
+            row(page, "Write on the sign", "`[" + chip.model() + "]`, or `=" + chip.shorthand() + "`");
             row(page, "Wiring", wiringOf(chip.defaultLayout()));
             chip.selfTriggeringModel().ifPresent(model ->
                     row(page, "Runs on its own as", "`[" + model + "]`"));

@@ -3,6 +3,7 @@
 
 package com.xeonproductions.craftbookultimate.paper.debug;
 
+import com.xeonproductions.craftbookultimate.core.debug.DebugMode;
 import java.util.List;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
@@ -29,8 +30,6 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class DebugStick {
 
-    /** The permission to be given one, and to use it at all. */
-    public static final String PERMISSION = "craftbook.debug";
 
     /** What the stick is made of. */
     private static final Material MATERIAL = Material.STICK;

@@ -3,6 +3,7 @@
 
 package com.xeonproductions.craftbookultimate.paper.debug;
 
+import com.xeonproductions.craftbookultimate.core.debug.DebugMode;
 import com.xeonproductions.craftbookultimate.core.ic.BandAwareICLogic;
 import com.xeonproductions.craftbookultimate.core.ic.ChipReport;
 import com.xeonproductions.craftbookultimate.core.math.Bounds;

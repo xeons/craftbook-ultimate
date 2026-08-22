@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Brandon Scott
 
-package com.xeonproductions.craftbookultimate.paper.docs;
+package com.xeonproductions.craftbookultimate.core.ic;
 
 import com.xeonproductions.craftbookultimate.core.ic.ICDocs;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
-import com.xeonproductions.craftbookultimate.paper.ICCatalogue;
+import com.xeonproductions.craftbookultimate.core.ic.ICCatalogue;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

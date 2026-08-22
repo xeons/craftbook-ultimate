@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Brandon Scott
 
-package com.xeonproductions.craftbookultimate.paper.store;
+package com.xeonproductions.craftbookultimate.core.store;
 
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
 import java.io.IOException;

@@ -6,60 +6,61 @@ package com.xeonproductions.craftbookultimate.paper;
 import com.xeonproductions.craftbookultimate.core.cart.Stations;
 import com.xeonproductions.craftbookultimate.core.cart.mechanic.CartMechanics;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
+import com.xeonproductions.craftbookultimate.core.debug.DebugMode;
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
+import com.xeonproductions.craftbookultimate.core.ic.ICCatalogue;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
-import com.xeonproductions.craftbookultimate.core.ic.gate.VariableChips;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
+import com.xeonproductions.craftbookultimate.core.ic.gate.VariableChips;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanic;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanics;
 import com.xeonproductions.craftbookultimate.core.mechanic.ToggleArea;
+import com.xeonproductions.craftbookultimate.core.pipe.PipeNetworks;
+import com.xeonproductions.craftbookultimate.core.store.FireworkFiles;
+import com.xeonproductions.craftbookultimate.core.store.MidiFiles;
+import com.xeonproductions.craftbookultimate.core.store.PasswordFile;
+import com.xeonproductions.craftbookultimate.core.store.SharedStateFiles;
 import com.xeonproductions.craftbookultimate.paper.area.Selections;
 import com.xeonproductions.craftbookultimate.paper.area.StructureVault;
 import com.xeonproductions.craftbookultimate.paper.cart.CartDispatcher;
 import com.xeonproductions.craftbookultimate.paper.cart.CartRecipes;
-import com.xeonproductions.craftbookultimate.paper.pipe.PipeDispatcher;
-import com.xeonproductions.craftbookultimate.core.pipe.PipeNetworks;
 import com.xeonproductions.craftbookultimate.paper.command.AreaCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CartCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CatalogueCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CheckCommands;
-import com.xeonproductions.craftbookultimate.paper.command.DebugCommands;
-import com.xeonproductions.craftbookultimate.paper.debug.AreaOutline;
-import com.xeonproductions.craftbookultimate.paper.debug.DebugActions;
-import com.xeonproductions.craftbookultimate.paper.debug.DebugMode;
-import com.xeonproductions.craftbookultimate.paper.debug.DebugStick;
 import com.xeonproductions.craftbookultimate.paper.command.ConfigCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
+import com.xeonproductions.craftbookultimate.paper.command.DebugCommands;
 import com.xeonproductions.craftbookultimate.paper.command.MusicCommands;
 import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
 import com.xeonproductions.craftbookultimate.paper.command.TestbedCommands;
 import com.xeonproductions.craftbookultimate.paper.command.VariableCommands;
 import com.xeonproductions.craftbookultimate.paper.config.ConfigFile;
+import com.xeonproductions.craftbookultimate.paper.debug.AreaOutline;
+import com.xeonproductions.craftbookultimate.paper.debug.DebugActions;
+import com.xeonproductions.craftbookultimate.paper.debug.DebugStick;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitAnnouncer;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitIllusions;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitRoster;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
-import com.xeonproductions.craftbookultimate.paper.store.FireworkFiles;
-import com.xeonproductions.craftbookultimate.paper.store.MidiFiles;
-import com.xeonproductions.craftbookultimate.paper.store.PasswordFile;
-import com.xeonproductions.craftbookultimate.paper.store.SharedStateFiles;
-import com.xeonproductions.craftbookultimate.paper.testbed.TestbedBuilder;
+import com.xeonproductions.craftbookultimate.paper.listener.CartHabitListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartRedstoneListener;
-import com.xeonproductions.craftbookultimate.paper.listener.CartHabitListener;
-import com.xeonproductions.craftbookultimate.paper.listener.PipeListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartSignListener;
+import com.xeonproductions.craftbookultimate.paper.listener.DebugStickListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICChunkListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICRedstoneListener;
-import com.xeonproductions.craftbookultimate.paper.listener.DebugStickListener;
 import com.xeonproductions.craftbookultimate.paper.listener.ICSignListener;
 import com.xeonproductions.craftbookultimate.paper.listener.LiftMoveListener;
 import com.xeonproductions.craftbookultimate.paper.listener.MechanicInteractListener;
 import com.xeonproductions.craftbookultimate.paper.listener.MechanicRedstoneListener;
 import com.xeonproductions.craftbookultimate.paper.listener.MechanicSignListener;
+import com.xeonproductions.craftbookultimate.paper.listener.PipeListener;
 import com.xeonproductions.craftbookultimate.paper.listener.SelectionListener;
 import com.xeonproductions.craftbookultimate.paper.mechanic.MechanicDispatcher;
+import com.xeonproductions.craftbookultimate.paper.pipe.PipeDispatcher;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
+import com.xeonproductions.craftbookultimate.paper.testbed.TestbedBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -377,7 +378,7 @@ public final class CraftBookPlugin extends JavaPlugin {
      * off from a distance.
      */
     private void declareDebugPermissions(PluginManager manager) {
-        declare(manager, DebugStick.PERMISSION,
+        declare(manager, DebugMode.PERMISSION,
                 "Be given an IC debug stick, and use the debugging commands.",
                 PermissionDefault.OP);
         for (DebugMode mode : DebugMode.CYCLE) {

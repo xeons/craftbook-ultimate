@@ -6,6 +6,7 @@ package com.xeonproductions.craftbookultimate.paper.cart;
 import com.xeonproductions.craftbookultimate.core.cart.CartMechanic;
 import com.xeonproductions.craftbookultimate.core.cart.CartMechanism;
 import com.xeonproductions.craftbookultimate.core.cart.CartVisit;
+import com.xeonproductions.craftbookultimate.core.cart.DispatchedCartVisit;
 import com.xeonproductions.craftbookultimate.core.cart.Stations;
 import com.xeonproductions.craftbookultimate.core.cart.Wiring;
 import com.xeonproductions.craftbookultimate.core.cart.mechanic.CartMechanics;
@@ -115,7 +116,7 @@ public final class CartDispatcher {
         }
 
         Wiring wiring = CartMechanisms.wiringOf(at, mechanism.get());
-        return Optional.of(new PaperCartVisit(
+        return Optional.of(new DispatchedCartVisit(
                 new BukkitCart(minecart),
                 mechanism.get(),
                 minor,

@@ -4,7 +4,7 @@
 package com.xeonproductions.craftbookultimate.paper.harness;
 
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
-import com.xeonproductions.craftbookultimate.paper.ICCatalogue;
+import com.xeonproductions.craftbookultimate.core.ic.ICCatalogue;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
 import net.kyori.adventure.text.Component;

@@ -3,8 +3,8 @@
 
 package com.xeonproductions.craftbookultimate.paper.listener;
 
+import com.xeonproductions.craftbookultimate.core.debug.DebugMode;
 import com.xeonproductions.craftbookultimate.paper.debug.DebugActions;
-import com.xeonproductions.craftbookultimate.paper.debug.DebugMode;
 import com.xeonproductions.craftbookultimate.paper.debug.DebugStick;
 import com.xeonproductions.craftbookultimate.paper.ic.ICInstance;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
@@ -60,7 +60,7 @@ public final class DebugStickListener implements Listener {
         }
 
         Player player = event.getPlayer();
-        if (!player.hasPermission(DebugStick.PERMISSION)) {
+        if (!player.hasPermission(DebugMode.PERMISSION)) {
             return;
         }
 

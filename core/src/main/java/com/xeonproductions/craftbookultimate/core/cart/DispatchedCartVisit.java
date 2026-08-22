@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Brandon Scott
 
-package com.xeonproductions.craftbookultimate.paper.cart;
+package com.xeonproductions.craftbookultimate.core.cart;
 
 import com.xeonproductions.craftbookultimate.core.cart.Cart;
 import com.xeonproductions.craftbookultimate.core.cart.CartMechanism;
@@ -31,7 +31,7 @@ import org.jspecify.annotations.NullMarked;
  * @param scheduler work bound to the region owning these blocks
  */
 @NullMarked
-public record PaperCartVisit(
+public record DispatchedCartVisit(
         Cart cart,
         CartMechanism mechanism,
         boolean isMinor,

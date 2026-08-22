@@ -15,7 +15,7 @@ import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.testbed.ChipSetup;
 import com.xeonproductions.craftbookultimate.core.testbed.Rig;
 import com.xeonproductions.craftbookultimate.core.testbed.Testbed;
-import com.xeonproductions.craftbookultimate.paper.ICCatalogue;
+import com.xeonproductions.craftbookultimate.core.ic.ICCatalogue;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

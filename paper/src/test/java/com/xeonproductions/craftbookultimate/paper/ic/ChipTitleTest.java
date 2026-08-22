@@ -8,7 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
-import com.xeonproductions.craftbookultimate.paper.ICCatalogue;
+import com.xeonproductions.craftbookultimate.core.ic.ICCatalogue;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;

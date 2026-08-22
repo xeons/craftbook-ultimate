@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Brandon Scott
 
-package com.xeonproductions.craftbookultimate.paper.debug;
+package com.xeonproductions.craftbookultimate.core.debug;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,7 +44,7 @@ class DebugModeTest {
         Set<String> permissions = new HashSet<>();
         for (DebugMode mode : DebugMode.values()) {
             permissions.add(mode.permission());
-            assertThat(mode.permission()).startsWith(DebugStick.PERMISSION + ".");
+            assertThat(mode.permission()).startsWith(DebugMode.PERMISSION + ".");
         }
 
         assertThat(permissions).hasSameSizeAs(DebugMode.values());

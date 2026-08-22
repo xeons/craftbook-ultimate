@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Brandon Scott
 
-package com.xeonproductions.craftbookultimate.paper;
+package com.xeonproductions.craftbookultimate.core.ic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

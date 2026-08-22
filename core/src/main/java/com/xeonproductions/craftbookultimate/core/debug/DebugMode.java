@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Brandon Scott
 
-package com.xeonproductions.craftbookultimate.paper.debug;
+package com.xeonproductions.craftbookultimate.core.debug;
 
 import java.util.List;
 import java.util.Locale;
@@ -53,6 +53,9 @@ public enum DebugMode {
         this.description = description;
     }
 
+    /** The permission every debugging tool is gated behind, and the root of each mode's own. */
+    public static final String PERMISSION = "craftbook.debug";
+
     /** How the mode is named on the stick. */
     public String title() {
         return title;
@@ -65,7 +68,7 @@ public enum DebugMode {
 
     /** The permission needed to use this mode. */
     public String permission() {
-        return "craftbook.debug." + name().toLowerCase(Locale.ROOT);
+        return PERMISSION + "." + name().toLowerCase(Locale.ROOT);
     }
 
     /** The mode after this one, wrapping round. */

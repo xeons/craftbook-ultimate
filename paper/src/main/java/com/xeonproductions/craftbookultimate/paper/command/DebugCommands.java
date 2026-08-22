@@ -5,14 +5,14 @@ package com.xeonproductions.craftbookultimate.paper.command;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.xeonproductions.craftbookultimate.core.debug.DebugMode;
+import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
+import com.xeonproductions.craftbookultimate.paper.area.Selections;
 import com.xeonproductions.craftbookultimate.paper.debug.DebugActions;
-import com.xeonproductions.craftbookultimate.paper.debug.DebugMode;
 import com.xeonproductions.craftbookultimate.paper.debug.DebugStick;
 import com.xeonproductions.craftbookultimate.paper.ic.ICInstance;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
-import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
-import com.xeonproductions.craftbookultimate.paper.area.Selections;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import java.util.Optional;
@@ -59,10 +59,10 @@ public final class DebugCommands {
     /** The whole {@code /craftbook debug} command. */
     public LiteralArgumentBuilder<CommandSourceStack> debugCommand() {
         LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal("debug")
-                .requires(source -> source.getSender().hasPermission(DebugStick.PERMISSION))
+                .requires(source -> source.getSender().hasPermission(DebugMode.PERMISSION))
                 .executes(context -> onLookedAtChip(context, DebugMode.MENU))
                 .then(Commands.literal("stick")
-                        .requires(source -> source.getSender().hasPermission(DebugStick.PERMISSION))
+                        .requires(source -> source.getSender().hasPermission(DebugMode.PERMISSION))
                         .executes(this::giveStick));
 
         for (DebugMode mode : DebugMode.CYCLE) {

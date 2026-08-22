@@ -2292,3 +2292,94 @@ Anything the game learned to fertilise after that table was written is not in it
 Fixed by asking the game to apply the bonemeal and spending one only where it took. The table is
 gone: `applyBoneMeal` on Paper and `BonemealableBlock` on Sponge both answer what the game itself
 would do, so a plant added in a later version works with nothing here being changed.
+
+### 144. The cultivator could not use a netherite hoe
+
+`Cultivator` keeps its own list of what counts as a hoe:
+
+```java
+private static final Set<Material> hoes = Set.of(Material.WOODEN_HOE, Material.STONE_HOE,
+        Material.IRON_HOE, Material.GOLDEN_HOE, Material.DIAMOND_HOE);
+```
+
+Netherite is missing. It was added to the game in 1.16 and the list was never widened, so the best
+hoe there is sits in the chest doing nothing while the chip reports failure. A builder who has just
+upgraded their tool sees a working farm stop, with no message and nothing changed but the tool.
+
+It also wears the hoe through `setDurability`, which counts up from zero on an item whose damage
+the modern game keeps separately, and destroys the tool by assigning `null` into the slot rather
+than letting the game do it — so an unbreaking enchantment does nothing.
+
+Fixed by listing every hoe, netherite included, and by wearing the tool through `Damageable`, which
+is what the game itself uses. An enchanted hoe now lasts as long in a chip as it would in a hand.
+
+### 145. The animal harvester never wore out its shears
+
+`AnimalHarvester` spends a bucket to milk a cow, and takes the wool off a sheep for nothing:
+
+```java
+if (doesChestContain(Material.SHEARS)) {
+    Sheep sh = (Sheep) entity;
+    if (sh.isSheared()) return false;
+    if (addToChest(new ItemStack(ItemUtil.getWoolFromColour(sh.getColor()), ...))) {
+        sh.setSheared(true);
+        return true;
+    }
+}
+```
+
+`doesChestContain` only looks. Nothing is ever removed and nothing is ever damaged, so one pair of
+shears in the chest shears a flock for ever — the chip checks they are there and then works for
+free. The bucket beside it in the same class is taken properly, which is what makes this look like
+an omission rather than a decision.
+
+Fixed by wearing the shears a point per sheep, through the same `Damageable` path the cultivator's
+hoe uses. A pair now lasts its 238 sheep and is gone.
+
+### 146. The animal breeder spawned the babies itself
+
+`AnimalBreeder` does not breed anything. It finds two animals of a kind, takes the food, and then
+makes a third:
+
+```java
+Ageable animal = (Ageable) entity.getWorld().spawnEntity(entity.getLocation(), entity.getType());
+animal.setBaby();
+((Ageable) entity).setBreed(false);
+```
+
+Four things follow from that. No experience is dropped, because nothing bred. Only one of the two
+parents has its cooldown set — the other is left able to breed again immediately, so one animal
+paired with a queue of others is a baby factory. A sheep's colour is copied by hand and every other
+inherited trait is lost, so two brown horses give a plain one. And the baby appears whether or not
+the game would have allowed the pairing at all.
+
+It also carries its own table of what may breed and what each species eats — cows and sheep on
+wheat, pigs on carrots, chickens on wheat seeds, wolves on meat. That is five species out of the
+several dozen the game now breeds, and the foods are wrong even for those: a pig takes potatoes and
+beetroot too, a chicken takes any seed. Everything the game has learned since is absent — horses,
+llamas, rabbits, turtles, foxes, pandas, bees, goats, camels, sniffers, armadillos.
+
+Fixed by asking the game both questions and doing neither itself. `Animals#isBreedItem` says
+whether a creature would take a particular food, and `setLoveModeTicks` puts the pair in love so
+that the game breeds them. Cooldowns, experience, inherited traits and every rule about what may
+breed with what are the game's, so an animal added in a later version works with nothing here
+changed. Same reasoning as the terraformer in finding 143.
+
+### 147. The experience spawner would spawn as many orbs as a sign asked for
+
+`XPSpawner` reads two numbers off its sign and bounds neither:
+
+```java
+amount = Integer.parseInt(getLine(2));
+orbs = Integer.parseInt(getLine(3));
+...
+for (int i = 0; i < orbs; i++) { ... }
+```
+
+A sign reading `1000000` on line 4 spawns a million entities in one pulse, on the server thread,
+every time the chip is triggered. It is a restricted chip, so this needs a permission — but a
+restricted chip is one an operator hands to trusted builders, not one that should be able to stop
+the server by typo.
+
+Both numbers are now held to what a sign may ask for: a thousand experience an orb, sixty-four orbs
+a pulse.

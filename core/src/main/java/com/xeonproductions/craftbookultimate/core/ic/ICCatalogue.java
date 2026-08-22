@@ -37,6 +37,7 @@ import com.xeonproductions.craftbookultimate.core.ic.gate.LogicGates;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Messages;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Music;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Husbandry;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Terrain;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensors;
@@ -94,8 +95,47 @@ public final class ICCatalogue {
         registerMusic(registry);
         registerVariables(registry);
         registerTerrain(registry);
+        registerHusbandry(registry);
 
         return registry;
+    }
+
+    /**
+     * The chips that work a farm and the animals on it.
+     *
+     * <p>All four pay out of the container above their sign: a hoe wears out, a bucket is spent,
+     * food is eaten.
+     */
+    private static void registerHusbandry(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MC1235", "CULTIVATOR")
+                .name("Cultivator")
+                .description("Tills earth in an area, wearing out a hoe from the container above.")
+                .thirdLine(optional("the area to till", searchArea()))
+                .logic(() -> Husbandry.cultivator(THREAD_LOCAL_RANDOM))
+                .build());
+
+        registry.register(ICDefinition.builder("MC1244", "ANIMAL HARV")
+                .name("Animal Harvester")
+                .description("Milks cows and shears sheep in an area into the container above.")
+                .thirdLine(optional("the area to work", searchArea()))
+                .logic(Husbandry::animalHarvester)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1280", "ANIMAL BRD")
+                .name("Animal Breeder")
+                .description("Feeds pairs of animals in an area so that they breed.")
+                .thirdLine(optional("the area to work", searchArea()))
+                .logic(Husbandry::animalBreeder)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1246", "XP SPAWNER")
+                .name("Experience Spawner")
+                .description("Drops orbs of experience above itself.")
+                .restricted()
+                .thirdLine(optional("how much each orb is worth, up to a thousand"))
+                .fourthLine(optional("how many orbs to drop, up to sixty-four"))
+                .logic(Husbandry::experienceSpawner)
+                .build());
     }
 
     /**

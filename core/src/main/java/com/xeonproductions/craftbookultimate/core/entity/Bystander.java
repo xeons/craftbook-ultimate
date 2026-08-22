@@ -133,6 +133,62 @@ public interface Bystander {
     boolean isPresent();
 
     /**
+     * Whether this creature is grown rather than a baby.
+     *
+     * <p>True for anything that has no age at all, since a chip asking is asking whether to leave
+     * a young animal alone and there is nothing young about a zombie.
+     */
+    default boolean isAdult() {
+        return true;
+    }
+
+    /**
+     * Whether this creature has a coat it would give up to shears right now.
+     *
+     * <p>The game's own answer, so a lamb, a sheep already sheared and a sheep that has eaten
+     * since are each judged the way a player holding shears would find them.
+     */
+    default boolean isShearable() {
+        return false;
+    }
+
+    /**
+     * Shears it, answering what came off.
+     *
+     * <p>The wool is handed back rather than dropped, because the chips that shear put what they
+     * take into a container. Nothing comes off a creature that was not {@link #isShearable}.
+     */
+    default Optional<Key> shear() {
+        return Optional.empty();
+    }
+
+    /**
+     * Whether this creature is grown, off its cooldown and would breed if it were fed.
+     *
+     * <p>The game's own answer again. A chip never decides for itself what may breed, so an animal
+     * the game learns to breed later works with nothing here changed.
+     */
+    default boolean isReadyToBreed() {
+        return false;
+    }
+
+    /** Whether this creature would be tempted into breeding by a particular item. */
+    default boolean isBredBy(Key item) {
+        return false;
+    }
+
+    /**
+     * Puts this creature in love, answering whether it took.
+     *
+     * <p>Nothing here makes a baby. Two creatures put in love beside each other are bred by the
+     * game, which is what keeps the cooldowns, the experience and every rule about what may breed
+     * with what out of this plugin entirely.
+     */
+    default boolean encourageBreeding() {
+        return false;
+    }
+
+    /**
      * Whether it is moving, rather than standing where it was.
      *
      * <p>Only whether, never how fast: what a movement sensor wants is the difference between a

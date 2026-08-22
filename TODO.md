@@ -5,7 +5,7 @@ are in `CLAUDE.md`; bugs found in the legacy code are in `FINDINGS.md`.
 
 ## Integrated circuits
 
-**130 chips are registered, under 159 model numbers** — 130 of their own, 26 self-triggering
+**134 chips are registered, under 163 model numbers** — 134 of their own, 26 self-triggering
 forms and 3 retired numbers kept as aliases. The extra fork's catalogue is complete; 4 model
 numbers were dropped by decision.
 
@@ -48,9 +48,9 @@ decision covers all of them.
 ### Upstream-only ICs
 
 Upstream registers 131 model numbers to this fork's 143, and 55 of those are shared. Counted
-against **this rewrite** rather than against the fork it ports, upstream has 62 numbers the
+against **this rewrite** rather than against the fork it ports, upstream has 58 numbers the
 catalogue here does not answer to: four are dropped by decision and **26 are chips already
-registered here under the extra fork's number**, so the real gap is **32**. Adding any of them is
+registered here under the extra fork's number**, so the real gap is **28**. Adding any of them is
 an optional addition rather than a compatibility obligation, and comes after everything above.
 
 That gap only shrinks by porting, so it is worth recomputing rather than trusting: it is upstream's
@@ -110,19 +110,19 @@ Note that `MC1421` is upstream's clock, so it cannot be taken at its own number 
 | Containers and logistics | `MC1209` collector — not the ranged one, this picks up only what lies on its own sign and hands it to a `Pipes` network — `MC1219` auto craft, `MC1229` sorter, `MC1233` item fan, `MC1242` stocker, `MC1243` distributer, `MC1245` cont stkr, `MC1268` sns cntns, `MC1269` sns p cntns |
 | Timing | `MC1421` clock, `MC2100` / `MC2101` / `MC2110` / `MC2111` delayers, `MC2500` / `MC2501` / `MC2510` / `MC2511` pulsers |
 | Weapons | `MC1218` block launch, `MC1224` time bomb, `MC1228` ent cannon, `MC1251` shoot fires, `MC1252` flame thrower, `MC1278` sentry gun |
-| Farming and animals | `MC1235` cultivator, `MC1244` animal harv, `MC1246` xp spawner, `MC1280` animal brd |
 | World control | `MC1232` time set, `MC1237` fake time |
 | Radio | `MC1276` radio station, `MC1277` radio player |
 
-Thirty-two, and they reconcile exactly against the sixty-two upstream numbers this catalogue does
-not answer to: four dropped by decision, twenty-six already here under the extra fork's number,
-these thirty-two.
+Twenty-eight, and they reconcile exactly against the fifty-eight upstream numbers this catalogue
+does not answer to: four dropped by decision, twenty-six already here under the extra fork's
+number, and these twenty-eight.
 
 **Done from upstream so far**, and no longer listed above: the terrain and liquid group — `MC1220`
 and `MC1221` block breakers, `MC1222` liq flood, `MC1223` terraform, `MC1225` pump, `MC1226`
-spigot, `MC1238` irrigate and `MC1248` driller — and the three sensors, `MC1265` inv sns itm,
-`MC1266` sense power and `MC1267` sense move. `MC1214` range coll was skipped as a true duplicate
-of `MCX203`.
+spigot, `MC1238` irrigate and `MC1248` driller; the three sensors, `MC1265` inv sns itm,
+`MC1266` sense power and `MC1267` sense move; and the farming and animal group, `MC1235`
+cultivator, `MC1244` animal harv, `MC1280` animal brd and `MC1246` xp spawner. `MC1214` range coll
+was skipped as a true duplicate of `MCX203`.
 
 The container group is the one that wants a decision before any of it is written. `Stockpile`
 aggregates the containers near a chip into one `Key`-to-count map, which loses which slot holds

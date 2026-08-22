@@ -50,6 +50,7 @@ import org.bukkit.block.data.type.Farmland;
 import org.bukkit.entity.Entity;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Item;
@@ -266,6 +267,15 @@ public record BukkitChipWorld(World world) implements ChipWorld {
             return false;
         }
         world.dropItem(toLocation(at), ItemStack.of(material, count));
+        return true;
+    }
+
+    @Override
+    public boolean spawnExperience(Vec3d at, int amount) {
+        if (amount < 1 || !isLoaded(at.toBlock()) || !isInBounds(at.toBlock())) {
+            return false;
+        }
+        world.spawn(toLocation(at), ExperienceOrb.class, orb -> orb.setExperience(amount));
         return true;
     }
 

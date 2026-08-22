@@ -4,6 +4,7 @@
 package com.xeonproductions.craftbookultimate.core.stock;
 
 import java.util.Map;
+import java.util.Set;
 import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
 
@@ -47,6 +48,22 @@ public interface Stockpile {
      * @return how many would not fit, which are the caller's problem to deal with
      */
     int give(Key item, int amount);
+
+    /**
+     * Wears one of these tools by a point of damage, answering whether there was one to wear.
+     *
+     * <p>Taking durability rather than taking the item, which is why it is not {@link #take}: a
+     * chip that works a tool wants the tool to last as long as it would in a hand, and to be gone
+     * when it would be. A tool worn past its last point is destroyed, as the game destroys one.
+     *
+     * <p>Answering false means there was nothing here to work with, which is a chip's cue to do
+     * nothing at all rather than to work for free.
+     *
+     * @param tools which items count, any one of which will do
+     */
+    default boolean wearOne(Set<Key> tools) {
+        return isUnlimited();
+    }
 
     /** Everything held, by kind. An unlimited stockpile reports nothing, since it holds no total. */
     Map<Key, Integer> contents();

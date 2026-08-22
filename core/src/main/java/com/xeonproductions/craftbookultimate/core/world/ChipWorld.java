@@ -161,6 +161,16 @@ public interface ChipWorld {
     boolean dropItem(Vec3d at, Key item, int count);
 
     /**
+     * Drops an orb of experience, answering whether it was dropped.
+     *
+     * <p>An orb rather than a level, because that is what the world holds: experience only exists
+     * loose in the world as an orb somebody has to walk over.
+     *
+     * @param amount how much experience the orb is worth
+     */
+    boolean spawnExperience(Vec3d at, int amount);
+
+    /**
      * Throws a projectile.
      *
      * <p>The spread is the game's own notion of inaccuracy, in the same units the dispensers use,

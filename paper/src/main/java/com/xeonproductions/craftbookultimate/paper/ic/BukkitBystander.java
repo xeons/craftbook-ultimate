@@ -10,6 +10,7 @@ import com.xeonproductions.craftbookultimate.core.illusion.Sky;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.paper.stock.ContainerStockpile;
+import io.papermc.paper.entity.Shearable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -19,10 +20,13 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Registry;
 import org.bukkit.damage.DamageSource;
 import org.bukkit.damage.DamageType;
+import org.bukkit.entity.Ageable;
 import org.bukkit.entity.Animals;
+import org.bukkit.entity.Breedable;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.GameMode;
@@ -50,6 +54,9 @@ import org.jspecify.annotations.NullMarked;
  */
 @NullMarked
 public record BukkitBystander(Entity entity) implements Bystander {
+
+    /** How long a creature stays in love, which is the span the game itself uses. */
+    private static final int LOVE_TICKS = 600;
 
     /** How fast something has to be going to count as moving, squared. */
     private static final double MOVING_SPEED_SQUARED = 0.01;
@@ -231,6 +238,59 @@ public record BukkitBystander(Entity entity) implements Bystander {
             riding.add(new BukkitBystander(passenger));
         }
         return riding;
+    }
+
+    @Override
+    public boolean isAdult() {
+        return !(entity instanceof Ageable ageable) || ageable.isAdult();
+    }
+
+    @Override
+    public boolean isShearable() {
+        return entity instanceof Shearable shearable && shearable.readyToBeSheared();
+    }
+
+    /**
+     * Shears a sheep and hands back its wool.
+     *
+     * <p>The coat is returned rather than dropped, because the chip that shears puts what it takes
+     * into a container. The game's own {@code shear} drops it on the floor instead, which is not
+     * what a harvester with a chest above it is for.
+     */
+    @Override
+    public Optional<Key> shear() {
+        if (!(entity instanceof Sheep sheep) || sheep.isSheared()) {
+            return Optional.empty();
+        }
+        Material wool = Material.matchMaterial(sheep.getColor().name() + "_WOOL");
+        if (wool == null) {
+            return Optional.empty();
+        }
+        sheep.setSheared(true);
+        return Optional.of(wool.getKey());
+    }
+
+    @Override
+    public boolean isReadyToBreed() {
+        return entity instanceof Breedable breedable && breedable.isAdult() && breedable.canBreed();
+    }
+
+    @Override
+    public boolean isBredBy(Key item) {
+        if (!(entity instanceof Animals animals)) {
+            return false;
+        }
+        Material food = Registry.MATERIAL.get(item);
+        return food != null && animals.isBreedItem(food);
+    }
+
+    @Override
+    public boolean encourageBreeding() {
+        if (!(entity instanceof Animals animals) || !animals.isAdult() || !animals.canBreed()) {
+            return false;
+        }
+        animals.setLoveModeTicks(LOVE_TICKS);
+        return true;
     }
 
     @Override

@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -51,6 +52,13 @@ public final class SimpleBystander implements Bystander {
     private boolean present = true;
 
     private boolean moving;
+
+    private boolean adult = true;
+    private Optional<Key> coat = Optional.empty();
+    private boolean shorn = false;
+    private boolean readyToBreed = false;
+    private boolean encouraged = false;
+    private final Set<Key> foods = new HashSet<>();
 
     public SimpleBystander(Key type) {
         this.type = type;
@@ -227,7 +235,78 @@ public final class SimpleBystander implements Bystander {
         return this;
     }
 
-    /** Makes it something that is not alive, such as a minecart or a dropped stack. */
+    /** Makes it a young animal, which the farming chips leave alone. */
+    public SimpleBystander young() {
+        this.adult = false;
+        return this;
+    }
+
+    /** Gives it a coat that shears would take, in the colour named. */
+    public SimpleBystander woolly(String colour) {
+        this.coat = Optional.of(Key.key("minecraft", colour + "_wool"));
+        return this;
+    }
+
+    /** Makes it grown, fed and off its cooldown, so a breeder would pair it up. */
+    public SimpleBystander readyToBreed(String... foods) {
+        this.readyToBreed = true;
+        for (String food : foods) {
+            this.foods.add(Key.key("minecraft", food));
+        }
+        return this;
+    }
+
+    /** Whether this creature was put in love. */
+    public boolean wasEncouraged() {
+        return encouraged;
+    }
+
+    /** Whether this creature had its coat taken. */
+    public boolean wasSheared() {
+        return coat.isEmpty() && shorn;
+    }
+
+    @Override
+    public boolean isAdult() {
+        return adult;
+    }
+
+    @Override
+    public boolean isShearable() {
+        return coat.isPresent() && adult;
+    }
+
+    @Override
+    public Optional<Key> shear() {
+        if (coat.isEmpty()) {
+            return Optional.empty();
+        }
+        Key taken = coat.get();
+        coat = Optional.empty();
+        shorn = true;
+        return Optional.of(taken);
+    }
+
+    @Override
+    public boolean isReadyToBreed() {
+        return readyToBreed && adult;
+    }
+
+    @Override
+    public boolean isBredBy(Key item) {
+        return foods.contains(item);
+    }
+
+    @Override
+    public boolean encourageBreeding() {
+        if (!isReadyToBreed()) {
+            return false;
+        }
+        encouraged = true;
+        return true;
+    }
+
+    /** Makes it moving, rather than standing where it is. */
     public SimpleBystander moving() {
         this.moving = true;
         return this;
@@ -238,7 +317,7 @@ public final class SimpleBystander implements Bystander {
         return moving;
     }
 
-    /** Something standing where it is, which is what a test says nothing about. */
+    /** Makes it something that is not alive, such as a minecart or a dropped stack. */
     public SimpleBystander asObject() {
         this.living = false;
         return this;

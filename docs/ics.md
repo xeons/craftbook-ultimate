@@ -134,7 +134,7 @@ watching for somebody to walk past. Those have a second model number for the
 self-triggering form, given as **runs on its own** in their entry, and `[MC1420]S`
 asks the same of any chip that can do it.
 
-There are **130 chips**, answering to **159 model numbers**. 51 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
+There are **134 chips**, answering to **163 model numbers**. 52 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
 
 ## Every chip
 
@@ -160,9 +160,12 @@ There are **130 chips**, answering to **159 model numbers**. 51 of them are rest
 | [`MC1225`](#mc1225--pump) | `PUMP` | Pump | Lifts still liquid from below into buckets in the container above. |
 | [`MC1226`](#mc1226--spigot) | `SPIGOT` | Spigot *(restricted)* | Pours liquid out of buckets in the container below into an area. |
 | [`MC1230`](#mc1230--daylight-sensor) | `SENSE DAY` | Daylight Sensor | Outputs high while the world time is within the day. |
+| [`MC1235`](#mc1235--cultivator) | `CULTIVATOR` | Cultivator | Tills earth in an area, wearing out a hoe from the container above. |
 | [`MC1238`](#mc1238--irrigator) | `IRRIGATE` | Irrigator | Waters dry farmland in an area from the container above. |
 | [`MC1240`](#mc1240--arrow-shooter) | `ARROW SHOOTER` | Arrow Shooter *(restricted)* | Shoots a single arrow out of the back of the sign. |
 | [`MC1241`](#mc1241--arrow-barrage) | `ARROW BARRAGE` | Arrow Barrage *(restricted)* | Shoots five arrows out of the back of the sign. |
+| [`MC1244`](#mc1244--animal-harvester) | `ANIMAL HARV` | Animal Harvester | Milks cows and shears sheep in an area into the container above. |
+| [`MC1246`](#mc1246--experience-spawner) | `XP SPAWNER` | Experience Spawner *(restricted)* | Drops orbs of experience above itself. |
 | [`MC1248`](#mc1248--driller) | `DRILLER` | Driller *(restricted)* | Digs a shaft downward, putting what it takes in the container above. |
 | [`MC1249`](#mc1249--block-replacer) | `BLOCK REPLACER` | Block Replacer *(restricted)* | Swaps a block between two kinds and lets the change spread outward. |
 | [`MC1250`](#mc1250--fireworks) | `FIREWORKS` | Fireworks *(restricted)* | Sets off a firework. |
@@ -173,6 +176,7 @@ There are **130 chips**, answering to **159 model numbers**. 51 of them are rest
 | [`MC1265`](#mc1265--item-not-near) | `INV SNS ITM` | Item Not Near | Outputs high while no matching stack is lying within range. |
 | [`MC1266`](#mc1266--power-sensor) | `SENSE POWER` | Power Sensor | Outputs high while power is arriving at somewhere else in the world. |
 | [`MC1267`](#mc1267--movement-sensor) | `SENSE MOVE` | Movement Sensor | Outputs high while something within range is moving. |
+| [`MC1280`](#mc1280--animal-breeder) | `ANIMAL BRD` | Animal Breeder | Feeds pairs of animals in an area so that they breed. |
 | [`MC1420`](#mc1420--clock) | `CLOCK` | Clock | Toggles its output every X ticks. |
 | [`MC1500`](#mc1500--player-online) | `PLAYER ONLINE?` | Player Online | Outputs high while a named player is logged in. |
 | [`MC1510`](#mc1510--player-messenger) | `MESSAGE PLAYER` | Player Messenger *(restricted)* | Says something to one named player, wherever they are. |
@@ -503,6 +507,17 @@ Outputs high while the world time is within the day.
 - **Runs on its own as** — `[MC0230]`
 - **Permission** — `craftbook.ic.safe.mc1230`
 
+### MC1235 — Cultivator
+
+Tills earth in an area, wearing out a hoe from the container above.
+
+- **Write on the sign** — `[MC1235]`, or `=CULTIVATOR`
+- **Line 3** — the area to till<br>  Takes `<radius>` `<x>,<y>,<z>` `<radius>=<x>:<y>:<z>`
+- **Line 4** — nothing
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc1235`
+
 ### MC1238 — Irrigator
 
 Waters dry farmland in an area from the container above.
@@ -536,6 +551,29 @@ Shoots five arrows out of the back of the sign.
 - **Wiring** — `AISO`, 4 inputs, 1 output
 - **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1241`
+- **Restricted** — not granted to everybody by default
+
+### MC1244 — Animal Harvester
+
+Milks cows and shears sheep in an area into the container above.
+
+- **Write on the sign** — `[MC1244]`, or `=ANIMAL HARV`
+- **Line 3** — the area to work<br>  Takes `<radius>` `<x>,<y>,<z>` `<radius>=<x>:<y>:<z>`
+- **Line 4** — nothing
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc1244`
+
+### MC1246 — Experience Spawner
+
+Drops orbs of experience above itself.
+
+- **Write on the sign** — `[MC1246]`, or `=XP SPAWNER`
+- **Line 3** — how much each orb is worth, up to a thousand
+- **Line 4** — how many orbs to drop, up to sixty-four
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.restricted.mc1246`
 - **Restricted** — not granted to everybody by default
 
 ### MC1248 — Driller
@@ -651,6 +689,17 @@ Outputs high while something within range is moving.
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1267`
+
+### MC1280 — Animal Breeder
+
+Feeds pairs of animals in an area so that they breed.
+
+- **Write on the sign** — `[MC1280]`, or `=ANIMAL BRD`
+- **Line 3** — the area to work<br>  Takes `<radius>` `<x>,<y>,<z>` `<radius>=<x>:<y>:<z>`
+- **Line 4** — nothing
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc1280`
 
 ### MC1420 — Clock
 

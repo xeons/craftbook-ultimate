@@ -5,6 +5,7 @@ package com.xeonproductions.craftbookultimate.core.stock;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
 
@@ -92,6 +93,23 @@ public final class SimpleStockpile implements Stockpile {
         return capacityPerItem == UNLIMITED_CAPACITY
                 ? Integer.MAX_VALUE
                 : Math.max(0, capacityPerItem - count(item));
+    }
+
+    /**
+     * Whether one of these tools is here to be worn.
+     *
+     * <p>Nothing is worn down: this holds counts rather than items, so it has no durability to
+     * take. What it answers is the half a chip's own behaviour turns on — whether there was a
+     * tool at all — and the wearing itself is the real inventory's business.
+     */
+    @Override
+    public boolean wearOne(Set<Key> tools) {
+        for (Key tool : tools) {
+            if (count(tool) > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

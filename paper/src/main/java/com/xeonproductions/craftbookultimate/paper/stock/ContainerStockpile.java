@@ -7,9 +7,12 @@ import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import java.util.HashMap;
 import java.util.Map;
 import net.kyori.adventure.key.Key;
+import java.util.HashSet;
+import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.Registry;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.ItemStack;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -69,6 +72,49 @@ public record ContainerStockpile(Inventory inventory) implements Stockpile {
 
         inventory.setStorageContents(contents);
         return amount - remaining;
+    }
+
+    /**
+     * Wears the first matching tool by a point, destroying it if that was its last.
+     *
+     * <p>The game's own damage rather than a count of uses: a tool worn here lasts exactly as long
+     * as it would in somebody's hand, unbreaking and all, and a chip working an enchanted tool
+     * gets the benefit of the enchantment without knowing anything about it.
+     */
+    @Override
+    public boolean wearOne(Set<Key> tools) {
+        Set<Material> kinds = new HashSet<>();
+        for (Key tool : tools) {
+            Material material = materialFor(tool);
+            if (material != null) {
+                kinds.add(material);
+            }
+        }
+        if (kinds.isEmpty()) {
+            return false;
+        }
+
+        ItemStack[] contents = inventory.getStorageContents();
+        for (int slot = 0; slot < contents.length; slot++) {
+            ItemStack stack = contents[slot];
+            if (stack == null || !kinds.contains(stack.getType())) {
+                continue;
+            }
+            if (!(stack.getItemMeta() instanceof Damageable worn)) {
+                continue;
+            }
+
+            int limit = stack.getType().getMaxDurability();
+            if (worn.getDamage() + 1 >= limit) {
+                contents[slot] = null;
+            } else {
+                worn.setDamage(worn.getDamage() + 1);
+                stack.setItemMeta(worn);
+            }
+            inventory.setStorageContents(contents);
+            return true;
+        }
+        return false;
     }
 
     @Override

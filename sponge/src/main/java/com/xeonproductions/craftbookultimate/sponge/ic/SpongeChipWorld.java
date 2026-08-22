@@ -290,6 +290,17 @@ public record SpongeChipWorld(ServerWorld world) implements ChipWorld {
     }
 
     @Override
+    public boolean spawnExperience(Vec3d at, int amount) {
+        if (amount < 1 || !isLoaded(at.toBlock()) || !isInBounds(at.toBlock())) {
+            return false;
+        }
+
+        Entity orb = world.createEntity(EntityTypes.EXPERIENCE_ORB.get(), Positions.toServer(at));
+        orb.offer(Keys.EXPERIENCE, amount);
+        return world.spawnEntity(orb);
+    }
+
+    @Override
     public boolean launchProjectile(
             Vec3d from, Key projectile, Vec3d direction, double speed, double spread) {
         if (!isLoaded(from.toBlock())) {

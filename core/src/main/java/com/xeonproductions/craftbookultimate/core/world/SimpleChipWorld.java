@@ -65,6 +65,7 @@ public final class SimpleChipWorld implements ChipWorld {
     private final Map<Vec3i, List<String>> books = new HashMap<>();
     private final List<Spawn> spawns = new ArrayList<>();
     private final List<Drop> droppedStacks = new ArrayList<>();
+    private final List<Orb> experience = new ArrayList<>();
     private final List<Shot> shots = new ArrayList<>();
     private final List<Firework> fireworks = new ArrayList<>();
     private final List<Vec3i> strikes = new ArrayList<>();
@@ -233,6 +234,23 @@ public final class SimpleChipWorld implements ChipWorld {
         droppedStacks.add(new Drop(at, item, count));
         return true;
     }
+
+    @Override
+    public boolean spawnExperience(Vec3d at, int amount) {
+        if (amount < 1 || !isLoaded(at.toBlock())) {
+            return false;
+        }
+        experience.add(new Orb(at, amount));
+        return true;
+    }
+
+    /** Every orb of experience this world has been asked for, in order. */
+    public List<Orb> experience() {
+        return List.copyOf(experience);
+    }
+
+    /** One orb of experience, as a test reads it back. */
+    public record Orb(Vec3d at, int amount) {}
 
     @Override
     public boolean launchProjectile(

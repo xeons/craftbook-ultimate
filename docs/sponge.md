@@ -11,9 +11,9 @@ that the Paper build can.
 ## What runs
 
 The chips. Writing a model reference on a wall sign makes a working chip, redstone drives it, and
-the chips in a chunk come and go with the chunk. It reads the same `config.yml` as the Paper build,
-through Configurate rather than Bukkit's YAML but against the same shared document, so an operator
-moving a server between the two keeps their settings.
+the chips in a chunk come and go with the chunk. It reads the same `config.yml` and the same
+`mechanics.yml` as the Paper build, through Configurate rather than Bukkit's YAML but against the
+same shared documents, so an operator moving a server between the two keeps their settings.
 
 The commands that do not need a mechanic run too: `/craftbook` and its `ic`, `reload`, `check` and
 `music` branches, `/var`, and the five switch commands.
@@ -42,7 +42,7 @@ into the game needs the jar on the **game module layer**, and what decides that 
 regard for where it was found. A plugin that quietly lost its old block spellings depending on which
 folder it was dropped in would be a miserable thing to work out.
 
-The settings file is written to `config/craftbookultimate/config.yml`, which is Sponge's own layout
+The settings files are written to `config/craftbookultimate/`, which is Sponge's own layout
 rather than the plugin choosing one.
 
 ## Which version

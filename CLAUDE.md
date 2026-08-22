@@ -36,7 +36,7 @@ to a hand and to redstone.**
 | Self-triggering chips (per-region tick tasks) | Done |
 | Time-based chips (clock, sensors, pulse, delays) | Done |
 | Commands (Brigadier, `/craftbook` and the switch commands) | Done |
-| Configuration (`config.yml`, `/craftbook reload`) | Done |
+| Configuration (`config.yml`, `mechanics.yml`, `/craftbook reload`) | Done |
 | Persistence | Switch passwords, switch positions, wireless bands |
 | World seam (`ChipWorld`, `SimpleChipWorld`) | Done |
 | World sensors (liquid, light, weather, block detector) | Done |
@@ -85,7 +85,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2144 tests passing**.
+**2179 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -157,21 +157,55 @@ back when it takes the structure down.
 
 ## Configuration
 
-`config.yml` in the plugin's folder, read into an immutable `Settings` value in `core`. Chips reach
-it through `ChipState#settings()`; nothing reads a file or a server from inside a chip, so a limit
-can be exercised in a plain unit test.
+**Two files** in the plugin's folder, read into one immutable `Settings` value in `core`.
+`config.yml` carries the chips, the carts, the vehicle habits and the pipes; `mechanics.yml`
+carries the mechanics. Chips reach the result through `ChipState#settings()`; nothing reads a file
+or a server from inside a chip, so a limit can be exercised in a plain unit test.
+
+`ConfigDocument` and `MechanicsDocument` hold every setting's name, default and explanation. A
+platform's `ConfigFile` supplies a `ConfigTree` per file and nothing else, which is what keeps the
+two bindings from drifting into disagreeing about what an operator's file means.
 
 `Configuration` is the one mutable holder saying which `Settings` is current. `/craftbook reload`
 replaces it and starts every chip again, so a change takes effect without a restart.
 
 Two rules shape what belongs there. A setting is either a limit on how far a chip may reach or a
-statement about what may run at all; nothing in the file changes what a sign *means*. And a sign
+statement about what may run at all; nothing in either file changes what a sign *means*. And a sign
 asking for more than it is allowed gets as much as it is allowed rather than being refused, so
 narrowing a limit shortens an existing build instead of breaking it.
 
 The settings that exist are the ones the legacy fork had, at the same defaults, so a world of
 existing signs behaves the same on a server that has never been configured. Do not add a setting
 for a limit a chip has always had on its own: those numbers are part of the frozen sign grammar.
+
+### The mechanics file
+
+`mechanics.yml` is **a section per mechanic, named after the mechanic**, which is how both source
+codebases arranged the same thing: upstream keeps one `mechanisms.yml` keyed by name, and the fork
+wrote a file per mechanic into a `mechanics/` folder. One file rather than twenty, because a folder
+of twenty is harder to grep, back up or paste into a bug report and the per-mechanic grouping — the
+part that actually helps — is the same either way.
+
+`Mechanics.ALL` in `core/mechanic/` is the one list of names, and every mechanic takes its own name
+from it. That name is asked for in three places which have to agree — the file writes a section
+with it, the settings record which are switched off by it, and each mechanic asks whether it may
+run by it — and a name spelt differently in any of those reads exactly like a mechanic somebody
+turned off.
+
+**Every mechanic gets a section**, including the ones with nothing to configure, so the file answers
+what there is as well as what may be changed. **Switching one off is that section saying
+`enabled: false`**, rather than a list of names somewhere else: a list sits in a different place
+from the settings it silences, so an operator who turned a mechanic off and then wonders why its
+settings do nothing has to know to look in two places.
+
+`MechanicSettings` mirrors it — one small record per mechanic (`GateSettings`, `ElevatorSettings`,
+`AreaSettings` and the rest), assembled through a builder. Two rules belong to no single mechanic
+and stay at the top of the file: whether redstone works a mechanic's sign, and whether a powered
+block goes out when its source is mined away.
+
+Nothing migrates an existing `config.yml`. A `mechanics.*` key left in the old file is ignored and
+the new file is written from the defaults, which is the "no backwards compatibility is owed to the
+config format" rule taken at its word.
 
 ## Scope decisions
 
@@ -253,8 +287,8 @@ nothing. Do not edit that page by hand.
 Everything else there is **written**, because what a mechanic does is not held as data anywhere to
 generate from. `docs/pipes.md` is the pattern: what the thing is, how to build one, the frozen
 grammar in full, worked examples, what to check when it does not work, and a section for operators
-at the end. `docs/variables.md`, `docs/testbed.md`, `docs/fireworks.md` and `docs/debugging.md`
-follow it.
+at the end. `docs/mechanics.md`, `docs/variables.md`, `docs/testbed.md`, `docs/fireworks.md` and
+`docs/debugging.md` follow it.
 
 ## What a chip's lines mean
 
@@ -479,9 +513,16 @@ names lives on disk rather than in the blocks beside the sign, so a sign naming 
 saved would otherwise be silently dead.
 
 Bridges and doors take their limits from the settings the building chips already use, because they
-are the same limits: `ics.max-width`, `ics.max-length` and `ics.placeable-blocks`. The `mechanics`
-section carries only what is peculiar to these — what a gate may be made of, how far it looks, how
-the lifts are worked, and how large and how many the saved areas may be.
+are the same limits: `ics.max-width`, `ics.max-length` and `ics.placeable-blocks` in `config.yml`.
+`mechanics.yml` carries only what is peculiar to each — what a gate may be made of, how far it
+looks, how the lifts are worked, and how large and how many the saved areas may be — under a
+section named after the mechanic.
+
+Whether a mechanic runs at all is one question with two halves, and `Settings#runsMechanicIn` is
+where it is asked: the world has to allow it and the mechanic has to be switched on. Every mechanic
+goes through it, sign or no sign. Half of them used to ask only the second half, so `disabled-worlds`
+reached the bridges and the gates but not the bounce blocks or the copiers, which is exactly the
+kind of half-working setting an operator has no way to notice.
 
 ## The saved areas
 

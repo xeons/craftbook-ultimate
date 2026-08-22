@@ -196,7 +196,7 @@ block — one reads light, the other reads redstone power — and the fork drew 
 bar twice to do it. One drawing now, two dials.
 
 Powering a block and then mining the redstone still leaves it lit. That is deliberate and old, and
-`mechanics.depower-on-source-removal` is how an operator asks for the other behaviour.
+`depower-on-source-removal` in `mechanics.yml` is how an operator asks for the other behaviour.
 
 Both halves of that are decided in the break handler, because the server decides neither for us:
 `BlockRedstoneEvent` is raised by a source when its own power changes, and breaking one goes
@@ -212,11 +212,11 @@ what would not pay for a whole one — the fork set them to zero and gave back w
 so a builder with nineteen points and a sixteen-point bottle lost the other three.
 
 `Snow` is not a mechanic anybody builds. Like the vehicle habits it changes the world everywhere the
-moment it is switched on, so it has a settings record of its own under `mechanics.snow` and every
-part of it starts off. `core/snow/` turns the game's two snow blocks into one number — a depth from
-nought to eight — which is what lets the piling, slumping and melting be arithmetic and be tested
-without a server. That paid for itself immediately: a test caught snow piled above a full block
-falling back into it and piling again for ever.
+moment it is switched on, so it has a settings record of its own under `Snow` in `mechanics.yml`
+and every part of it starts off. `core/snow/` turns the game's two snow blocks into one number —
+a depth from nought to eight — which is what lets the piling, slumping and melting be arithmetic
+and be tested without a server. That paid for itself immediately: a test caught snow piled above
+a full block falling back into it and piling again for ever.
 
 **Not ported with it:** the fork's automatic mode for `XPStorer`, an `[XP]` sign and a chest that
 gathered loose experience orbs from a distance. It is off by default there too, so a server behaves
@@ -260,7 +260,7 @@ itself; that is a thing to agree on rather than a port.
 | Piece | Why it is needed |
 | --- | --- |
 | Persistence | The switch passwords, the switch positions and the wireless bands are saved. What a chip keeps on its own sign is saved with the world. What remains unsaved is deliberate: a destination republishes itself when it loads, and a cart's rider says again where they are going. The scripts in `fireworks/`, `midi/` and `playlist/` are read, never written. |
-| Configuration | `config.yml` carries the settings the chips read, the minecart mechanics read, and the sign mechanics read. Each further mechanic will want its own entries as it arrives. |
+| Configuration | `config.yml` carries what the chips, the carts, the vehicle habits and the pipes read; `mechanics.yml` carries the mechanics, a section each, named after the mechanic. A further mechanic wants a name in `Mechanics.ALL` and a section of its own. |
 | Storage | The saved areas live in `areas/`, two files each, in the game's own structure format. Nothing else a mechanic uses is written down. |
 | Commands | `/craftbook` reads the catalogue and the switch commands drive `MCX120` and `MCX121`, all through Brigadier. The per-mechanic commands come with their mechanics. |
 | Permissions | Every chip's permission is registered under `craftbook.ic.safe.*` or `craftbook.ic.restricted.*` and checked on creation. The sign mechanics register a pair each, `craftbook.<name>` to build and `craftbook.<name>.use` to work, and both are checked. Nothing checks a chip at run time. |
@@ -284,8 +284,8 @@ at all. Worth checking early, in roughly this order:
 10. A potion area doses whoever walks through it without stripping what they had drunk.
 11. A firework script in `fireworks/` plays, pauses and stops when it should.
 12. A sensor under a floor reports whoever walks over it, and ignores a vanished player.
-13. `config.yml` is written on first run, a narrowed limit shortens a bridge, and
-    `/craftbook reload` picks up a change without a restart.
+13. `config.yml` and `mechanics.yml` are written on first run, a narrowed limit shortens a bridge,
+    and `/craftbook reload` picks up a change without a restart.
 14. A message nearby reads a script out of a book, waits where the book says to, and never
     names a vanished player in the log.
 15. A melody plays a MIDI file dropped in `midi/` through a note block, works down a playlist,

@@ -16,11 +16,11 @@ reading first.
 In development, and not yet released.
 
 117 chips are wired and working under 146 model numbers, along with the minecart mechanics, both
-pipe grammars, and the bridge, door, gate, lift and toggled-area sign mechanics. **2144 tests
+pipe grammars, and the bridge, door, gate, lift and toggled-area sign mechanics. **2179 tests
 pass.** What is left is inventoried in [TODO.md](TODO.md).
 
 The **Paper build is the complete one.** The Sponge build shares the same domain model and the same
-`config.yml`; the chips run on it, the commands that do not need a mechanic answer, and both have
+settings files; the chips run on it, the commands that do not need a mechanic answer, and both have
 been watched working in game. The cart mechanics, the pipes, the sign mechanics, the toggled areas
 and the debugging tools are not bound there yet.
 [docs/sponge.md](docs/sponge.md) says what is there, what is not, and what it will never do — and
@@ -153,6 +153,7 @@ is kept, because it is also just a cleaner way to write those chips.
 | Page | What it covers |
 | --- | --- |
 | [docs/ics.md](docs/ics.md) | Every chip, its model number, wiring and what its sign lines mean. Generated from the catalogue; do not edit by hand. |
+| [docs/mechanics.md](docs/mechanics.md) | `mechanics.yml`: what every mechanic is called, what it may be told, and what moved out of `config.yml`. |
 | [docs/pipes.md](docs/pipes.md) | Moving items along a run of blocks, in both grammars. |
 | [docs/variables.md](docs/variables.md) | Named numbers the server shares, and the three chips that read them. |
 | [docs/fireworks.md](docs/fireworks.md) | Writing a firework display script. |

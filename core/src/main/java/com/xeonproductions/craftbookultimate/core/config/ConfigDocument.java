@@ -3,6 +3,7 @@
 
 package com.xeonproductions.craftbookultimate.core.config;
 
+import com.xeonproductions.craftbookultimate.core.mechanic.SneakState;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -113,6 +114,22 @@ public final class ConfigDocument {
     private static final String LIGHT_SWITCH_LIGHTS = "mechanics.light-switch-max-lights";
     private static final String LIGHT_STONE_ITEM = "mechanics.light-stone-item";
     private static final String AMMETER_ITEM = "mechanics.ammeter-item";
+    private static final String BOUNCE_BLOCKS = "mechanics.bounce-blocks";
+    private static final String AUTO_BOUNCE_BLOCKS = "mechanics.auto-bounce-blocks";
+    private static final String BOUNCE_SENSITIVITY = "mechanics.bounce-sensitivity";
+    private static final String TELEPORTER_BUTTONS = "mechanics.teleporter-buttons";
+    private static final String TELEPORTER_REQUIRE_SIGN = "mechanics.teleporter-require-sign";
+    private static final String TELEPORTER_RANGE = "mechanics.teleporter-range";
+    private static final String XP_BLOCK = "mechanics.xp-storer-block";
+    private static final String XP_PER_BOTTLE = "mechanics.xp-per-bottle";
+    private static final String XP_REQUIRES_BOTTLE = "mechanics.xp-requires-bottle";
+    private static final String XP_SNEAK = "mechanics.xp-sneak-state";
+    private static final String SNOW_PILING = "mechanics.snow.piling";
+    private static final String SNOW_DISPERSION = "mechanics.snow.dispersion";
+    private static final String SNOW_FREEZES = "mechanics.snow.freezes-water";
+    private static final String SNOW_MELTS = "mechanics.snow.melts-in-sunlight";
+    private static final String SNOW_PARTIAL_MELT = "mechanics.snow.partial-melt-only";
+    private static final String SNOWBALLS_PILE = "mechanics.snow.snowballs-pile";
 
     /** Puts the default of every setting the file does not already carry into it. */
     private static void fillIn(ConfigTree tree) {
@@ -183,6 +200,23 @@ public final class ConfigDocument {
         setIfAbsent(tree, LIGHT_SWITCH_LIGHTS, mechanics.lightSwitchMaxLights());
         setIfAbsent(tree, LIGHT_STONE_ITEM, mechanics.lightStoneItem().asString());
         setIfAbsent(tree, AMMETER_ITEM, mechanics.ammeterItem().asString());
+        setIfAbsent(tree, BOUNCE_BLOCKS, names(mechanics.bounceBlocks()));
+        mechanics.autoBounceBlocks().forEach((block, throwing) ->
+                setIfAbsent(tree, AUTO_BOUNCE_BLOCKS + "." + block.value(), throwing));
+        setIfAbsent(tree, BOUNCE_SENSITIVITY, mechanics.bounceSensitivity());
+        setIfAbsent(tree, TELEPORTER_BUTTONS, mechanics.teleporterButtons());
+        setIfAbsent(tree, TELEPORTER_REQUIRE_SIGN, mechanics.teleporterRequireSign());
+        setIfAbsent(tree, TELEPORTER_RANGE, mechanics.teleporterRange());
+        setIfAbsent(tree, XP_BLOCK, mechanics.xpStorerBlock().asString());
+        setIfAbsent(tree, XP_PER_BOTTLE, mechanics.xpPerBottle());
+        setIfAbsent(tree, XP_REQUIRES_BOTTLE, mechanics.xpRequiresBottle());
+        setIfAbsent(tree, XP_SNEAK, mechanics.xpSneakState().written());
+        setIfAbsent(tree, SNOW_PILING, mechanics.snow().piling());
+        setIfAbsent(tree, SNOW_DISPERSION, mechanics.snow().dispersion());
+        setIfAbsent(tree, SNOW_FREEZES, mechanics.snow().freezesWater());
+        setIfAbsent(tree, SNOW_MELTS, mechanics.snow().meltsInSunlight());
+        setIfAbsent(tree, SNOW_PARTIAL_MELT, mechanics.snow().partialMeltOnly());
+        setIfAbsent(tree, SNOWBALLS_PILE, mechanics.snow().snowballsPile());
     }
 
     private static void setIfAbsent(ConfigTree tree, String path, Object value) {
@@ -489,6 +523,70 @@ public final class ConfigDocument {
 
         tree.comment(AMMETER_ITEM, List.of(
                 "What is held up to a block to read how much redstone power it carries."));
+
+        tree.comment(BOUNCE_BLOCKS, List.of(
+                "",
+                "What throws somebody who jumps on it, when a [Jump] sign under it says how hard."));
+
+        tree.comment(AUTO_BOUNCE_BLOCKS, List.of(
+                "What throws somebody with no sign at all, and how hard. The throw is written the",
+                "way a sign writes it: a number for straight up, three for a push along the",
+                "ground, and a leading ! to ignore which way the jumper is facing."));
+
+        tree.comment(BOUNCE_SENSITIVITY, List.of(
+                "How much of a jump counts as one. Lower notices a smaller hop."));
+
+        tree.comment(TELEPORTER_BUTTONS, List.of(
+                "",
+                "Whether a button on the far side of a teleporter sign works it, so a builder can",
+                "hide the sign behind the wall."));
+
+        tree.comment(TELEPORTER_REQUIRE_SIGN, List.of(
+                "Whether the far end needs a teleporter sign of its own. On, this means a",
+                "teleporter can only send somebody where a builder has said they may arrive."));
+
+        tree.comment(TELEPORTER_RANGE, List.of(
+                "How far a teleporter may send somebody. A negative number is no limit."));
+
+        tree.comment(XP_BLOCK, List.of(
+                "",
+                "What turns the experience somebody is carrying into bottles when it is clicked."));
+
+        tree.comment(XP_PER_BOTTLE, List.of(
+                "How much experience one bottle costs. Whatever will not pay for a whole bottle",
+                "stays with the player rather than being lost."));
+
+        tree.comment(XP_REQUIRES_BOTTLE, List.of(
+                "Whether the player has to be carrying empty bottles for it to fill."));
+
+        tree.comment(XP_SNEAK, List.of(
+                "Whether the player must be crouching to use one: must, must-not or either."));
+
+        tree.comment("mechanics.snow", List.of(
+                "",
+                "How snow behaves. Every part of it is off out of the box: a server that has never",
+                "been configured runs snow exactly as the game does. Unlike the mechanics above,",
+                "nothing here is built and nothing has a sign — switching any of it on changes",
+                "every snowy block in the world."));
+
+        tree.comment(SNOW_PILING, List.of(
+                "Whether snow keeps piling past the height the game stops at."));
+
+        tree.comment(SNOW_DISPERSION, List.of(
+                "Whether a pile slumps into the lower ground beside it, so drifts settle into a",
+                "slope rather than standing in columns."));
+
+        tree.comment(SNOW_FREEZES, List.of("Whether water under snow turns to ice."));
+
+        tree.comment(SNOW_MELTS, List.of(
+                "Whether snow in the warm and under open sky goes away again."));
+
+        tree.comment(SNOW_PARTIAL_MELT, List.of(
+                "Whether melting stops at the depth the game would have left, rather than",
+                "clearing the ground entirely."));
+
+        tree.comment(SNOWBALLS_PILE, List.of(
+                "Whether a thrown snowball leaves snow where it lands."));
     }
 
     /** Turns what the file says into the settings the chips read. */
@@ -514,6 +612,19 @@ public final class ConfigDocument {
     private MechanicSettings mechanics(ConfigTree tree, MechanicSettings defaults) {
         Set<Key> gateBlocks = names.blocks(tree.strings(GATE_BLOCKS), report);
         Set<Key> fireBlocks = names.blocks(tree.strings(FIRE_BLOCKS), report);
+        Set<Key> bounceBlocks = names.blocks(tree.strings(BOUNCE_BLOCKS), report);
+
+        // Each named block carries the throw it gives, in the same grammar a [Jump] sign uses.
+        Map<Key, String> autoBounces = new LinkedHashMap<>();
+        for (String written : tree.childrenOf(AUTO_BOUNCE_BLOCKS)) {
+            Optional<Key> block = names.block(written);
+            if (block.isEmpty()) {
+                report.accept("No block called " + written + ", so nothing bounces off it");
+                continue;
+            }
+            autoBounces.put(block.get(), tree.text(AUTO_BOUNCE_BLOCKS + "." + written, ""));
+        }
+
         return new MechanicSettings(
                 Set.copyOf(tree.strings(MECHANICS_DISABLED)),
                 tree.bool(MECHANICS_REDSTONE, defaults.redstone()),
@@ -534,7 +645,20 @@ public final class ConfigDocument {
                 names.block(tree.text(LIGHT_STONE_ITEM, defaults.lightStoneItem().asString()))
                         .orElseGet(defaults::lightStoneItem),
                 names.block(tree.text(AMMETER_ITEM, defaults.ammeterItem().asString()))
-                        .orElseGet(defaults::ammeterItem));
+                        .orElseGet(defaults::ammeterItem),
+                bounceBlocks.isEmpty() ? defaults.bounceBlocks() : bounceBlocks,
+                autoBounces.isEmpty() ? defaults.autoBounceBlocks() : autoBounces,
+                tree.number(BOUNCE_SENSITIVITY, defaults.bounceSensitivity()),
+                tree.bool(TELEPORTER_BUTTONS, defaults.teleporterButtons()),
+                tree.bool(TELEPORTER_REQUIRE_SIGN, defaults.teleporterRequireSign()),
+                tree.number(TELEPORTER_RANGE, defaults.teleporterRange()),
+                names.block(tree.text(XP_BLOCK, defaults.xpStorerBlock().asString()))
+                        .orElseGet(defaults::xpStorerBlock),
+                tree.integer(XP_PER_BOTTLE, defaults.xpPerBottle()),
+                tree.bool(XP_REQUIRES_BOTTLE, defaults.xpRequiresBottle()),
+                SneakState.of(tree.text(XP_SNEAK, defaults.xpSneakState().written()),
+                        defaults.xpSneakState()),
+                snow(tree, defaults.snow()));
     }
 
     /** Reads what an operator has said about the minecart mechanics. */
@@ -596,6 +720,17 @@ public final class ConfigDocument {
                 tree.bool(BOAT_RUN_DOWN, defaults.runDownEntities()),
                 tree.bool(BOAT_RUN_DOWN_HURTS, defaults.runDownOnlyHurts()),
                 tree.bool(BOAT_RUN_DOWN_BOATS, defaults.runDownOtherBoats()));
+    }
+
+    /** How snow piles, slumps and melts. */
+    private static SnowSettings snow(ConfigTree tree, SnowSettings defaults) {
+        return new SnowSettings(
+                tree.bool(SNOW_PILING, defaults.piling()),
+                tree.bool(SNOW_DISPERSION, defaults.dispersion()),
+                tree.bool(SNOW_FREEZES, defaults.freezesWater()),
+                tree.bool(SNOW_MELTS, defaults.meltsInSunlight()),
+                tree.bool(SNOW_PARTIAL_MELT, defaults.partialMeltOnly()),
+                tree.bool(SNOWBALLS_PILE, defaults.snowballsPile()));
     }
 
     /** How every cart behaves, whether or not it is standing on a mechanism. */

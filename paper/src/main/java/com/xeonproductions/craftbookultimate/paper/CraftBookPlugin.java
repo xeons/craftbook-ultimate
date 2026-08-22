@@ -46,10 +46,17 @@ import com.xeonproductions.craftbookultimate.paper.ic.BukkitRoster;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.core.copier.Copiers;
 import com.xeonproductions.craftbookultimate.core.copier.SignClipboard;
+import com.xeonproductions.craftbookultimate.core.mechanic.Bounces;
+import com.xeonproductions.craftbookultimate.core.mechanic.Teleporters;
+import com.xeonproductions.craftbookultimate.core.mechanic.XpStorers;
 import com.xeonproductions.craftbookultimate.core.meter.Meters;
 import com.xeonproductions.craftbookultimate.paper.copier.CopierListener;
 import com.xeonproductions.craftbookultimate.paper.copier.SignCopierListener;
 import com.xeonproductions.craftbookultimate.paper.listener.BoatHabitListener;
+import com.xeonproductions.craftbookultimate.paper.mechanic.BounceListener;
+import com.xeonproductions.craftbookultimate.paper.mechanic.TeleporterListener;
+import com.xeonproductions.craftbookultimate.paper.mechanic.XpStorerListener;
+import com.xeonproductions.craftbookultimate.paper.snow.SnowListener;
 import com.xeonproductions.craftbookultimate.paper.meter.MeterListener;
 import com.xeonproductions.craftbookultimate.paper.powerable.LightSwitchListener;
 import com.xeonproductions.craftbookultimate.paper.powerable.PowerableListener;
@@ -184,11 +191,19 @@ public final class CraftBookPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new SignCopierListener(chipServices.configuration(), signClipboard), this);
         getServer().getPluginManager().registerEvents(
-                new PowerableListener(chipServices.configuration()), this);
+                new PowerableListener(chipServices.configuration(), regionSchedulers), this);
         getServer().getPluginManager().registerEvents(
                 new LightSwitchListener(chipServices.configuration()), this);
         getServer().getPluginManager().registerEvents(
                 new MeterListener(chipServices.configuration()), this);
+        getServer().getPluginManager().registerEvents(
+                new BounceListener(chipServices.configuration()), this);
+        getServer().getPluginManager().registerEvents(
+                new TeleporterListener(chipServices.configuration()), this);
+        getServer().getPluginManager().registerEvents(
+                new XpStorerListener(chipServices.configuration()), this);
+        getServer().getPluginManager().registerEvents(
+                new SnowListener(chipServices.configuration()), this);
         getServer().getPluginManager().registerEvents(
                 new PipeListener(
                         new PipeDispatcher(chipServices.configuration(), pipeNetworks),
@@ -249,6 +264,7 @@ public final class CraftBookPlugin extends JavaPlugin {
                 "Write a filter on a pipe's sign.", PermissionDefault.TRUE);
         declareCopierPermissions(manager);
         declareLightPermissions(manager);
+        declareJumpAndTeleportPermissions(manager);
         declareVariablePermissions(manager);
         declare(manager, TestbedCommands.BUILD,
                 "Build a test bed carrying a rig for every chip.", PermissionDefault.OP);
@@ -265,6 +281,17 @@ public final class CraftBookPlugin extends JavaPlugin {
             manager.addPermission(node);
             node.addParent(definition.restricted() ? restricted : safe, true);
         }
+    }
+
+    /** What a bounce block and a teleporter need, which is a pair each. */
+    private static void declareJumpAndTeleportPermissions(PluginManager manager) {
+        declare(manager, Bounces.BUILD, "Make a bounce block.", PermissionDefault.OP);
+        declare(manager, Bounces.USE, "Be thrown by a bounce block.", PermissionDefault.TRUE);
+        declare(manager, Teleporters.BUILD, "Make a teleporter.", PermissionDefault.OP);
+        declare(manager, Teleporters.USE, "Use a teleporter.", PermissionDefault.TRUE);
+        declare(manager, XpStorers.BUILD, "Make an experience store.", PermissionDefault.OP);
+        declare(manager, XpStorers.USE,
+                "Bottle your experience at one.", PermissionDefault.TRUE);
     }
 
     /**

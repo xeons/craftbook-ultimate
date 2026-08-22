@@ -5,10 +5,14 @@ package com.xeonproductions.craftbookultimate.core.config;
 
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import net.kyori.adventure.key.Key;
+import com.xeonproductions.craftbookultimate.core.mechanic.SneakState;
+import com.xeonproductions.craftbookultimate.core.mechanic.XpStorers;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -38,6 +42,17 @@ import org.jspecify.annotations.NullMarked;
  *     otherwise
  * @param lightStoneItem what is held to read a light level off a block
  * @param ammeterItem what is held to read a redstone power level off a block
+ * @param bounceBlocks what may throw somebody when a [Jump] sign is under it
+ * @param autoBounceBlocks what throws somebody with no sign at all, and how hard
+ * @param bounceSensitivity how much of a jump counts as one
+ * @param teleporterButtons whether a button opposite a teleporter sign works it
+ * @param teleporterRequireSign whether the far end of a teleport needs a sign of its own
+ * @param teleporterRange how far a teleporter may send somebody, or a negative number for no limit
+ * @param xpStorerBlock what turns experience into bottles when it is clicked
+ * @param xpPerBottle how much experience one bottle costs
+ * @param xpRequiresBottle whether the player must be carrying empty bottles to fill
+ * @param xpSneakState whether the player must be crouching to use one
+ * @param snow how snow piles, slumps and melts
  */
 @NullMarked
 public record MechanicSettings(
@@ -57,7 +72,18 @@ public record MechanicSettings(
         int lightSwitchRange,
         int lightSwitchMaxLights,
         Key lightStoneItem,
-        Key ammeterItem) {
+        Key ammeterItem,
+        Set<Key> bounceBlocks,
+        Map<Key, String> autoBounceBlocks,
+        double bounceSensitivity,
+        boolean teleporterButtons,
+        boolean teleporterRequireSign,
+        double teleporterRange,
+        Key xpStorerBlock,
+        int xpPerBottle,
+        boolean xpRequiresBottle,
+        SneakState xpSneakState,
+        SnowSettings snow) {
 
     /** Every kind of fence, which is what most gates are made of. */
     private static final String[] FENCES = {
@@ -97,18 +123,42 @@ public record MechanicSettings(
     /** What is held up to a block to read its redstone power. */
     public static final Key DEFAULT_AMMETER_ITEM = Key.key("minecraft:charcoal");
 
+    /** What throws somebody when a sign under it says how hard. */
+    public static final Key DEFAULT_BOUNCE_BLOCK = Key.key("minecraft:diamond_block");
+
+    /** What throws somebody with no sign at all. */
+    public static final Key DEFAULT_AUTO_BOUNCE_BLOCK = Key.key("minecraft:orange_terracotta");
+
+    /** How hard it throws them, in the frozen grammar a sign would use. */
+    public static final String DEFAULT_AUTO_BOUNCE = "2,1,2";
+
+    /** How much of a jump counts as one, as the fork had it. */
+    public static final double DEFAULT_BOUNCE_SENSITIVITY = 0.1;
+
+    /** What turns experience into bottles, as the fork had it. */
+    public static final Key DEFAULT_XP_STORER_BLOCK = Key.key("minecraft:spawner");
+
     /** The mechanics as they have always been built. */
     public static final MechanicSettings DEFAULTS = new MechanicSettings(
             Set.of(), true, defaultGateBlocks(), 5, true, true, true, 5, 5000, 30,
             DEFAULT_GLOWSTONE_OFF, Set.of(DEFAULT_FIRE_BLOCK), false,
             DEFAULT_LIGHT_SWITCH_RANGE, DEFAULT_LIGHT_SWITCH_LIGHTS, DEFAULT_LIGHT_STONE_ITEM,
-            DEFAULT_AMMETER_ITEM);
+            DEFAULT_AMMETER_ITEM,
+            Set.of(DEFAULT_BOUNCE_BLOCK),
+            Map.of(DEFAULT_AUTO_BOUNCE_BLOCK, DEFAULT_AUTO_BOUNCE),
+            DEFAULT_BOUNCE_SENSITIVITY, true, true, -1,
+            DEFAULT_XP_STORER_BLOCK, XpStorers.DEFAULT_PER_BOTTLE, false, SneakState.MUST_NOT,
+            SnowSettings.DEFAULTS);
 
     /** Copies the collections and holds every limit to something a mechanic can work with. */
     public MechanicSettings {
         disabled = lowercased(disabled);
         gateBlocks = Collections.unmodifiableSet(new LinkedHashSet<>(gateBlocks));
         fireBlocks = Collections.unmodifiableSet(new LinkedHashSet<>(fireBlocks));
+        bounceBlocks = Collections.unmodifiableSet(new LinkedHashSet<>(bounceBlocks));
+        autoBounceBlocks = Collections.unmodifiableMap(new LinkedHashMap<>(autoBounceBlocks));
+        bounceSensitivity = Math.max(0, bounceSensitivity);
+        xpPerBottle = Math.max(1, xpPerBottle);
         lightSwitchRange = Math.max(0, lightSwitchRange);
         lightSwitchMaxLights = Math.max(0, lightSwitchMaxLights);
         gateRadius = Math.clamp(gateRadius, 1, MAX_GATE_RADIUS);
@@ -153,7 +203,10 @@ public record MechanicSettings(
                 liftJumping, liftButtons, liftTolerance,
                 maxAreaBlocks, maxAreasPerNamespace,
                 glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
+                bounceBlocks, autoBounceBlocks, bounceSensitivity,
+                teleporterButtons, teleporterRequireSign, teleporterRange,
+                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
     }
 
     /** These settings with redstone allowed or refused. */
@@ -163,7 +216,10 @@ public record MechanicSettings(
                 liftJumping, liftButtons, liftTolerance,
                 maxAreaBlocks, maxAreasPerNamespace,
                 glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
+                bounceBlocks, autoBounceBlocks, bounceSensitivity,
+                teleporterButtons, teleporterRequireSign, teleporterRange,
+                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
     }
 
     /** These settings with a different set of gate materials. */
@@ -173,7 +229,10 @@ public record MechanicSettings(
                 liftJumping, liftButtons, liftTolerance,
                 maxAreaBlocks, maxAreasPerNamespace,
                 glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
+                bounceBlocks, autoBounceBlocks, bounceSensitivity,
+                teleporterButtons, teleporterRequireSign, teleporterRange,
+                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
     }
 
     /** These settings with gates reaching a different distance. */
@@ -183,7 +242,10 @@ public record MechanicSettings(
                 liftJumping, liftButtons, liftTolerance,
                 maxAreaBlocks, maxAreasPerNamespace,
                 glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
+                bounceBlocks, autoBounceBlocks, bounceSensitivity,
+                teleporterButtons, teleporterRequireSign, teleporterRange,
+                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
     }
 
     /** These settings with clicking a gate's material allowed or refused. */
@@ -193,7 +255,10 @@ public record MechanicSettings(
                 liftJumping, liftButtons, liftTolerance,
                 maxAreaBlocks, maxAreasPerNamespace,
                 glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
+                bounceBlocks, autoBounceBlocks, bounceSensitivity,
+                teleporterButtons, teleporterRequireSign, teleporterRange,
+                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
     }
 
     /** These settings with jump lifts allowed or refused. */
@@ -203,7 +268,10 @@ public record MechanicSettings(
                 allowed, liftButtons, liftTolerance,
                 maxAreaBlocks, maxAreasPerNamespace,
                 glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
+                bounceBlocks, autoBounceBlocks, bounceSensitivity,
+                teleporterButtons, teleporterRequireSign, teleporterRange,
+                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
     }
 
     /** These settings with button lifts allowed or refused. */
@@ -212,7 +280,10 @@ public record MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, gateClicking,
                 liftJumping, allowed, liftTolerance, maxAreaBlocks, maxAreasPerNamespace,
                 glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
+                bounceBlocks, autoBounceBlocks, bounceSensitivity,
+                teleporterButtons, teleporterRequireSign, teleporterRange,
+                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
     }
 
     /** These settings with a different limit on how big one area may be. */
@@ -221,7 +292,10 @@ public record MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, gateClicking,
                 liftJumping, liftButtons, liftTolerance, blocks, maxAreasPerNamespace,
                 glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
+                bounceBlocks, autoBounceBlocks, bounceSensitivity,
+                teleporterButtons, teleporterRequireSign, teleporterRange,
+                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
     }
 
     /** These settings with a different limit on how many areas one name may have. */
@@ -230,7 +304,10 @@ public record MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, gateClicking,
                 liftJumping, liftButtons, liftTolerance, maxAreaBlocks, areas,
                 glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
+                bounceBlocks, autoBounceBlocks, bounceSensitivity,
+                teleporterButtons, teleporterRequireSign, teleporterRange,
+                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
     }
 
     /** These settings with lifts dropping somebody a different distance to find a floor. */
@@ -239,7 +316,10 @@ public record MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, gateClicking,
                 liftJumping, liftButtons, tolerance, maxAreaBlocks, maxAreasPerNamespace,
                 glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
+                bounceBlocks, autoBounceBlocks, bounceSensitivity,
+                teleporterButtons, teleporterRequireSign, teleporterRange,
+                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
     }
 
     /** What a gate may be made of when nobody has said otherwise. */

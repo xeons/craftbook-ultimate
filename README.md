@@ -16,13 +16,16 @@ reading first.
 In development, and not yet released.
 
 117 chips are wired and working under 146 model numbers, along with the minecart mechanics, both
-pipe grammars, and the bridge, door, gate, lift and toggled-area sign mechanics. **2010 tests
+pipe grammars, and the bridge, door, gate, lift and toggled-area sign mechanics. **2050 tests
 pass.** What is left is inventoried in [TODO.md](TODO.md).
 
 The **Paper build is the complete one.** The Sponge build shares the same domain model and the same
-`config.yml`, and the chips run on it — but the commands, the cart mechanics, the pipes, the sign
-mechanics and the debugging tools are not bound there yet, and none of it has been run on a server.
-[docs/sponge.md](docs/sponge.md) says what is there, what is not, and what it will never do.
+`config.yml`; the chips run on it, the commands that do not need a mechanic answer, and both have
+been watched working in game. The cart mechanics, the pipes, the sign mechanics, the toggled areas
+and the debugging tools are not bound there yet.
+[docs/sponge.md](docs/sponge.md) says what is there, what is not, and what it will never do — and
+carries the one thing to know before running it, which is that a stock SpongeVanilla 26.2 release
+candidate cannot host a vanilla client until an upstream one-line bug is fixed.
 
 ## Where this comes from
 
@@ -133,6 +136,12 @@ source-compatible with both, a class file is compiled against one of them. Compi
 plainer than relocating a text library through every seam in the plugin. The consequence worth
 knowing: **an Adventure 5-only API used anywhere in `core` breaks the Sponge build**, at compile
 time, which is the right time.
+
+A command is split the same way. Its grammar is per-platform, because Paper's is Brigadier and
+SpongeAPI 20 exposes none, but what a command *does* lives once in `core/command/` behind a `Caller`
+seam — what to say back, what the caller may do, what they are called, where they are standing. Two
+platforms telling a builder different things about the same variable would be worse than either
+wording alone.
 
 The Paper build is **Folia-compatible** — region schedulers throughout, and no mechanic reaches
 across a region boundary. SpongeVanilla ticks every world on one thread, so there the schedulers

@@ -15,9 +15,20 @@ the chips in a chunk come and go with the chunk. It reads the same `config.yml` 
 through Configurate rather than Bukkit's YAML but against the same shared document, so an operator
 moving a server between the two keeps their settings.
 
-Not yet bound here: the commands, the cart mechanics, the pipes, the sign mechanics, the toggled
-areas, the test bed and the debugging tools. And **none of this has been run on a server** — it
-compiles against SpongeAPI 20 and the reasoning below is as far as a compiler can take it.
+The commands that do not need a mechanic run too: `/craftbook` and its `ic`, `reload`, `check` and
+`music` branches, `/var`, and the five switch commands.
+
+**Watched working in game** on SpongeVanilla for Minecraft 26.2: a chip loading from a sign already
+in the world, and redstone driving it. The second was the assumption everything else rested on,
+because SpongeAPI has no redstone event and the listener stands `ChangeBlockEvent.Post` in for one.
+
+Not yet bound here: the cart mechanics, the pipes, the sign mechanics, the toggled areas, the test
+bed and the debugging tools, along with the commands that belong to them — those are absent rather
+than registered and dead.
+
+Before any of it will run, see [what a stock RC does](#the-entity-type-bug-in-spongevanilla-262):
+an unpatched build cannot host a vanilla client at all, and it fails in a way that looks like this
+plugin's fault.
 
 ## Where the jar goes
 
@@ -198,13 +209,56 @@ powered, is it powered now" answer `BlockRedstoneEvent` gave directly.
 This is the shape the Sponge fork this codebase was ported from already used, which is some evidence
 it holds up under a real redstone load.
 
+## The entity type bug in SpongeVanilla 26.2
+
+**A stock SpongeVanilla `26.2-20.0.0-RC####` cannot host a vanilla client.** This is upstream's bug,
+not this plugin's, but it presents as this plugin's: you join, and the client disconnects with
+
+```
+Invalid entity data item type for field 9 on entity Boat['Dark Oak Boat']:
+  old=1(class java.lang.Integer), new=20.0(class java.lang.Float)
+```
+
+There is no boat. In a fresh world at cave depth there are mobs, and the client is building a boat
+out of a packet the server sent for one of them. `20.0` is a creeper's health and `14.0` is an
+axolotl's; on `LivingEntity` the float at id 9 is `DATA_HEALTH_ID`, while on a boat id 9 is
+`VehicleEntity.DATA_ID_HURTDIR`, an integer defaulting to 1. Every entity type id is off by one.
+
+The cause is where `sponge:human` gets registered. `EntityTypeMixin_Vanilla` injects
+`SpongeEntityTypes.register(BuiltInRegistries.ENTITY_TYPE)` at `@At("TAIL")` of
+`EntityType.<clinit>`, which was correct while `EntityType` held the type constants. Minecraft 26.2
+moved all 158 of them into a new `net.minecraft.world.entity.EntityTypes` class, leaving
+`EntityType.<clinit>` nine instructions long and registering nothing. So the injection now fires
+*before* any vanilla type exists, `sponge:human` takes id 0, and everything after it shifts.
+
+It fails silently because `EntityType` still has a `<clinit>` for the mixin to land in — no error,
+no warning. Upstream had already guarded against exactly this failure mode in commit `1a07c8baa7`,
+*"Ensure sponge:human is always registered last, to avoid holes in numeric ids from client pov"*;
+the refactor defeated the guard without touching the code that implements it.
+
+**The fix is to retarget the mixin** to `EntityTypes.class`, whose `<clinit>` ends with all 158
+registrations done — three lines, counting the class rename and the entry in
+`mixins.spongevanilla.core.json`. A sturdier anchor is to inject into `BuiltInRegistries.bootStrap()`
+after `createContents()` and before `freeze()`, which is the semantic point rather than a class's
+static initialiser and so survives Mojang moving constants around again.
+
+Forge and NeoForge are unaffected. They hook `GameData.postRegisterEvents` after
+`ModLoader.postEventWrapContainerInModOrder(...)` and filter on the registry key, so they anchor to
+a lifecycle phase rather than to a class — and they sync registry ids to the client at login anyway.
+
+Until an RC ships with this fixed, build SpongeVanilla from source with the change applied. Nothing
+in this plugin can work around it: it happens before a plugin is consulted about anything.
+
 ## What is not a problem
 
 Worth saying, because they would be the obvious worries:
 
 - **Adventure** is native to Sponge. No conversion layer, no legacy colour codes.
 - **Commands** are Sponge's own `Command.Parameterized` rather than Brigadier — SpongeAPI 20 does
-  not expose Brigadier to plugins — but everything the Paper commands do has a counterpart.
+  not expose Brigadier to plugins. What each command *does* was lifted into `core/command/` when
+  this build gained them, so the two platforms say the same things in the same words and only the
+  grammar differs. `Caller` is the whole seam: what to say back, what the caller may do, what they
+  are called, and where they are standing.
 - **Custom item data** for the debug stick works through `RegisterDataEvent` and a `DataStore`.
 - **Holding a cart** is cleaner: Sponge's `MoveEntityEvent` is cancellable, unlike Bukkit's
   `VehicleMoveEvent`, so the "stop it dead instead" workaround is not forced.

@@ -257,16 +257,23 @@ mixin; the plumbing for one is in the build and switched off until something nee
 The platform-independent files that were sitting in `paper/` have moved to `core`, so both
 platforms share one catalogue rather than two that drift.
 
-**The chips run.** The plugin has an entry point, reads the same `config.yml` the Paper build does,
-starts the chips in every loaded chunk and keeps up with them as chunks come and go. What it does
-not have yet, in the order it needs doing:
+**The chips run, and they have been watched running.** The plugin has an entry point, reads the
+same `config.yml` the Paper build does, starts the chips in every loaded chunk, keeps up with them
+as chunks come and go, and answers commands.
+
+**Verified in game** on SpongeVanilla for Minecraft 26.2: a chip loads from a sign already in the
+world, and redstone drives it. That last one is the assumption the whole port rested on —
+`ChangeBlockEvent.Post` standing in for a redstone event SpongeAPI does not have — and no compiler
+could have settled it. See `docs/sponge.md` for what a stock RC build does before it will let a
+vanilla client in at all.
+
+What it does not have yet, in the order it needs doing:
 
 | Layer | What it is |
 | --- | --- |
-| Commands | Sponge's `Command.Parameterized`, not Brigadier — SpongeAPI 20 exposes no Brigadier |
 | Mechanics, carts, pipes | Three dispatchers and their world bindings |
 | Areas | Sponge schematics rather than `org.bukkit.structure` |
 | Test bed, debugging | `TestbedBuilder`, the debug stick through `RegisterDataEvent` |
 
-Nothing here has been run on a server yet. The redstone listener in particular rests on
-`ChangeBlockEvent.Post` carrying what a chip needs to see, and no compiler can settle that.
+The commands the carts, areas, test bed and debug stick own are absent along with them, rather than
+registered and dead.

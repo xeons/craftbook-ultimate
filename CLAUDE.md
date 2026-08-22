@@ -75,10 +75,11 @@ to a hand and to redstone.**
 | Sponge build: module, adapters, world seam, entity bindings | Done |
 | Sponge build: the native layer over Minecraft's own code | Done |
 | Sponge build: entry point, config, chips running | Done |
-| Sponge build: commands, mechanics, carts, pipes, areas | Not started |
+| Sponge build: commands, on `Command.Parameterized` | Done |
+| Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2010 tests passing**.
+**2050 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -295,6 +296,30 @@ Upstream has a `getLineHelp()` of its own and it was **not** ported. It describe
 grammar, which often differs: its bridge reads `onID{:onData-offID:offData}` where this one takes a
 block and then `width:length`. Documenting grammar the code does not accept is worse than
 documenting none, so every entry was read off this codebase's own gates instead.
+
+## What a command does, and where it says it
+
+A command is two things: a grammar, and what it does. The grammar differs by platform and nothing
+can be done about that — Paper's commands are Brigadier, and SpongeAPI 20 exposes no Brigadier at
+all, so the Sponge build is `Command.Parameterized`. What a command *does* is the same on both, so
+it lives once in `core/command/` as a set of `...Actions` classes, named after `DebugActions`, which
+was already the pattern for "what each mode does, said once".
+
+`Caller` is the whole seam between them, and it is four questions, none of which needs a server:
+what to say back, what the caller may do, what they are called — which is what decides whose
+variables are whose — and where they are standing, which only `/craftbook check` uses and only to
+put the nearest broken chip first. The console is a caller like any other: it has a name, every
+permission, and is standing nowhere.
+
+This is the same split as `ConfigDocument`, and for the same reason. Every one of these commands is
+mostly wording, and wording that exists twice drifts — two platforms telling a builder different
+things about the same variable is worse than either wording alone. It also means the behaviour is
+testable in plain JUnit with a recording `Caller`, which is where the rules that were previously
+only exercised by hand now get pinned.
+
+A platform still owns anything that needs a world. `/craftbook check` is the example: reading the
+loaded chips' signs is done by the binding, which hands `core` a list of `BrokenChip` values and
+lets it decide what the answer reads like.
 
 ## The variables
 

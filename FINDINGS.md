@@ -2074,3 +2074,34 @@ the other lighting fires on netherrack, with no way to tell which one was doing 
 `mechanics.fire-blocks`. That is the more general of the two behaviours and the more familiar of
 the two names.
 
+### 136. Reading a block's power during the redstone event answers the wrong question
+
+Not a bug in the fork — a bug in this rewrite, found by somebody standing in front of a carved
+pumpkin wondering why powering it did nothing and unpowering it lit it.
+
+`PowerableListener` hung off `BlockRedstoneEvent` and, for each block beside the change, asked the
+world whether that block was powered:
+
+```java
+boolean powered = block.isBlockIndirectlyPowered() || block.isBlockPowered();
+```
+
+`BlockRedstoneEvent` is raised **by a source while it is changing**, before the world around it
+reflects the change. Paper fires it from the block that is turning over — `LeverBlock`,
+`ButtonBlock`, `DiodeBlock`, the wire evaluators and the rest — and the neighbours have not been
+told yet. So the answer is the power that is going away, not the power that is arriving.
+
+Every powerable therefore did the opposite of what it was asked. Switch a lever on and the light
+read "still off" and stayed dark; switch it off and the light read "still on" and lit up.
+
+It also explains a second symptom that looked unrelated: mining an unpowered source made a pumpkin
+come **on**, because the reading it took was of the power the source had before it was removed.
+
+**Rewrite:** the blocks that care are noted during the event and read one tick later, once the
+change has landed. Nothing is scheduled unless a powerable is actually beside the change, so an
+ordinary redstone machine costs six map lookups and no task.
+
+The general lesson is worth keeping: an event named for a change is not a promise that the change
+has happened. Anything that answers a redstone question by asking the world has to ask after the
+world has settled, and the failure is silent and inverted rather than loud.
+

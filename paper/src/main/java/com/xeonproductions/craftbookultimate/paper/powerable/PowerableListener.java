@@ -7,6 +7,8 @@ import com.xeonproductions.craftbookultimate.core.config.Configuration;
 import com.xeonproductions.craftbookultimate.core.config.MechanicSettings;
 import com.xeonproductions.craftbookultimate.core.powerable.Powerable;
 import com.xeonproductions.craftbookultimate.core.powerable.Powerables;
+import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,7 +47,14 @@ public final class PowerableListener implements Listener {
             BlockFace.UP, BlockFace.DOWN,
             BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST);
 
+    /** How long to wait for the broken block to actually be gone before reading the power again. */
+    private static final long AFTER_THE_BREAK = 1;
+
+    /** How long to wait for a redstone change to reach the blocks around it. */
+    private static final long ONCE_THE_WORLD_HAS_SETTLED = 1;
+
     private final Configuration configuration;
+    private final RegionSchedulers schedulers;
 
     /**
      * The blocks left alone because the redstone feeding them was mined rather than switched off.
@@ -56,21 +65,29 @@ public final class PowerableListener implements Listener {
      */
     private final Set<Block> spared = new HashSet<>();
 
-    public PowerableListener(Configuration configuration) {
+    public PowerableListener(Configuration configuration, RegionSchedulers schedulers) {
         this.configuration = configuration;
+        this.schedulers = schedulers;
     }
 
     /**
-     * Notes what a break is about to take the power away from.
+     * Answers a redstone source being mined out of the world.
      *
-     * <p>Only when an operator has left the default alone. Where they have asked for blocks to go
-     * out when their source is mined, nothing is spared and the power change does the ordinary
-     * thing.
+     * <p>Both halves of the setting are decided here, because the server will not decide either of
+     * them for us. {@code BlockRedstoneEvent} is raised by a source when its own power changes —
+     * a lever pulled, a repeater turning over, wire recalculated — and breaking one goes through
+     * none of those paths. So a block left powered by something that has been mined away hears
+     * nothing at all unless this says something.
+     *
+     * <p>Left alone by default, which is the old behaviour and the one builders use: power a
+     * light, mine the redstone, keep the light. Where an operator has asked for the other, the
+     * blocks beside are read again a tick later, once the broken block has actually gone and the
+     * power they can see is the power that is left.
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
         MechanicSettings settings = configuration.settings().mechanics();
-        if (settings.depowerOnSourceRemoval() || !isPowerSource(event.getBlock().getType())) {
+        if (!isPowerSource(event.getBlock().getType())) {
             return;
         }
 
@@ -79,15 +96,49 @@ public final class PowerableListener implements Listener {
             return;
         }
 
-        for (BlockFace face : AROUND) {
-            Block beside = event.getBlock().getRelative(face);
-            if (Powerables.workingOn(powerables, keyOf(beside)).isPresent()) {
-                spared.add(beside);
+        Block broken = event.getBlock();
+        if (!settings.depowerOnSourceRemoval()) {
+            List<Block> sparing = new ArrayList<>(AROUND.size());
+            for (BlockFace face : AROUND) {
+                Block beside = broken.getRelative(face);
+                if (Powerables.workingOn(powerables, keyOf(beside)).isPresent()) {
+                    sparing.add(beside);
+                }
             }
+            if (sparing.isEmpty()) {
+                return;
+            }
+
+            spared.addAll(sparing);
+            // Sparing lasts exactly as long as the break that caused it. Emptying the set only
+            // when a power change happened to arrive left entries behind for good when none did.
+            schedulers.at(broken.getLocation()).runLater(
+                    () -> spared.removeAll(sparing), AFTER_THE_BREAK);
+            return;
         }
+
+        schedulers.at(broken.getLocation()).runLater(() -> {
+            for (BlockFace face : AROUND) {
+                Block beside = broken.getRelative(face);
+                Powerables.workingOn(powerables, keyOf(beside))
+                        .ifPresent(powerable -> apply(powerable, beside));
+            }
+        }, AFTER_THE_BREAK);
     }
 
-    /** Turns whatever is beside a changed signal on or off. */
+    /**
+     * Turns whatever is beside a changed signal on or off.
+     *
+     * <p>The blocks are noted here and read a tick later, and that is not an optimisation — it is
+     * the whole of what makes this work. {@code BlockRedstoneEvent} is raised by a source while it
+     * is changing, before the world around it reflects the change, so asking a neighbour whether it
+     * is powered during the event answers for the power that is going away rather than the power
+     * that is arriving. Acting on that answer lights a lamp when its lever is switched off and
+     * leaves it dark when it is switched on, which is exactly backwards.
+     *
+     * <p>Nothing is scheduled unless a block that cares is actually beside the change, so an
+     * ordinary redstone machine costs six lookups and no task at all.
+     */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onRedstoneChange(BlockRedstoneEvent event) {
         if (event.getOldCurrent() == event.getNewCurrent()) {
@@ -97,19 +148,30 @@ public final class PowerableListener implements Listener {
         MechanicSettings settings = configuration.settings().mechanics();
         List<Powerable> powerables = Powerables.all(settings);
         if (powerables.isEmpty()) {
-            spared.clear();
             return;
         }
 
+        List<Block> changed = new ArrayList<>(AROUND.size());
         for (BlockFace face : AROUND) {
             Block beside = event.getBlock().getRelative(face);
-            if (spared.remove(beside)) {
-                continue;
+            if (!spared.contains(beside)
+                    && Powerables.workingOn(powerables, keyOf(beside)).isPresent()) {
+                changed.add(beside);
             }
-            Powerables.workingOn(powerables, keyOf(beside))
-                    .ifPresent(powerable -> apply(powerable, beside));
         }
-        spared.clear();
+        if (changed.isEmpty()) {
+            return;
+        }
+
+        schedulers.at(event.getBlock().getLocation()).runLater(() -> {
+            for (Block beside : changed) {
+                if (spared.contains(beside)) {
+                    continue;
+                }
+                Powerables.workingOn(powerables, keyOf(beside))
+                        .ifPresent(powerable -> apply(powerable, beside));
+            }
+        }, ONCE_THE_WORLD_HAS_SETTLED);
     }
 
     /**

@@ -5,7 +5,7 @@ are in `CLAUDE.md`; bugs found in the legacy code are in `FINDINGS.md`.
 
 ## Integrated circuits
 
-**114 chips are registered, under 143 model numbers.** The extra fork's catalogue is complete;
+**117 chips are registered, under 146 model numbers.** The extra fork's catalogue is complete;
 4 model numbers were dropped by decision.
 
 Nothing from this fork's catalogue is left to port. Anything added from here comes from upstream,

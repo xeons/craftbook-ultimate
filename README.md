@@ -1,7 +1,7 @@
 # CraftBook Ultimate
 
 Redstone integrated circuits, minecart mechanics, pipes and sign mechanics for **Paper 26.x** on
-**Java 25**.
+**Java 25**, with a **SpongeVanilla** build alongside it.
 
 Write `[MC1000]` on a wall sign and the block behind it becomes a repeater you can wire into. Write
 `[Bridge]` and a walkway runs out across a gap when somebody throws a lever. Put a sign under a
@@ -15,9 +15,14 @@ reading first.
 
 In development, and not yet released.
 
-117 chips are wired and working, along with the minecart mechanics, both pipe grammars, and the
-bridge, door, gate, lift and toggled-area sign mechanics. **2010 tests pass.** What is left is
-inventoried in [TODO.md](TODO.md).
+117 chips are wired and working under 146 model numbers, along with the minecart mechanics, both
+pipe grammars, and the bridge, door, gate, lift and toggled-area sign mechanics. **2010 tests
+pass.** What is left is inventoried in [TODO.md](TODO.md).
+
+The **Paper build is the complete one.** The Sponge build shares the same domain model and has its
+world seam, chip state, chip lifecycle and redstone listener written, but it has no plugin entry
+point yet, so it does not run. [docs/sponge.md](docs/sponge.md) says what is there, what is not, and
+what it will never do.
 
 ## Where this comes from
 
@@ -62,7 +67,12 @@ Mob Zapper reaches. That understanding is the whole substance of the work and it
 **It did not take the code.** Every line here was written fresh, in a new package
 (`com.xeonproductions.craftbookultimate`), against a different server API, in a different language
 generation. Neither original tree is in this repository or in anything it builds. Nothing in
-`core/` or `paper/` is copied, adapted or transcribed from either.
+`core/`, `paper/` or `sponge/` is copied, adapted or transcribed from either. Both are read from
+checkouts kept outside it.
+
+That holds for the Sponge build too, which is worth saying plainly given the fork was itself a
+Sponge plugin. It was written against SpongeAPI 7 and is a decade of API removed from SpongeAPI 20;
+it was read for behaviour, like everything else, and nothing was carried across.
 
 **The sign format is deliberately identical**, and that is the point rather than an oversight.
 Existing worlds are full of signs. `[MC1000]`, `#north*`, `sci+:stone:4` and `[Lift UpDown]` all
@@ -87,24 +97,47 @@ of it. See [LICENSE](LICENSE).
 ./gradlew build
 ```
 
-Produces `paper/build/libs/CraftBookUltimate-<version>.jar`. Needs **JDK 25**; the Gradle wrapper
-handles the rest. Adventure and JSpecify come from the server rather than being shaded in.
+Produces `paper/build/libs/CraftBookUltimate-<version>.jar`, which is the one to install. Needs
+**JDK 25**; the Gradle wrapper handles the rest. Adventure and JSpecify come from the server rather
+than being shaded in.
+
+The same command also builds `sponge/build/libs/CraftBookUltimate-Sponge-<version>.jar`, which is
+not yet a working plugin. That module additionally downloads Minecraft through VanillaGradle the
+first time it is built, so the first build takes rather longer than the rest.
 
 ## Layout
 
 ```
 core/    platform-independent domain model; no server API on its classpath
-paper/   Paper 26.x bindings: plugin, schedulers, adapters, catalogue
+paper/   Paper 26.x bindings: plugin, schedulers, adapters, listeners
+sponge/  SpongeVanilla bindings, against SpongeAPI 20
 docs/    what a builder reads
 ```
 
 `core` depends on Adventure and JSpecify and nothing else. That is deliberate: chip logic, sign
-parsing, pin geometry and the cart filter grammar are pure functions there, so they are exercised in
-plain JUnit with no server running. Anything needing a `World`, a scheduler or an event lives in
-`paper`.
+parsing, pin geometry, the cart filter grammar and the chip catalogue are pure functions and pure
+data there, so they are exercised in plain JUnit with no server running. Anything needing a world,
+a scheduler or an event lives in one of the two binding modules.
 
-The plugin is Folia-compatible — region schedulers throughout, and no mechanic reaches across a
-region boundary.
+Where the line falls is a decision that gets revisited. A rule that can be stated without a server
+is worth stating in `core` even when only one platform currently needs it: it gets tested properly
+there, and it gets tested once rather than twice. The chip catalogue, the file stores, the debug
+modes and the block key all began life under `paper/` and moved when a second platform made the
+duplication obvious.
+
+### Two platforms, one domain
+
+`sponge` does not depend on the `core` project — it compiles the same sources itself. SpongeAPI 20
+is built against Adventure 4.26.1 where Paper 26.2 ships Adventure 5.2.0, and while `core` is
+source-compatible with both, a class file is compiled against one of them. Compiling twice is
+plainer than relocating a text library through every seam in the plugin. The consequence worth
+knowing: **an Adventure 5-only API used anywhere in `core` breaks the Sponge build**, at compile
+time, which is the right time.
+
+The Paper build is **Folia-compatible** — region schedulers throughout, and no mechanic reaches
+across a region boundary. SpongeVanilla ticks every world on one thread, so there the schedulers
+collapse to the server's own; the care taken over action at a distance costs nothing either way and
+is kept, because it is also just a cleaner way to write those chips.
 
 ## Documentation
 
@@ -116,6 +149,7 @@ region boundary.
 | [docs/fireworks.md](docs/fireworks.md) | Writing a firework display script. |
 | [docs/testbed.md](docs/testbed.md) | The generated plane carrying a working rig for every chip. |
 | [docs/debugging.md](docs/debugging.md) | The debug stick and commands, for when a chip does nothing. |
+| [docs/sponge.md](docs/sponge.md) | The SpongeVanilla build: which version, how it is put together, and what it cannot do. |
 
 ## Contributing
 

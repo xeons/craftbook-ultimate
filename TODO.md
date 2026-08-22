@@ -250,6 +250,18 @@ the flattening, so there is nothing left for that to fix.
 
 **Neither has been run in game.**
 
+### The loppers and the dispensers: done
+
+`TreeLopper` and the new `VeinMiner` are one engine in `core/lopper/`, bound by one listener. See
+the loppers section in `CLAUDE.md` for why they are one thing and what was decided; findings 137 and
+138 for what the fork got wrong on the way. `HiddenSwitch` is on the `SignMechanic` seam, resolved
+through `MechanicDispatcher` like every other, and takes its key from the sign's first line rather
+than from block data nobody can see. `BetterPhysics` is the falling ladders and nothing else, which
+is all either codebase ever had under that name. `DispenserRecipes` carries the fork's six machines,
+including the two upstream lacks.
+
+**None of it has been run in game.**
+
 ### Unique to this fork
 
 | Mechanic | What it does |
@@ -261,14 +273,19 @@ the flattening, so there is nothing left for that to fix.
 
 Compare both sources for these. Where they differ, this fork's behaviour is the one to keep.
 
-`BetterPhysics`, `BetterPlants`, `Bookshelf`, `CommandSigns`, `CookingPot`, `DispenserRecipes`,
-`HiddenSwitch`, `Marquee`, `PaintingSwitcher`, `RedstoneJukebox`, `TreeLopper`,
+`BetterPlants`, `Bookshelf`, `CommandSigns`, `CookingPot`, `Marquee`, `PaintingSwitcher`,
+`RedstoneJukebox`,
 `Variables` (store, commands and the three chips are done — the `%name%` substitution in chat and
 commands is what is left of it; see **Variables: what is left of them** above).
 
-**Done from this list:** `Ammeter`, `BounceBlocks`, `Chairs`, `GlowStone`, `HeadDrops`,
-`JackOLantern`, `LightStone`, `LightSwitch`, `Netherrack`, `SignCopier`, `Snow`, `Teleporter`,
-`XPStorer`.
+`Marquee` is 99 lines upstream and works against the variable store that already exists; the
+`%name%` substitution is what `CommandSigns` actually needs.
+
+**Done from this list:** `Ammeter`, `BetterPhysics`, `BounceBlocks`, `Chairs`, `DispenserRecipes`,
+`GlowStone`, `HeadDrops`, `HiddenSwitch`, `JackOLantern`, `LightStone`, `LightSwitch`, `Netherrack`,
+`SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `XPStorer`.
+
+**New rather than ported:** `VeinMiner`.
 
 The `boat` set is **done, less two that cannot be**. `WaterPlaceOnly` and the boat-going
 `EmptyDecay`, `ExitRemover` and `RemoveEntities` are in `BoatHabits`, decided in `BoatBehaviour` and

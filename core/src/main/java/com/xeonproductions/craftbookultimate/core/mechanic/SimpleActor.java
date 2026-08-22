@@ -7,9 +7,12 @@ import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.transport.Landing;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Optional;
 import java.util.Set;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.jspecify.annotations.NullMarked;
@@ -23,6 +26,8 @@ import org.jspecify.annotations.Nullable;
  */
 @NullMarked
 public final class SimpleActor implements Actor {
+
+    private final Set<Key> holding = new LinkedHashSet<>();
 
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
 
@@ -75,6 +80,18 @@ public final class SimpleActor implements Actor {
     @Override
     public Optional<Vec3i> position() {
         return Optional.ofNullable(position);
+    }
+
+    @Override
+    public Set<Key> held() {
+        return holding;
+    }
+
+    /** Puts something in their hands. */
+    public SimpleActor holding(Key... items) {
+        holding.clear();
+        holding.addAll(List.of(items));
+        return this;
     }
 
     @Override

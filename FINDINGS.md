@@ -2105,3 +2105,57 @@ The general lesson is worth keeping: an event named for a change is not a promis
 has happened. Anything that answers a redstone question by asking the world has to ask after the
 world has settled, and the failure is silent and inverted rather than loud.
 
+
+### 137. The tree lopper destroyed the tree instead of felling it
+
+`TreeLopper.checkBlocks` in the fork took each log away with `block.removeBlock()`, which empties
+the block and drops nothing at all. Felling a tree therefore cost the player the whole tree: one log
+from the swing that started it, and nothing from the twenty the mechanic took.
+
+The source says why, in a comment above the line:
+
+```java
+// TODO Switch to FakePlayer when implemented.
+//block.getExtent().digBlockWith(block.getBlockPosition(), player.getItemInHand(...), ...);
+block.removeBlock();
+```
+
+So it is a placeholder for an API that never arrived, not a decision. Upstream broke the same block
+with `block.breakNaturally(tool)` and got the drops, the fortune on the axe and the experience right
+for free.
+
+The rule for this rewrite is the fork's behaviour where the two disagree, and this is the exception
+that rule needs: the fork's behaviour here is what its own author wrote down as wrong. The rewrite
+breaks every block through the server's own `breakNaturally`, so what a felled tree yields is
+whatever the game says it should.
+
+Two further pieces of the same mechanic were the fork's placeholder rather than its intent, and are
+not reproduced either. Nothing wore the axe out, so a tree was free; and the run ignored the block
+that was actually struck when deciding what to follow, matching instead on Sponge's `TREE_TYPE`
+data, which no longer exists after the flattening and answers nothing for any wood added since 1.13
+— mangrove, cherry and pale oak among them. The rewrite follows the block's own name and so gains
+every wood a later version adds without being touched.
+
+### 138. An operator could not change what a meter is held up to
+
+`MechanicsDocument` read the ammeter's and the light meter's items through `BlockNames#block`,
+which resolves a name and then filters it to things that are blocks:
+
+```java
+names.block(tree.text(AMMETER_ITEM, ...)).orElseGet(defaults::ammeterItem)
+```
+
+Both defaults — charcoal and glowstone dust — are items and not blocks, so both lookups answered
+nothing and both fell back to the default. That made the setting look like it worked, because the
+default is what an unconfigured server wanted anyway. Writing anything else in the file, including
+the default spelt out by hand, silently reverted.
+
+Nothing complained, since falling back to a default is what that line is for.
+
+**Rewrite:** `BlockNames` now answers blocks and items separately, and a platform resolves each
+through its own lookup — `LegacyBlocks.resolve` for blocks and `resolveItem` for items, which the
+plugin already had for exactly this reason on the sign side. The meters ask for items. The tree
+lopper's and the vein miner's tool lists are the same question and would have hit the same wall.
+
+The general shape is worth noting: a setting that falls back to its default on a bad value cannot
+be tested by checking the default comes out right.

@@ -34,11 +34,18 @@ import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
 import com.xeonproductions.craftbookultimate.paper.command.DebugCommands;
 import com.xeonproductions.craftbookultimate.paper.command.MusicCommands;
 import com.xeonproductions.craftbookultimate.core.chair.Chairs;
+import com.xeonproductions.craftbookultimate.core.lopper.TreeLoppers;
+import com.xeonproductions.craftbookultimate.core.lopper.VeinMiners;
 import com.xeonproductions.craftbookultimate.core.head.HeadDrops;
 import com.xeonproductions.craftbookultimate.paper.chair.ChairListener;
 import com.xeonproductions.craftbookultimate.paper.chair.Seats;
 import com.xeonproductions.craftbookultimate.paper.chair.Sitting;
 import com.xeonproductions.craftbookultimate.paper.command.ChairCommands;
+import com.xeonproductions.craftbookultimate.paper.command.LopperCommands;
+import com.xeonproductions.craftbookultimate.paper.dispenser.DispenserListener;
+import com.xeonproductions.craftbookultimate.paper.lopper.LopperListener;
+import com.xeonproductions.craftbookultimate.paper.lopper.Lopping;
+import com.xeonproductions.craftbookultimate.paper.physics.BetterPhysicsListener;
 import com.xeonproductions.craftbookultimate.paper.command.SignCommands;
 import com.xeonproductions.craftbookultimate.paper.head.HeadDropListener;
 import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
@@ -122,6 +129,7 @@ public final class CraftBookPlugin extends JavaPlugin {
     private @Nullable PasswordFile passwordFile;
     private @Nullable Seats seats;
     private @Nullable Sitting sitting;
+    private @Nullable Lopping lopping;
     private @Nullable FireworkFiles fireworkFiles;
     private final SignClipboard signClipboard = new SignClipboard();
     private @Nullable MidiFiles midiFiles;
@@ -175,6 +183,7 @@ public final class CraftBookPlugin extends JavaPlugin {
                 getDataPath(), getServer(), regionSchedulers, this::reportSetting);
         this.areas = areaVault;
         this.debugSticks = new DebugStick(this);
+        this.lopping = new Lopping(this);
 
         registerPermissions();
         loadPasswords();
@@ -198,6 +207,13 @@ public final class CraftBookPlugin extends JavaPlugin {
                 new CartHabitListener(carts, chipServices.configuration(), regionSchedulers), this);
         getServer().getPluginManager().registerEvents(
                 new BoatHabitListener(chipServices.configuration(), regionSchedulers), this);
+        getServer().getPluginManager().registerEvents(
+                new LopperListener(
+                        chipServices.configuration(), loppingTarget(), regionSchedulers), this);
+        getServer().getPluginManager().registerEvents(
+                new BetterPhysicsListener(chipServices.configuration(), regionSchedulers), this);
+        getServer().getPluginManager().registerEvents(
+                new DispenserListener(chipServices.configuration()), this);
         getServer().getPluginManager().registerEvents(
                 new CopierListener(chipServices.configuration()), this);
         getServer().getPluginManager().registerEvents(
@@ -230,7 +246,7 @@ public final class CraftBookPlugin extends JavaPlugin {
                 this);
 
         MechanicDispatcher mechanics =
-                new MechanicDispatcher(chipServices.configuration(), areaVault);
+                new MechanicDispatcher(chipServices.configuration(), areaVault, regionSchedulers);
         getServer().getPluginManager().registerEvents(new MechanicInteractListener(mechanics), this);
         getServer().getPluginManager().registerEvents(new MechanicRedstoneListener(mechanics), this);
         getServer().getPluginManager().registerEvents(new LiftMoveListener(mechanics), this);
@@ -349,6 +365,17 @@ public final class CraftBookPlugin extends JavaPlugin {
                 "Turn sitting down by clicking off for yourself.", PermissionDefault.TRUE);
         declare(manager, Chairs.HEAL_BUILD,
                 "Make a chair that heals whoever sits in it.", PermissionDefault.OP);
+
+        declare(manager, TreeLoppers.USE,
+                "Fell a whole tree by breaking one log of it.", PermissionDefault.TRUE);
+        declare(manager, TreeLoppers.SAPLING,
+                "Have a felled tree replanted for you.", PermissionDefault.TRUE);
+        declare(manager, TreeLoppers.TOGGLE,
+                "Turn felling whole trees off for yourself.", PermissionDefault.TRUE);
+        declare(manager, VeinMiners.USE,
+                "Mine a whole seam by breaking one ore of it.", PermissionDefault.TRUE);
+        declare(manager, VeinMiners.TOGGLE,
+                "Turn mining whole seams off for yourself.", PermissionDefault.TRUE);
     }
 
     /** What the copiers need, which is a pair for each sign and two for the sign copier. */
@@ -458,7 +485,8 @@ public final class CraftBookPlugin extends JavaPlugin {
                                 schedulersTarget()),
                         new SignCommands(signClipboard),
                         new ChairCommands(
-                                chipServices.configuration(), sittingTarget(), seatsTarget()))
+                                chipServices.configuration(), sittingTarget(), seatsTarget()),
+                        new LopperCommands(loppingTarget()))
                 .registerOn(this);
     }
 
@@ -468,6 +496,14 @@ public final class CraftBookPlugin extends JavaPlugin {
             throw new IllegalStateException("The seats are not available until enabled");
         }
         return seats;
+    }
+
+    /** Who has turned the loppers off for themselves, which the commands set. */
+    private Lopping loppingTarget() {
+        if (lopping == null) {
+            throw new IllegalStateException("The loppers are not available until enabled");
+        }
+        return lopping;
     }
 
     /** The sitting, which the sit and toggle commands go through. */

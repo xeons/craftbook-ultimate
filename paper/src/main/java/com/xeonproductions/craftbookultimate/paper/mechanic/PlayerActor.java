@@ -9,7 +9,10 @@ import com.xeonproductions.craftbookultimate.core.mechanic.Actor;
 import com.xeonproductions.craftbookultimate.core.transport.Landing;
 import com.xeonproductions.craftbookultimate.paper.adapter.Directions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
+import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.Set;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -52,6 +55,14 @@ public record PlayerActor(Player player) implements Actor {
     @Override
     public Optional<Vec3i> position() {
         return Optional.of(Positions.toDomain(player.getLocation()));
+    }
+
+    @Override
+    public Set<Key> held() {
+        Set<Key> holding = new LinkedHashSet<>(2);
+        holding.add(player.getInventory().getItemInMainHand().getType().getKey());
+        holding.add(player.getInventory().getItemInOffHand().getType().getKey());
+        return holding;
     }
 
     @Override

@@ -40,6 +40,7 @@ public final class SimpleMechanicWorld implements MechanicWorld {
     private final Map<Vec3i, Key> blocks = new HashMap<>();
     private final Map<Vec3i, PostedSign> signs = new HashMap<>();
     private final Set<Vec3i> unloaded = new HashSet<>();
+    private final Map<Vec3i, Boolean> switches = new HashMap<>();
     private final Set<Key> passable = new LinkedHashSet<>(Blocks.AIR);
 
     private Stockpile stockpile = SimpleStockpile.empty();
@@ -150,6 +151,27 @@ public final class SimpleMechanicWorld implements MechanicWorld {
     public SimpleMechanicWorld withSign(Vec3i position, BlockFace facing, String... lines) {
         signs.put(position, new PostedSign(position, SignLines.of(lines), facing));
         return this;
+    }
+
+    /** Puts a lever somewhere, switched off. */
+    public SimpleMechanicWorld withSwitch(Vec3i position) {
+        switches.put(position, false);
+        return this;
+    }
+
+    /** Whether a lever put here is now on. */
+    public boolean isSwitchOn(Vec3i position) {
+        return Boolean.TRUE.equals(switches.get(position));
+    }
+
+    @Override
+    public boolean workSwitchAt(Vec3i position) {
+        Boolean thrown = switches.get(position);
+        if (thrown == null) {
+            return false;
+        }
+        switches.put(position, !thrown);
+        return true;
     }
 
     /** Makes a position unreadable, standing in for a chunk that is not loaded. */

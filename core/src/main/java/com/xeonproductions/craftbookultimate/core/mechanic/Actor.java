@@ -6,6 +6,8 @@ package com.xeonproductions.craftbookultimate.core.mechanic;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.transport.Landing;
 import java.util.Optional;
+import java.util.Set;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jspecify.annotations.NullMarked;
@@ -41,6 +43,17 @@ public interface Actor {
 
     /** Where they are standing, or nothing if they are not in the world. */
     Optional<Vec3i> position();
+
+    /**
+     * What they are holding, in either hand.
+     *
+     * <p>Both hands together rather than one at a time, because every mechanic that asks this asks
+     * whether somebody has a thing on them, not which hand it is in. Only what sort of item it is,
+     * since that is all a hidden switch's key is.
+     */
+    default Set<Key> held() {
+        return Set.of();
+    }
 
     /**
      * Sends them somewhere.

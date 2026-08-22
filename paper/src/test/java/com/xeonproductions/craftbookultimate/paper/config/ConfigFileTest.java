@@ -8,6 +8,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.xeonproductions.craftbookultimate.core.config.BlockNames;
 import com.xeonproductions.craftbookultimate.core.config.MechanicSettings;
+import com.xeonproductions.craftbookultimate.core.config.TreeSettings;
+import com.xeonproductions.craftbookultimate.core.config.LopperSettings;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
 import java.io.IOException;
@@ -82,9 +84,15 @@ class ConfigFileTest {
         }
 
         @Test
-        @DisplayName("come out as the defaults")
+        @DisplayName("come out as the defaults, but for the lists only a server can expand")
         void comeOutAsTheDefaults() throws IOException {
-            assertThat(load()).isEqualTo(Settings.DEFAULTS);
+            Settings loaded = load();
+            MechanicSettings mechanics = loaded.mechanics()
+                    .withTree(TreeSettings.DEFAULTS)
+                    .withVein(LopperSettings.VEIN_DEFAULTS);
+
+            assertThat(loaded.toBuilder().mechanics(mechanics).build())
+                    .isEqualTo(Settings.DEFAULTS);
         }
 
         @Test

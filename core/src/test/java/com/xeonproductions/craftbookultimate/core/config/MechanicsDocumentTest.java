@@ -6,6 +6,7 @@ package com.xeonproductions.craftbookultimate.core.config;
 import static com.xeonproductions.craftbookultimate.core.config.StubBlockNames.key;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.xeonproductions.craftbookultimate.core.dispenser.DispenserRecipe;
 import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
 import com.xeonproductions.craftbookultimate.core.mechanic.SneakState;
 import java.util.ArrayList;
@@ -33,9 +34,24 @@ class MechanicsDocumentTest {
     class Fresh {
 
         @Test
-        @DisplayName("comes out as the defaults")
+        @DisplayName("comes out as the defaults, but for the lists only a server can expand")
         void comesOutAsTheDefaults() {
-            assertThat(read()).isEqualTo(MechanicSettings.DEFAULTS);
+            // The tree lopper and the vein miner name their blocks by tag, and what is in a tag
+            // is the server's answer rather than one this side can hold as a constant.
+            MechanicSettings read = read()
+                    .withTree(TreeSettings.DEFAULTS)
+                    .withVein(LopperSettings.VEIN_DEFAULTS);
+
+            assertThat(read).isEqualTo(MechanicSettings.DEFAULTS);
+        }
+
+        @Test
+        @DisplayName("fills the lopper lists in from the file, since the defaults cannot hold them")
+        void fillsTheLopperListsIn() {
+            MechanicSettings read = read();
+
+            assertThat(read.tree().lopper().tools()).isNotEmpty();
+            assertThat(read.vein().tools()).isNotEmpty();
         }
 
         @Test
@@ -131,6 +147,100 @@ class MechanicsDocumentTest {
             tree.values.put("Gate.enabled", true);
 
             assertThat(read().allows(Mechanics.CHAIRS)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("the loppers")
+    class Loppers {
+
+        @Test
+        @DisplayName("take their blocks from whatever the server has in a tag")
+        void takeTheirBlocksFromATag() {
+            names.tags.put("minecraft:logs", Set.of(key("oak_log"), key("spruce_log")));
+
+            assertThat(read().tree().lopper().blocks())
+                    .containsExactlyInAnyOrder(key("oak_log"), key("spruce_log"));
+        }
+
+        @Test
+        @DisplayName("take their tools by name, since a tool is an item and not a block")
+        void takeTheirToolsByName() {
+            assertThat(read().tree().lopper().tools()).contains(key("diamond_axe"));
+            assertThat(read().vein().tools()).contains(key("diamond_pickaxe"));
+        }
+
+        @Test
+        @DisplayName("do not share a list, so a change to one leaves the other alone")
+        void doNotShareAList() {
+            tree.values.put("TreeLopper.max-size", 4);
+
+            MechanicSettings settings = read();
+
+            assertThat(settings.tree().lopper().maxSize()).isEqualTo(4);
+            assertThat(settings.vein().maxSize())
+                    .isEqualTo(LopperSettings.DEFAULT_MAX_SIZE);
+        }
+
+        @Test
+        @DisplayName("take an emptied list at its word rather than putting the defaults back")
+        void takeAnEmptiedListAtItsWord() {
+            // Unlike the gate's materials: a list somebody has deliberately emptied means they
+            // want the mechanic to take nothing, and it says so by not running.
+            tree.values.put("VeinMiner.blocks", List.of());
+
+            assertThat(read().vein().rules().runsAtAll()).isFalse();
+        }
+
+        @Test
+        @DisplayName("leave the leaves alone until an operator asks for them")
+        void leaveTheLeavesAlone() {
+            names.tags.put("minecraft:leaves", Set.of(key("oak_leaves")));
+
+            assertThat(read().tree().alsoTaken()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("take the leaves once they have been asked for")
+        void takeTheLeavesWhenAsked() {
+            names.tags.put("minecraft:leaves", Set.of(key("oak_leaves")));
+            tree.values.put("TreeLopper.break-leaves", true);
+
+            assertThat(read().tree().alsoTaken()).containsExactly(key("oak_leaves"));
+        }
+    }
+
+    @Nested
+    @DisplayName("the dispenser machines")
+    class Dispensers {
+
+        @Test
+        @DisplayName("get a line each, since they are six unrelated things")
+        void getALineEach() {
+            read();
+
+            for (DispenserRecipe recipe : DispenserRecipe.values()) {
+                assertThat(tree.values)
+                        .containsKey("DispenserRecipes." + recipe.settingName());
+            }
+        }
+
+        @Test
+        @DisplayName("are all allowed once the mechanic itself is switched on")
+        void areAllAllowed() {
+            assertThat(read().dispensers().allowed())
+                    .hasSize(DispenserRecipe.values().length);
+        }
+
+        @Test
+        @DisplayName("lose only the one an operator names")
+        void loseOnlyTheOneNamed() {
+            tree.values.put("DispenserRecipes.cannon", false);
+
+            MechanicSettings settings = read();
+
+            assertThat(settings.dispensers().allows(DispenserRecipe.CANNON)).isFalse();
+            assertThat(settings.dispensers().allows(DispenserRecipe.FAN)).isTrue();
         }
     }
 

@@ -34,6 +34,7 @@ public final class CraftBookCommands {
     private final DebugCommands debug;
     private final SignCommands signs;
     private final ChairCommands chairs;
+    private final LopperCommands loppers;
 
     public CraftBookCommands(
             CatalogueCommands catalogue,
@@ -47,7 +48,8 @@ public final class CraftBookCommands {
             CheckCommands check,
             DebugCommands debug,
             SignCommands signs,
-            ChairCommands chairs) {
+            ChairCommands chairs,
+            LopperCommands loppers) {
         this.catalogue = catalogue;
         this.switches = switches;
         this.config = config;
@@ -60,6 +62,7 @@ public final class CraftBookCommands {
         this.debug = debug;
         this.signs = signs;
         this.chairs = chairs;
+        this.loppers = loppers;
     }
 
     /** Registers everything against a plugin. */
@@ -77,6 +80,16 @@ public final class CraftBookCommands {
                             .build(),
                     "Reads the integrated circuit catalogue.",
                     List.of("cb"));
+
+            commands.register(
+                    loppers.treeLopper().build(),
+                    "Turns felling whole trees off for yourself.",
+                    List.of("timber"));
+
+            commands.register(
+                    loppers.veinMiner().build(),
+                    "Turns mining whole seams off for yourself.",
+                    List.of());
 
             commands.register(
                     variables.command().build(),

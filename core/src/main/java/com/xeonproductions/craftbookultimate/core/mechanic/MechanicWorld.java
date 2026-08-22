@@ -87,6 +87,20 @@ public interface MechanicWorld {
      */
     Stockpile stockpileAround(Vec3i position);
 
+    /**
+     * Throws a lever or presses a button at a position.
+     *
+     * <p>Its own method rather than writing a block, because what a switch is doing is part of
+     * that block's state rather than its name, and a hidden switch has to leave a lever thrown
+     * where it found it thrown. A button is pressed and springs back on its own, as it would
+     * under a hand.
+     *
+     * @return true if there was a switch there to work
+     */
+    default boolean workSwitchAt(Vec3i position) {
+        return false;
+    }
+
     /** The lowest y coordinate that can hold a block. */
     int minHeight();
 
@@ -117,6 +131,16 @@ public interface MechanicWorld {
      */
     default Optional<Key> resolveBlock(String written) {
         return BlockReference.parse(written).flatMap(BlockReference::asKey);
+    }
+
+    /**
+     * Works out which item a sign means.
+     *
+     * <p>Separate from {@link #resolveBlock} because an id named either one before the flattening,
+     * and because what a hidden switch takes as a key is usually not a block at all.
+     */
+    default Optional<Key> resolveItem(String written) {
+        return resolveBlock(written);
     }
 
     /**

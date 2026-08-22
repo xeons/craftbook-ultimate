@@ -14,15 +14,18 @@ import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
 import com.xeonproductions.craftbookultimate.paper.ic.LegacyBlocks;
+import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
 import com.xeonproductions.craftbookultimate.paper.stock.NearbyStockpiles;
 import java.util.Optional;
 import java.util.UUID;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Material;
 import org.bukkit.Registry;
+import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Rotatable;
+import org.bukkit.block.data.type.Switch;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -33,7 +36,44 @@ import org.jspecify.annotations.NullMarked;
  * is never a constraint in practice.
  */
 @NullMarked
-public record BukkitMechanicWorld(World world, AreaVault vault) implements MechanicWorld {
+public record BukkitMechanicWorld(World world, AreaVault vault, RegionSchedulers schedulers)
+        implements MechanicWorld {
+
+    /** How long a wooden button stays pressed, which is longer than a stone one. */
+    private static final long WOODEN_BUTTON_TICKS = 30;
+
+    /** How long every other button stays pressed. */
+    private static final long BUTTON_TICKS = 20;
+
+    @Override
+    public boolean workSwitchAt(Vec3i position) {
+        Block block = world.getBlockAt(position.x(), position.y(), position.z());
+        if (!(block.getBlockData() instanceof Switch switchData)) {
+            return false;
+        }
+
+        boolean button = Tag.BUTTONS.isTagged(block.getType());
+        switchData.setPowered(button || !switchData.isPowered());
+        block.setBlockData(switchData);
+
+        if (button) {
+            // A button springs back on its own, exactly as it would under a hand. The block is
+            // read again first, since anything may have happened to it in the meantime.
+            long ticks = Tag.WOODEN_BUTTONS.isTagged(block.getType())
+                    ? WOODEN_BUTTON_TICKS
+                    : BUTTON_TICKS;
+            schedulers.at(world, position).runLater(() -> release(block), ticks);
+        }
+        return true;
+    }
+
+    /** Lets a button back out again, if it is still a pressed button. */
+    private static void release(Block button) {
+        if (button.getBlockData() instanceof Switch pressed && pressed.isPowered()) {
+            pressed.setPowered(false);
+            button.setBlockData(pressed);
+        }
+    }
 
     @Override
     public UUID id() {
@@ -153,5 +193,10 @@ public record BukkitMechanicWorld(World world, AreaVault vault) implements Mecha
     @Override
     public Optional<Key> resolveBlock(String written) {
         return LegacyBlocks.resolve(written);
+    }
+
+    @Override
+    public Optional<Key> resolveItem(String written) {
+        return LegacyBlocks.resolveItem(written);
     }
 }

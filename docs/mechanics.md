@@ -120,10 +120,15 @@ the source being taken out of the world. `GlowStone`, `JackOLantern` and `Nether
 | `LightStone` | `item` — what is held up to a block to read its light level |
 | `LightSwitch` | `range`, `max-lights` |
 | `MapCopier` | — |
+| `BetterPhysics` | `falling-ladders` — whether a ladder falls when what it stood on goes away |
+| `DispenserRecipes` | `cannon`, `fan`, `vacuum`, `fire-arrows`, `snow-shooter`, `xp-shooter` |
+| `HiddenSwitch` | `any-side` |
 | `Netherrack` | `fire-blocks` — what catches light on top of itself while powered |
 | `SignCopier` | — |
 | `Snow` | `piling`, `dispersion`, `freezes-water`, `melts-in-sunlight`, `partial-melt-only`, `snowballs-pile` |
 | `Teleporter` | `buttons`, `require-sign`, `range` |
+| `TreeLopper` | `blocks`, `tools`, `max-size`, `diagonals`, `any-listed-block`, `single-use`, `leaves`, `break-leaves`, `place-saplings` |
+| `VeinMiner` | `blocks`, `tools`, `max-size`, `diagonals`, `any-listed-block`, `single-use` |
 | `XPStorer` | `block`, `per-bottle`, `requires-bottle`, `sneaking` |
 
 A mechanic with nothing in the second column has only `enabled`. That is not an oversight: a bridge
@@ -184,6 +189,77 @@ somebody else's furniture into a player's inventory.
 The fork also re-dropped a head when its **block** was mined, because the game of the day dropped a
 blank one and lost whose it was. The game has kept the face on a mined head since the flattening,
 so that is not here and does not need to be.
+
+### The tree lopper and the vein miner are one mechanic
+
+Break a log with an axe and the whole trunk comes away. Break an ore with a pickaxe and the whole
+seam does. They are the same code with a different list of blocks and a different list of tools, so
+every setting means the same thing in both sections and a change to how one follows a run reaches
+the other.
+
+`VeinMiner` is **new here** rather than ported from either CraftBook, so nothing about it is fixed
+by what an old world already contains. `TreeLopper` comes from both, and where they disagreed the
+fork's behaviour was kept — except where the fork's was plainly a limitation of the API it was
+written against. It dropped the felled logs entirely, which its own source notes as something to
+fix once the platform allowed it; that is finding 134.
+
+Three things are worth knowing before switching either on.
+
+**A run follows the block that was broken, not the list.** The list says whether the mechanic
+engages at all. Felling an oak leaves the spruce growing against it, and mining iron leaves the gold
+beside it. `any-listed-block: true` is how you ask for the other behaviour, and its one good use is
+an ore seam that crosses from stone into deepslate — the game gives those two halves different
+names, so a seam on the boundary otherwise comes away in two swings.
+
+**The tool wears out and the run stops with it.** Twenty logs cost an axe twenty points. An axe that
+breaks partway leaves the rest of the tree standing. `single-use: true` makes the whole run cost one
+point instead, which is a decision rather than something that falls out of how it is written.
+
+**`max-size` is the safety valve, and it counts the block you struck.** A tree bigger than the limit
+is felled as far as the limit, nearest blocks first, and the rest is still there to swing at again.
+Setting it to zero switches the mechanic off without a second setting saying so. Turning
+`break-leaves` on is what will actually spend that limit — a canopy is far more blocks than a
+trunk.
+
+Players can turn either off for themselves with `/treelopper toggle` and `/veinminer toggle`, which
+matters because both change what an ordinary swing of an ordinary tool does. `/timber` is an alias
+for the first, kept from the fork. The preference lives in the player's own data rather than in your
+settings file.
+
+### The hidden switch is the only sign you never click
+
+Put an `[X]` sign on the **back** of a block and the levers or buttons touching that sign are what
+get thrown. From the front there is a plain wall. Clicking the wall works whatever is behind it.
+
+A key may be named on the sign's **first** line, and then the switch only answers to somebody
+holding one, in either hand. That is upstream's spelling. The fork asked for the key through a chat
+prompt and kept it in block data the builder could never see again, which is the arrangement the
+toggled areas already rejected: a line anybody can read and anybody can change is worth more.
+
+`any-side: false` means only the face opposite the sign works it, which is what you want for a
+switch built into a wall. `true` reaches round the block, for a switch behind something a player can
+walk around.
+
+### The dispenser machines
+
+Load a dispenser in one of six patterns and it does something other than dispense. Nothing is
+crafted — the pattern stays where it is and one of every stack is taken, so a machine works until
+one of its stacks runs out.
+
+| Pattern | Middle | Sides | Corners |
+| --- | --- | --- | --- |
+| Cannon — throws lit TNT | TNT | gunpowder | fire charges |
+| Fan — blows things away | piston | leaves | cobwebs |
+| Vacuum — drags things closer | sticky piston | leaves | cobwebs |
+| Fire arrows | arrow | fire charges | *empty* |
+| Snow shooter | potion | snow blocks | *empty* |
+| XP shooter | glass bottle | redstone | *empty* |
+
+The empty corners have to actually be empty — a machine is nine slots and all nine are read.
+
+The fan and the vacuum reach five blocks along the open air in front of the dispenser and weaken
+with every block, so a wall stops the draught. That is the fork's behaviour; upstream's fan reaches
+one block and pushes at a fixed strength, and upstream has no vacuum at all.
 
 ### Snow is not like the others
 
@@ -276,6 +352,11 @@ more often than not, because it is what every section says until you change it. 
 switches in `config.yml` that stop everything at once: `enabled: false` at the top of it takes the
 whole plugin out of service, and a world named under `disabled-worlds` runs no mechanic and no chip.
 Both reach every mechanic here, not only the ones with signs.
+
+**A tree lopper or a vein miner does nothing.** Four things, in order: the section says
+`enabled: true`; you are holding something on its `tools` list; the block is on its `blocks` list;
+and you have not turned it off for yourself with `/treelopper toggle`. Creative mode never fells or
+mines, deliberately — a creative swing already takes the block it hit.
 
 **A change did nothing.** `/craftbook reload`. If it still did nothing, look in the console: an
 entry that could not be understood is complained about by name as the file is read.

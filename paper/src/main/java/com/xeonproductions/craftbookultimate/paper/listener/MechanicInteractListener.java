@@ -44,7 +44,10 @@ public final class MechanicInteractListener implements Listener {
         }
 
         if (dispatcher.onInteract(
-                clicked, Optional.ofNullable(event.getInteractionPoint()), event.getPlayer())) {
+                clicked,
+                event.getBlockFace(),
+                Optional.ofNullable(event.getInteractionPoint()),
+                event.getPlayer())) {
             event.setCancelled(true);
         }
     }

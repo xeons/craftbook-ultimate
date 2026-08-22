@@ -218,12 +218,17 @@ public final class ConfigFile {
         }
     }
 
-    /** What a block name means on a Sponge server. */
+    /** What a block or item name means on a Sponge server. */
     private record GameBlockNames() implements BlockNames {
 
         @Override
         public Optional<Key> block(String written) {
             return LegacyBlocks.resolve(written);
+        }
+
+        @Override
+        public Optional<Key> item(String written) {
+            return LegacyBlocks.resolveItem(written);
         }
 
         @Override

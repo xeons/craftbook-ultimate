@@ -34,6 +34,9 @@ public final class Mechanics {
     /** Hands out copies of a banner. */
     public static final String BANNER_COPIER = "BannerCopier";
 
+    /** Ladders that fall when what they stood on goes away. */
+    public static final String BETTER_PHYSICS = "BetterPhysics";
+
     /** Hands out copies of a written book. */
     public static final String BOOK_COPIER = "BookCopier";
 
@@ -45,6 +48,9 @@ public final class Mechanics {
 
     /** Sits somebody down on a stair. */
     public static final String CHAIRS = "Chairs";
+
+    /** A dispenser loaded in a pattern that makes it do something else. */
+    public static final String DISPENSER_RECIPES = "DispenserRecipes";
 
     /** Fills a doorway from its lintel or its threshold. */
     public static final String DOOR = "Door";
@@ -60,6 +66,9 @@ public final class Mechanics {
 
     /** Drops the head of whatever was killed. */
     public static final String HEAD_DROPS = "HeadDrops";
+
+    /** A lever hidden behind the wall it works. */
+    public static final String HIDDEN_SWITCH = "HiddenSwitch";
 
     /** A carved pumpkin that lights up. */
     public static final String JACK_O_LANTERN = "JackOLantern";
@@ -85,6 +94,12 @@ public final class Mechanics {
     /** Sends whoever clicks it somewhere else in the same world. */
     public static final String TELEPORTER = "Teleporter";
 
+    /** Fells a whole tree from one log of it. */
+    public static final String TREE_LOPPER = "TreeLopper";
+
+    /** Mines a whole seam from one ore of it. */
+    public static final String VEIN_MINER = "VeinMiner";
+
     /** Turns the experience somebody is carrying into bottles. */
     public static final String XP_STORER = "XPStorer";
 
@@ -98,15 +113,18 @@ public final class Mechanics {
             AMMETER,
             AREA,
             BANNER_COPIER,
+            BETTER_PHYSICS,
             BOOK_COPIER,
             BOUNCE_BLOCKS,
             BRIDGE,
             CHAIRS,
+            DISPENSER_RECIPES,
             DOOR,
             ELEVATOR,
             GATE,
             GLOW_STONE,
             HEAD_DROPS,
+            HIDDEN_SWITCH,
             JACK_O_LANTERN,
             LIGHT_STONE,
             LIGHT_SWITCH,
@@ -115,6 +133,8 @@ public final class Mechanics {
             SIGN_COPIER,
             SNOW,
             TELEPORTER,
+            TREE_LOPPER,
+            VEIN_MINER,
             XP_STORER);
 
     private Mechanics() {

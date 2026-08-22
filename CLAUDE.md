@@ -79,7 +79,10 @@ to a hand and to redstone.**
 | Chairs, with the healing sign and the three commands | Done |
 | Head drops, the game's seven and a face for the rest | Done |
 | The boat habits, beside the cart ones under `vehicles` | Done |
-| Mechanics other than those, the copiers and the minecart ones | 14 left |
+| Ladders that fall, and the six dispenser machines | Done |
+| The hidden switch, on the sign mechanic seam | Done |
+| The tree lopper and the vein miner, on one engine | Done |
+| Mechanics other than those, the copiers and the minecart ones | 10 left |
 | Sponge build: module, adapters, world seam, entity bindings | Done |
 | Sponge build: the native layer over Minecraft's own code | Done |
 | Sponge build: entry point, config, chips running | Done |
@@ -87,7 +90,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2247 tests passing**.
+**2315 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -575,6 +578,39 @@ where it is asked: the world has to allow it and the mechanic has to be switched
 goes through it, sign or no sign. Half of them used to ask only the second half, so `disabled-worlds`
 reached the bridges and the gates but not the bounce blocks or the copiers, which is exactly the
 kind of half-working setting an operator has no way to notice.
+
+## The loppers
+
+Felling a tree and mining a seam are one mechanic twice. `core/lopper/` holds it: `LopperRules` is
+what a run is allowed to take, `Loppers` is the run, and `LopperSight` is as much of the world as a
+run needs to see — two questions, neither of which changes anything. `TreeLopper` is those rules
+pointed at logs and held in an axe; `VeinMiner` is the same pointed at ores and held in a pickaxe.
+`paper/lopper/LopperListener` is the one listener that asks both.
+
+`VeinMiner` is **new** rather than ported, so nothing about it is frozen. It was written to the
+tree lopper's shape on purpose: a builder who has learnt one has learnt both, and an operator
+reading one section of `mechanics.yml` can read the other.
+
+Three decisions are worth keeping.
+
+**A run follows the block that was broken, not the list.** The list decides whether the mechanic
+engages at all; what is then followed is the exact block struck, so felling an oak leaves the spruce
+against it. `any-listed-block` asks for the other behaviour and exists for one case: an ore seam
+crossing from stone into deepslate, which the game names as two different blocks.
+
+**Nearest first**, as the pipes are and for the same reason. A limit reached partway takes the
+blocks closest to the hand, so what is left standing is the far end rather than whichever branch
+happened to be walked first. That only shows at the limit, which is exactly when somebody is
+watching.
+
+**The decision is made in full before a block is broken.** `Loppers.reach` reads block names and
+returns a list; nothing it touches can change under it, and the whole thing is exercised against a
+world written in a test. What the listener then does — drops, tool wear, replanting — is the
+server's own `breakNaturally` plus `damageItemStack`, so none of it is this plugin's idea of what
+the game does.
+
+The fork destroyed the tree rather than felling it, and said in its own source that this was a
+placeholder; see finding 137.
 
 ## The saved areas
 

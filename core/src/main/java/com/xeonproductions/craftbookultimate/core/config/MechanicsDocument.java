@@ -3,6 +3,7 @@
 
 package com.xeonproductions.craftbookultimate.core.config;
 
+import com.xeonproductions.craftbookultimate.core.dispenser.DispenserRecipe;
 import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
 import com.xeonproductions.craftbookultimate.core.mechanic.SneakState;
 import java.util.ArrayList;
@@ -103,6 +104,27 @@ public final class MechanicsDocument {
     private static final String XP_PER_BOTTLE = Mechanics.XP_STORER + ".per-bottle";
     private static final String XP_REQUIRES_BOTTLE = Mechanics.XP_STORER + ".requires-bottle";
     private static final String XP_SNEAK = Mechanics.XP_STORER + ".sneaking";
+
+    private static final String TREE_BLOCKS = Mechanics.TREE_LOPPER + ".blocks";
+    private static final String TREE_TOOLS = Mechanics.TREE_LOPPER + ".tools";
+    private static final String TREE_MAX = Mechanics.TREE_LOPPER + ".max-size";
+    private static final String TREE_DIAGONALS = Mechanics.TREE_LOPPER + ".diagonals";
+    private static final String TREE_ANY = Mechanics.TREE_LOPPER + ".any-listed-block";
+    private static final String TREE_SINGLE_USE = Mechanics.TREE_LOPPER + ".single-use";
+    private static final String TREE_LEAVES = Mechanics.TREE_LOPPER + ".leaves";
+    private static final String TREE_BREAK_LEAVES = Mechanics.TREE_LOPPER + ".break-leaves";
+    private static final String TREE_SAPLINGS = Mechanics.TREE_LOPPER + ".place-saplings";
+
+    private static final String VEIN_BLOCKS = Mechanics.VEIN_MINER + ".blocks";
+    private static final String VEIN_TOOLS = Mechanics.VEIN_MINER + ".tools";
+    private static final String VEIN_MAX = Mechanics.VEIN_MINER + ".max-size";
+    private static final String VEIN_DIAGONALS = Mechanics.VEIN_MINER + ".diagonals";
+    private static final String VEIN_ANY = Mechanics.VEIN_MINER + ".any-listed-block";
+    private static final String VEIN_SINGLE_USE = Mechanics.VEIN_MINER + ".single-use";
+
+    private static final String HIDDEN_ANY_SIDE = Mechanics.HIDDEN_SWITCH + ".any-side";
+
+    private static final String FALLING_LADDERS = Mechanics.BETTER_PHYSICS + ".falling-ladders";
 
     private static final String SNOW_PILING = Mechanics.SNOW + ".piling";
     private static final String SNOW_DISPERSION = Mechanics.SNOW + ".dispersion";
@@ -206,6 +228,33 @@ public final class MechanicsDocument {
         setIfAbsent(tree, XP_PER_BOTTLE, xp.perBottle());
         setIfAbsent(tree, XP_REQUIRES_BOTTLE, xp.requiresBottle());
         setIfAbsent(tree, XP_SNEAK, xp.sneaking().written());
+
+        TreeSettings felling = defaults.tree();
+        LopperSettings trees = felling.lopper();
+        setIfAbsent(tree, TREE_BLOCKS, new ArrayList<>(LopperSettings.DEFAULT_TREE_BLOCKS));
+        setIfAbsent(tree, TREE_TOOLS, new ArrayList<>(LopperSettings.DEFAULT_AXES));
+        setIfAbsent(tree, TREE_MAX, trees.maxSize());
+        setIfAbsent(tree, TREE_DIAGONALS, trees.diagonals());
+        setIfAbsent(tree, TREE_ANY, trees.anyListedBlock());
+        setIfAbsent(tree, TREE_SINGLE_USE, trees.singleUse());
+        setIfAbsent(tree, TREE_LEAVES, new ArrayList<>(LopperSettings.DEFAULT_LEAVES));
+        setIfAbsent(tree, TREE_BREAK_LEAVES, felling.breakLeaves());
+        setIfAbsent(tree, TREE_SAPLINGS, felling.placeSaplings());
+
+        LopperSettings veins = defaults.vein();
+        setIfAbsent(tree, VEIN_BLOCKS, new ArrayList<>(LopperSettings.DEFAULT_VEIN_BLOCKS));
+        setIfAbsent(tree, VEIN_TOOLS, new ArrayList<>(LopperSettings.DEFAULT_PICKAXES));
+        setIfAbsent(tree, VEIN_MAX, veins.maxSize());
+        setIfAbsent(tree, VEIN_DIAGONALS, veins.diagonals());
+        setIfAbsent(tree, VEIN_ANY, veins.anyListedBlock());
+        setIfAbsent(tree, VEIN_SINGLE_USE, veins.singleUse());
+
+        setIfAbsent(tree, HIDDEN_ANY_SIDE, defaults.hiddenSwitchAnySide());
+        setIfAbsent(tree, FALLING_LADDERS, defaults.fallingLadders());
+
+        for (DispenserRecipe recipe : DispenserRecipe.values()) {
+            setIfAbsent(tree, machineKey(recipe), defaults.dispensers().allows(recipe));
+        }
 
         SnowSettings snow = defaults.snow();
         setIfAbsent(tree, SNOW_PILING, snow.piling());
@@ -463,6 +512,136 @@ public final class MechanicsDocument {
                 "",
                 "Copies what one sign says onto another."));
 
+        tree.comment(Mechanics.TREE_LOPPER, List.of(
+                "",
+                "Fells a whole tree from one log of it. Nothing is built and nothing carries a",
+                "sign: an axe in the hand and a log in front of it are the whole declaration.",
+                "The vein miner below is the same mechanic pointed at ores, so the settings are",
+                "the same settings and mean the same things."));
+
+        tree.comment(TREE_BLOCKS, List.of(
+                "What counts as part of a tree. An entry is a block name or a tag written with a",
+                "leading # such as #minecraft:logs, which gains a wood a later version of the",
+                "game adds without this file being touched."));
+
+        tree.comment(TREE_TOOLS, List.of(
+                "What has to be in the hand. Nothing happens with an empty hand or a shovel, so",
+                "a builder taking one log out of a wall still takes one log."));
+
+        tree.comment(TREE_MAX, List.of(
+                "The most blocks one swing takes, counting the log that was actually broken.",
+                "Zero switches the mechanic off. A tree larger than this is felled as far as the",
+                "limit, nearest blocks first, so the rest is still standing to swing at again."));
+
+        tree.comment(TREE_DIAGONALS, List.of(
+                "Whether logs touching only at an edge or a corner count as the same tree. Off,",
+                "since two trees grown up against one another share corners and felling both",
+                "from one swing is rarely what was meant."));
+
+        tree.comment(TREE_ANY, List.of(
+                "Whether a swing takes any block on the list rather than only more of the one",
+                "that was broken. Off, so felling an oak leaves the spruce growing against it."));
+
+        tree.comment(TREE_SINGLE_USE, List.of(
+                "Whether the whole tree costs the axe one point of wear rather than one a log."));
+
+        tree.comment(TREE_LEAVES, List.of(
+                "What counts as leaves, for the setting below."));
+
+        tree.comment(TREE_BREAK_LEAVES, List.of(
+                "Whether the leaves come down with the trunk. Off, and worth leaving off on a",
+                "busy server: a canopy is far more blocks than a trunk and it is what the",
+                "max-size limit will be spent on."));
+
+        tree.comment(TREE_SAPLINGS, List.of(
+                "Whether a sapling is put back where the trunk stood. Which sapling is worked",
+                "out from the wood that was felled, so a wood added later replants itself."));
+
+        tree.comment(Mechanics.VEIN_MINER, List.of(
+                "",
+                "Mines a whole seam from one ore of it: the tree lopper pointed downward, and the",
+                "same code underneath, so every setting here means what it means above.",
+                "",
+                "New in this plugin rather than ported from either CraftBook, so nothing about it",
+                "is fixed by what an old world already contains."));
+
+        tree.comment(VEIN_BLOCKS, List.of(
+                "What counts as a seam. Tags are expanded, so #minecraft:copper_ores covers the",
+                "stone and the deepslate forms both."));
+
+        tree.comment(VEIN_TOOLS, List.of(
+                "What has to be in the hand."));
+
+        tree.comment(VEIN_MAX, List.of(
+                "The most blocks one swing takes. Zero switches the mechanic off."));
+
+        tree.comment(VEIN_DIAGONALS, List.of(
+                "Whether ores touching only at an edge or a corner count as one seam. Worth more",
+                "here than for trees, since the game scatters a seam rather than stacking it."));
+
+        tree.comment(VEIN_ANY, List.of(
+                "Whether a swing takes any block on the list rather than only more of the one",
+                "that was broken. Off, so mining iron leaves the gold beside it. Turning it on",
+                "is chiefly worth it for a seam that crosses from stone into deepslate, since",
+                "the game gives those two halves different names."));
+
+        tree.comment(VEIN_SINGLE_USE, List.of(
+                "Whether the whole seam costs the pickaxe one point of wear rather than one an",
+                "ore."));
+
+        tree.comment(Mechanics.HIDDEN_SWITCH, List.of(
+                "",
+                "A lever hidden behind the wall it works. An [X] sign goes on the back of a block",
+                "and the levers or buttons touching that sign are what get thrown; from the front",
+                "there is a plain wall.",
+                "",
+                "A key may be named on the sign's first line, and then the switch only answers to",
+                "somebody holding one."));
+
+        tree.comment(HIDDEN_ANY_SIDE, List.of(
+                "Whether clicking any side of the block works the switch, rather than only the",
+                "side opposite the sign."));
+
+        tree.comment(Mechanics.BETTER_PHYSICS, List.of(
+                "",
+                "Ladders that fall when what they stood on goes away, so mining the bottom rung",
+                "of a shaft brings the rest of the ladder down instead of leaving it floating."));
+
+        tree.comment(FALLING_LADDERS, List.of(
+                "Whether ladders fall. The only thing this mechanic does, and it keeps its own",
+                "line because both CraftBooks had one."));
+
+        tree.comment(Mechanics.DISPENSER_RECIPES, List.of(
+                "",
+                "A dispenser loaded in a pattern that makes it do something other than dispense.",
+                "Nothing is consumed beyond one of every stack, so a machine goes on working",
+                "until its stacks run out.",
+                "",
+                "One switch each rather than one for the lot, since these are six unrelated",
+                "things that happen to be built the same way."));
+
+        tree.comment(machineKey(DispenserRecipe.CANNON), List.of(
+                "Throws a lit stick of dynamite. TNT in the middle, gunpowder in the sides, fire",
+                "charges in the corners."));
+
+        tree.comment(machineKey(DispenserRecipe.FAN), List.of(
+                "Blows whatever is in front of it away, up to five blocks and weaker with each.",
+                "A piston in the middle, leaves in the sides, cobwebs in the corners."));
+
+        tree.comment(machineKey(DispenserRecipe.VACUUM), List.of(
+                "The fan turned round. A sticky piston in the middle and the rest as the fan."));
+
+        tree.comment(machineKey(DispenserRecipe.FIRE_ARROWS), List.of(
+                "Shoots an arrow that is on fire. An arrow in the middle, fire charges in the",
+                "sides, the corners empty."));
+
+        tree.comment(machineKey(DispenserRecipe.SNOW_SHOOTER), List.of(
+                "Shoots a snowball. A potion in the middle, snow in the sides."));
+
+        tree.comment(machineKey(DispenserRecipe.XP_SHOOTER), List.of(
+                "Throws a bottle of experience. A glass bottle in the middle, redstone in the",
+                "sides."));
+
         tree.comment(Mechanics.SNOW, List.of(
                 "",
                 "Snow that piles, slumps and melts. Every part of it below is off as well as the",
@@ -541,6 +720,12 @@ public final class MechanicsDocument {
                 .teleporter(teleporter(tree, defaults.teleporter()))
                 .xp(xp(tree, defaults.xp()))
                 .snow(snow(tree, defaults.snow()))
+                .tree(felling(tree, defaults.tree()))
+                .vein(mining(tree, defaults.vein()))
+                .dispensers(dispensers(tree, defaults.dispensers()))
+                .hiddenSwitchAnySide(
+                        tree.bool(HIDDEN_ANY_SIDE, defaults.hiddenSwitchAnySide()))
+                .fallingLadders(tree.bool(FALLING_LADDERS, defaults.fallingLadders()))
                 .build();
     }
 
@@ -627,9 +812,9 @@ public final class MechanicsDocument {
 
     private MeterSettings meters(ConfigTree tree, MeterSettings defaults) {
         return new MeterSettings(
-                names.block(tree.text(AMMETER_ITEM, defaults.ammeterItem().asString()))
+                names.item(tree.text(AMMETER_ITEM, defaults.ammeterItem().asString()))
                         .orElseGet(defaults::ammeterItem),
-                names.block(tree.text(LIGHT_STONE_ITEM, defaults.lightStoneItem().asString()))
+                names.item(tree.text(LIGHT_STONE_ITEM, defaults.lightStoneItem().asString()))
                         .orElseGet(defaults::lightStoneItem));
     }
 
@@ -669,6 +854,75 @@ public final class MechanicsDocument {
                 tree.bool(XP_REQUIRES_BOTTLE, defaults.requiresBottle()),
                 SneakState.of(tree.text(XP_SNEAK, defaults.sneaking().written()),
                         defaults.sneaking()));
+    }
+
+    /** The name a dispenser machine is switched off by. */
+    private static String machineKey(DispenserRecipe recipe) {
+        return Mechanics.DISPENSER_RECIPES + "." + recipe.settingName();
+    }
+
+    private TreeSettings felling(ConfigTree tree, TreeSettings defaults) {
+        LopperSettings run = lopper(
+                tree,
+                defaults.lopper(),
+                TREE_BLOCKS,
+                TREE_TOOLS,
+                TREE_MAX,
+                TREE_DIAGONALS,
+                TREE_ANY,
+                TREE_SINGLE_USE);
+        return new TreeSettings(
+                run,
+                names.blocks(tree.strings(TREE_LEAVES), report),
+                tree.bool(TREE_BREAK_LEAVES, defaults.breakLeaves()),
+                tree.bool(TREE_SAPLINGS, defaults.placeSaplings()));
+    }
+
+    private LopperSettings mining(ConfigTree tree, LopperSettings defaults) {
+        return lopper(
+                tree,
+                defaults,
+                VEIN_BLOCKS,
+                VEIN_TOOLS,
+                VEIN_MAX,
+                VEIN_DIAGONALS,
+                VEIN_ANY,
+                VEIN_SINGLE_USE);
+    }
+
+    /**
+     * One lopper run's settings, read the same way for the trees and for the seams.
+     *
+     * <p>An empty list is left empty rather than falling back to the defaults, unlike the gate's
+     * materials: a list somebody has deliberately emptied means they want the mechanic to take
+     * nothing, and the mechanic says so by not running at all.
+     */
+    private LopperSettings lopper(
+            ConfigTree tree,
+            LopperSettings defaults,
+            String blocks,
+            String tools,
+            String max,
+            String diagonals,
+            String any,
+            String singleUse) {
+        return new LopperSettings(
+                names.blocks(tree.strings(blocks), report),
+                names.items(tree.strings(tools), report),
+                tree.integer(max, defaults.maxSize()),
+                tree.bool(diagonals, defaults.diagonals()),
+                tree.bool(any, defaults.anyListedBlock()),
+                tree.bool(singleUse, defaults.singleUse()));
+    }
+
+    private static DispenserSettings dispensers(ConfigTree tree, DispenserSettings defaults) {
+        Set<DispenserRecipe> allowed = new LinkedHashSet<>();
+        for (DispenserRecipe recipe : DispenserRecipe.values()) {
+            if (tree.bool(machineKey(recipe), defaults.allows(recipe))) {
+                allowed.add(recipe);
+            }
+        }
+        return new DispenserSettings(allowed);
     }
 
     private static SnowSettings snow(ConfigTree tree, SnowSettings defaults) {

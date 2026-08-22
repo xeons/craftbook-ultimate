@@ -12,6 +12,7 @@ import com.xeonproductions.craftbookultimate.core.mechanic.PostedSign;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanic;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanics;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
+import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalDouble;
@@ -31,13 +32,24 @@ import org.jspecify.annotations.NullMarked;
  * <p>One place that resolves the sign and checks what is allowed, rather than each mechanic
  * watching the world for itself. Three things can set a mechanic off and all three come through
  * here: a hand on its own sign, a hand on something standing in for that sign — a button in front
- * of a lift, a fence a gate is made of — and redstone arriving beside it.
+ * of a lift, a fence a gate is made of, a wall a hidden switch is behind — and redstone arriving
+ * beside it.
  */
 @NullMarked
 public final class MechanicDispatcher {
 
     /** How far in front of a lift's sign its button is. */
     private static final int BUTTON_REACH = 2;
+
+    /** The six sides a hidden switch's sign may be on. */
+    private static final BlockFace[] AROUND = {
+        BlockFace.NORTH,
+        BlockFace.EAST,
+        BlockFace.SOUTH,
+        BlockFace.WEST,
+        BlockFace.UP,
+        BlockFace.DOWN
+    };
 
     /** The sides power may arrive from, and the block itself. */
     private static final BlockFace[] NEIGHBOURS = {
@@ -52,15 +64,18 @@ public final class MechanicDispatcher {
 
     private final Configuration configuration;
     private final AreaVault vault;
+    private final RegionSchedulers schedulers;
 
-    public MechanicDispatcher(Configuration configuration, AreaVault vault) {
+    public MechanicDispatcher(
+            Configuration configuration, AreaVault vault, RegionSchedulers schedulers) {
         this.configuration = configuration;
         this.vault = vault;
+        this.schedulers = schedulers;
     }
 
     /** The world as a mechanic sees it, with the saved areas behind it. */
     public BukkitMechanicWorld worldOf(World world) {
-        return new BukkitMechanicWorld(world, vault);
+        return new BukkitMechanicWorld(world, vault, schedulers);
     }
 
     /**
@@ -71,7 +86,11 @@ public final class MechanicDispatcher {
      * @param who clicked it
      * @return true if a mechanic claimed the click, which is what stops it doing anything else
      */
-    public boolean onInteract(Block clicked, Optional<Location> interactionPoint, Player who) {
+    public boolean onInteract(
+            Block clicked,
+            BlockFace clickedFace,
+            Optional<Location> interactionPoint,
+            Player who) {
         World world = clicked.getWorld();
         Settings settings = configuration.settings();
         if (!settings.allowsWorld(world.getName())) {
@@ -85,6 +104,12 @@ public final class MechanicDispatcher {
         Optional<PostedSign> onTheSign = mechanicWorld.signAt(Positions.toDomain(clicked));
         if (onTheSign.isPresent()) {
             return run(onTheSign.get(), height, mechanicWorld, settings, actor);
+        }
+
+        Optional<PostedSign> behindTheWall =
+                hiddenSwitchFor(clicked, clickedFace, mechanicWorld, settings);
+        if (behindTheWall.isPresent()) {
+            return run(behindTheWall.get(), height, mechanicWorld, settings, actor);
         }
 
         if (settings.mechanics().elevator().buttons() && Tag.BUTTONS.isTagged(clicked.getType())) {
@@ -192,6 +217,39 @@ public final class MechanicDispatcher {
 
         mechanic.act(MechanicVisit.byHand(sign, height, world, settings, actor));
         return true;
+    }
+
+    /**
+     * The hidden switch a clicked block is the front of.
+     *
+     * <p>Behind the face that was clicked, so a wall works the switch on its far side and nothing
+     * else does. An operator may allow any side instead, which is for a switch behind a block
+     * somebody has to walk round.
+     *
+     * <p>A block that is itself a lever or a button is left alone: the game already answers a
+     * click on one of those, and doubling it up would throw the switch twice.
+     */
+    private static Optional<PostedSign> hiddenSwitchFor(
+            Block clicked, BlockFace clickedFace, BukkitMechanicWorld world, Settings settings) {
+        if (!settings.mechanics().allows(SignMechanics.hiddenSwitch().name())
+                || clicked.getType() == Material.LEVER
+                || Tag.BUTTONS.isTagged(clicked.getType())) {
+            return Optional.empty();
+        }
+
+        BlockFace[] sides = settings.mechanics().hiddenSwitchAnySide()
+                ? AROUND
+                : new BlockFace[] {clickedFace.getOppositeFace()};
+
+        for (BlockFace side : sides) {
+            Optional<PostedSign> sign =
+                    world.signAt(Positions.toDomain(clicked.getRelative(side)))
+                            .filter(posted -> SignMechanics.hiddenSwitch().claims(posted.lines()));
+            if (sign.isPresent()) {
+                return sign;
+            }
+        }
+        return Optional.empty();
     }
 
     /**

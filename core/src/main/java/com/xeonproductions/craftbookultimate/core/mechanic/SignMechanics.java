@@ -25,8 +25,10 @@ public final class SignMechanics {
     private static final Door DOOR = new Door();
     private static final Gate GATE = new Gate();
     private static final ToggleArea AREA = new ToggleArea();
+    private static final HiddenSwitch HIDDEN = HiddenSwitch.instance();
 
-    private static final List<SignMechanic> ALL = List.of(ELEVATOR, BRIDGE, DOOR, GATE, AREA);
+    private static final List<SignMechanic> ALL =
+            List.of(ELEVATOR, BRIDGE, DOOR, GATE, AREA, HIDDEN);
 
     private SignMechanics() {}
 
@@ -43,6 +45,11 @@ public final class SignMechanics {
     /** The gate, which is the one that answers to a hand on its own material. */
     public static Gate gate() {
         return GATE;
+    }
+
+    /** The hidden switch, which is the one whose own sign is never what gets clicked. */
+    public static HiddenSwitch hiddenSwitch() {
+        return HIDDEN;
     }
 
     /** The toggled area, which is the one that keeps its blocks somewhere other than the world. */

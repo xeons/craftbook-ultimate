@@ -46,6 +46,11 @@ import org.jspecify.annotations.NullMarked;
  * @param teleporter how far somebody may be sent, and from where
  * @param xp what bottles experience, and what a bottle costs
  * @param snow how snow piles, slumps and melts
+ * @param tree what a tree lopper fells and what it replants
+ * @param vein what a vein miner follows
+ * @param dispensers which of the dispenser machines work
+ * @param hiddenSwitch which side of a block a hidden switch answers to
+ * @param fallingLadders whether a ladder falls when what it stood on goes away
  */
 @NullMarked
 public record MechanicSettings(
@@ -63,7 +68,12 @@ public record MechanicSettings(
         BounceSettings bounce,
         TeleporterSettings teleporter,
         XpSettings xp,
-        SnowSettings snow) {
+        SnowSettings snow,
+        TreeSettings tree,
+        LopperSettings vein,
+        DispenserSettings dispensers,
+        boolean hiddenSwitchAnySide,
+        boolean fallingLadders) {
 
     /** Every mechanic switched off, which is how a server nobody has configured runs. */
     public static final MechanicSettings DEFAULTS = builder().build();
@@ -95,7 +105,12 @@ public record MechanicSettings(
                 .bounce(bounce)
                 .teleporter(teleporter)
                 .xp(xp)
-                .snow(snow);
+                .snow(snow)
+                .tree(tree)
+                .vein(vein)
+                .dispensers(dispensers)
+                .hiddenSwitchAnySide(hiddenSwitchAnySide)
+                .fallingLadders(fallingLadders);
     }
 
     /**
@@ -188,6 +203,31 @@ public record MechanicSettings(
         return toBuilder().meters(dials).build();
     }
 
+    /** These settings felling trees differently. */
+    public MechanicSettings withTree(TreeSettings felling) {
+        return toBuilder().tree(felling).build();
+    }
+
+    /** These settings mining seams differently. */
+    public MechanicSettings withVein(LopperSettings mining) {
+        return toBuilder().vein(mining).build();
+    }
+
+    /** These settings with different dispenser machines allowed. */
+    public MechanicSettings withDispensers(DispenserSettings machines) {
+        return toBuilder().dispensers(machines).build();
+    }
+
+    /** These settings with hidden switches answering from any side, or only from behind. */
+    public MechanicSettings withHiddenSwitchAnySide(boolean anySide) {
+        return toBuilder().hiddenSwitchAnySide(anySide).build();
+    }
+
+    /** These settings with ladders falling, or staying where they hang. */
+    public MechanicSettings withFallingLadders(boolean falling) {
+        return toBuilder().fallingLadders(falling).build();
+    }
+
     /** These settings with different blocks throwing people. */
     public MechanicSettings withBounce(BounceSettings bounces) {
         return toBuilder().bounce(bounces).build();
@@ -234,6 +274,11 @@ public record MechanicSettings(
         private TeleporterSettings teleporter = TeleporterSettings.DEFAULTS;
         private XpSettings xp = XpSettings.DEFAULTS;
         private SnowSettings snow = SnowSettings.DEFAULTS;
+        private TreeSettings tree = TreeSettings.DEFAULTS;
+        private LopperSettings vein = LopperSettings.VEIN_DEFAULTS;
+        private DispenserSettings dispensers = DispenserSettings.DEFAULTS;
+        private boolean hiddenSwitchAnySide = false;
+        private boolean fallingLadders = true;
 
         private Builder() {}
 
@@ -327,6 +372,36 @@ public record MechanicSettings(
             return this;
         }
 
+        /** What a tree lopper fells and what it replants. */
+        public Builder tree(TreeSettings felling) {
+            this.tree = felling;
+            return this;
+        }
+
+        /** What a vein miner follows. */
+        public Builder vein(LopperSettings mining) {
+            this.vein = mining;
+            return this;
+        }
+
+        /** Which of the dispenser machines work. */
+        public Builder dispensers(DispenserSettings machines) {
+            this.dispensers = machines;
+            return this;
+        }
+
+        /** Whether a hidden switch answers to a click on any side of its block. */
+        public Builder hiddenSwitchAnySide(boolean anySide) {
+            this.hiddenSwitchAnySide = anySide;
+            return this;
+        }
+
+        /** Whether a ladder falls when what it stood on goes away. */
+        public Builder fallingLadders(boolean falling) {
+            this.fallingLadders = falling;
+            return this;
+        }
+
         public MechanicSettings build() {
             return new MechanicSettings(
                     enabled,
@@ -343,7 +418,12 @@ public record MechanicSettings(
                     bounce,
                     teleporter,
                     xp,
-                    snow);
+                    snow,
+                    tree,
+                    vein,
+                    dispensers,
+                    hiddenSwitchAnySide,
+                    fallingLadders);
         }
     }
 }

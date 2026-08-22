@@ -29,6 +29,15 @@ import org.jspecify.annotations.NullMarked;
  * @param liftTolerance how far a lift will drop somebody to find them a floor
  * @param maxAreaBlocks the most blocks one saved area may hold, or zero for no limit
  * @param maxAreasPerNamespace the most areas one name may have saved, or zero for no limit
+ * @param glowstoneOffBlock what a glowstone is while it is dark
+ * @param fireBlocks what catches light on top of itself while it is powered
+ * @param depowerOnSourceRemoval whether a powered block goes out when the redstone feeding it is
+ *     mined away, rather than staying as it was
+ * @param lightSwitchRange how far a light switch reaches, unless its sign says otherwise
+ * @param lightSwitchMaxLights the most torches one light switch turns, unless its sign says
+ *     otherwise
+ * @param lightStoneItem what is held to read a light level off a block
+ * @param ammeterItem what is held to read a redstone power level off a block
  */
 @NullMarked
 public record MechanicSettings(
@@ -41,7 +50,14 @@ public record MechanicSettings(
         boolean liftButtons,
         int liftTolerance,
         int maxAreaBlocks,
-        int maxAreasPerNamespace) {
+        int maxAreasPerNamespace,
+        Key glowstoneOffBlock,
+        Set<Key> fireBlocks,
+        boolean depowerOnSourceRemoval,
+        int lightSwitchRange,
+        int lightSwitchMaxLights,
+        Key lightStoneItem,
+        Key ammeterItem) {
 
     /** Every kind of fence, which is what most gates are made of. */
     private static final String[] FENCES = {
@@ -63,14 +79,38 @@ public record MechanicSettings(
     /** The most a gate may reach, however wide an operator makes it. */
     public static final int MAX_GATE_RADIUS = 16;
 
-    /** The mechanics as they have always worked. */
+    /** What a glowstone is while it is dark, as the fork had it. */
+    public static final Key DEFAULT_GLOWSTONE_OFF = Key.key("minecraft:soul_sand");
+
+    /** What catches light on top of itself while it is powered, as the fork had it. */
+    public static final Key DEFAULT_FIRE_BLOCK = Key.key("minecraft:netherrack");
+
+    /** How far a light switch reaches out for torches, as the fork had it. */
+    public static final int DEFAULT_LIGHT_SWITCH_RANGE = 10;
+
+    /** How many it turns before it stops, as the fork had it. */
+    public static final int DEFAULT_LIGHT_SWITCH_LIGHTS = 20;
+
+    /** What is held up to a block to read its light level. */
+    public static final Key DEFAULT_LIGHT_STONE_ITEM = Key.key("minecraft:glowstone_dust");
+
+    /** What is held up to a block to read its redstone power. */
+    public static final Key DEFAULT_AMMETER_ITEM = Key.key("minecraft:charcoal");
+
+    /** The mechanics as they have always been built. */
     public static final MechanicSettings DEFAULTS = new MechanicSettings(
-            Set.of(), true, defaultGateBlocks(), 5, true, true, true, 5, 5000, 30);
+            Set.of(), true, defaultGateBlocks(), 5, true, true, true, 5, 5000, 30,
+            DEFAULT_GLOWSTONE_OFF, Set.of(DEFAULT_FIRE_BLOCK), false,
+            DEFAULT_LIGHT_SWITCH_RANGE, DEFAULT_LIGHT_SWITCH_LIGHTS, DEFAULT_LIGHT_STONE_ITEM,
+            DEFAULT_AMMETER_ITEM);
 
     /** Copies the collections and holds every limit to something a mechanic can work with. */
     public MechanicSettings {
         disabled = lowercased(disabled);
         gateBlocks = Collections.unmodifiableSet(new LinkedHashSet<>(gateBlocks));
+        fireBlocks = Collections.unmodifiableSet(new LinkedHashSet<>(fireBlocks));
+        lightSwitchRange = Math.max(0, lightSwitchRange);
+        lightSwitchMaxLights = Math.max(0, lightSwitchMaxLights);
         gateRadius = Math.clamp(gateRadius, 1, MAX_GATE_RADIUS);
         liftTolerance = Math.max(1, liftTolerance);
         maxAreaBlocks = Math.max(0, maxAreaBlocks);
@@ -111,7 +151,9 @@ public record MechanicSettings(
         return new MechanicSettings(
                 mechanics, redstone, gateBlocks, gateRadius, gateClicking,
                 liftJumping, liftButtons, liftTolerance,
-                maxAreaBlocks, maxAreasPerNamespace);
+                maxAreaBlocks, maxAreasPerNamespace,
+                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
     }
 
     /** These settings with redstone allowed or refused. */
@@ -119,7 +161,9 @@ public record MechanicSettings(
         return new MechanicSettings(
                 disabled, allowed, gateBlocks, gateRadius, gateClicking,
                 liftJumping, liftButtons, liftTolerance,
-                maxAreaBlocks, maxAreasPerNamespace);
+                maxAreaBlocks, maxAreasPerNamespace,
+                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
     }
 
     /** These settings with a different set of gate materials. */
@@ -127,7 +171,9 @@ public record MechanicSettings(
         return new MechanicSettings(
                 disabled, redstone, blocks, gateRadius, gateClicking,
                 liftJumping, liftButtons, liftTolerance,
-                maxAreaBlocks, maxAreasPerNamespace);
+                maxAreaBlocks, maxAreasPerNamespace,
+                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
     }
 
     /** These settings with gates reaching a different distance. */
@@ -135,7 +181,9 @@ public record MechanicSettings(
         return new MechanicSettings(
                 disabled, redstone, gateBlocks, radius, gateClicking,
                 liftJumping, liftButtons, liftTolerance,
-                maxAreaBlocks, maxAreasPerNamespace);
+                maxAreaBlocks, maxAreasPerNamespace,
+                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
     }
 
     /** These settings with clicking a gate's material allowed or refused. */
@@ -143,7 +191,9 @@ public record MechanicSettings(
         return new MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, allowed,
                 liftJumping, liftButtons, liftTolerance,
-                maxAreaBlocks, maxAreasPerNamespace);
+                maxAreaBlocks, maxAreasPerNamespace,
+                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
     }
 
     /** These settings with jump lifts allowed or refused. */
@@ -151,35 +201,45 @@ public record MechanicSettings(
         return new MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, gateClicking,
                 allowed, liftButtons, liftTolerance,
-                maxAreaBlocks, maxAreasPerNamespace);
+                maxAreaBlocks, maxAreasPerNamespace,
+                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
     }
 
     /** These settings with button lifts allowed or refused. */
     public MechanicSettings withLiftButtons(boolean allowed) {
         return new MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, gateClicking,
-                liftJumping, allowed, liftTolerance, maxAreaBlocks, maxAreasPerNamespace);
+                liftJumping, allowed, liftTolerance, maxAreaBlocks, maxAreasPerNamespace,
+                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
     }
 
     /** These settings with a different limit on how big one area may be. */
     public MechanicSettings withMaxAreaBlocks(int blocks) {
         return new MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, liftTolerance, blocks, maxAreasPerNamespace);
+                liftJumping, liftButtons, liftTolerance, blocks, maxAreasPerNamespace,
+                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
     }
 
     /** These settings with a different limit on how many areas one name may have. */
     public MechanicSettings withMaxAreasPerNamespace(int areas) {
         return new MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, liftTolerance, maxAreaBlocks, areas);
+                liftJumping, liftButtons, liftTolerance, maxAreaBlocks, areas,
+                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
     }
 
     /** These settings with lifts dropping somebody a different distance to find a floor. */
     public MechanicSettings withLiftTolerance(int tolerance) {
         return new MechanicSettings(
                 disabled, redstone, gateBlocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, tolerance, maxAreaBlocks, maxAreasPerNamespace);
+                liftJumping, liftButtons, tolerance, maxAreaBlocks, maxAreasPerNamespace,
+                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
+                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem);
     }
 
     /** What a gate may be made of when nobody has said otherwise. */

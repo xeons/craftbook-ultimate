@@ -113,8 +113,8 @@ reason: one readable thing a builder and an operator can both act on beats survi
 
 ## Mechanics
 
-The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 38 are
-ported, 5 are dropped or cannot be done, and **27 are left**. (73 files carry the annotation;
+The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 45 are
+ported, 5 are dropped or cannot be done, and **20 are left**. (73 files carry the annotation;
 `EmptyDecay`, `ExitRemover` and `RemoveEntities` each have a cart class and a boat class, and both
 of each are now done.)
 
@@ -177,13 +177,33 @@ answer the same right-click. They are deliberately **not** on the `SignMechanic`
 mechanic there is about blocks, and these are about the item in somebody's hand, which a
 `MechanicVisit` does not carry and should not have to.
 
+### The blocks that answer redstone, and the two about light: done
+
+`GlowStone`, `JackOLantern` and `Netherrack` are one seam in `core/powerable/`: a block that becomes
+another block when it is powered, or one that carries a fire on top of itself. Nothing is built and
+no sign declares them, so they are found by looking at what is beside whatever changed rather than
+through an index.
+
+`LightNetherrack` is not a fourth. It and `Netherrack` were the same mechanic written twice, so one
+implementation answers for both under the more familiar name, with the block it works on a setting —
+see finding 135.
+
+`LightSwitch` has a listener of its own, since nothing powers it and it answers a right-click. Its
+reach was made symmetric and its limit made to bite nearest first — finding 134.
+
+`LightStone` and `Ammeter` are one thing in `core/meter/`. Both are an instrument held up to a
+block — one reads light, the other reads redstone power — and the fork drew the same fifteen-mark
+bar twice to do it. One drawing now, two dials.
+
+Powering a block and then mining the redstone still leaves it lit. That is deliberate and old, and
+`mechanics.depower-on-source-removal` is how an operator asks for the other behaviour.
+
 ### Unique to this fork
 
 | Mechanic | What it does |
 | --- | --- |
 | `Footprints` | Cosmetic particles where players walk. |
 | `PageReader` | A library of books kept in files, with its own commands. 1054 lines in the fork, and its own piece of work rather than a copier. |
-| `LightNetherrack` | Netherrack lit by redstone. |
 
 ### Shared with upstream
 

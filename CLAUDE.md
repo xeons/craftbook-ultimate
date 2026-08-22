@@ -72,6 +72,8 @@ to a hand and to redstone.**
 | Test bed: a rig per chip, built from the catalogue | Done |
 | Debugging: the IC stick, the commands, the report | Done |
 | The copiers: banner, book, map and sign | Done |
+| The powerables and the light switch | Done |
+| The two meters, light and redstone, on one dial | Done |
 | The boat habits, beside the cart ones under `vehicles` | Done |
 | Mechanics other than those, the copiers and the minecart ones | Not started |
 | Sponge build: module, adapters, world seam, entity bindings | Done |
@@ -81,7 +83,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2074 tests passing**.
+**2114 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 

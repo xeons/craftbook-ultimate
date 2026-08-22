@@ -46,9 +46,13 @@ import com.xeonproductions.craftbookultimate.paper.ic.BukkitRoster;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
 import com.xeonproductions.craftbookultimate.core.copier.Copiers;
 import com.xeonproductions.craftbookultimate.core.copier.SignClipboard;
+import com.xeonproductions.craftbookultimate.core.meter.Meters;
 import com.xeonproductions.craftbookultimate.paper.copier.CopierListener;
 import com.xeonproductions.craftbookultimate.paper.copier.SignCopierListener;
 import com.xeonproductions.craftbookultimate.paper.listener.BoatHabitListener;
+import com.xeonproductions.craftbookultimate.paper.meter.MeterListener;
+import com.xeonproductions.craftbookultimate.paper.powerable.LightSwitchListener;
+import com.xeonproductions.craftbookultimate.paper.powerable.PowerableListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartHabitListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartRedstoneListener;
@@ -180,6 +184,12 @@ public final class CraftBookPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new SignCopierListener(chipServices.configuration(), signClipboard), this);
         getServer().getPluginManager().registerEvents(
+                new PowerableListener(chipServices.configuration()), this);
+        getServer().getPluginManager().registerEvents(
+                new LightSwitchListener(chipServices.configuration()), this);
+        getServer().getPluginManager().registerEvents(
+                new MeterListener(chipServices.configuration()), this);
+        getServer().getPluginManager().registerEvents(
                 new PipeListener(
                         new PipeDispatcher(chipServices.configuration(), pipeNetworks),
                         chipServices.configuration()),
@@ -238,6 +248,7 @@ public final class CraftBookPlugin extends JavaPlugin {
         declare(manager, PipeListener.BUILD,
                 "Write a filter on a pipe's sign.", PermissionDefault.TRUE);
         declareCopierPermissions(manager);
+        declareLightPermissions(manager);
         declareVariablePermissions(manager);
         declare(manager, TestbedCommands.BUILD,
                 "Build a test bed carrying a rig for every chip.", PermissionDefault.OP);
@@ -257,11 +268,23 @@ public final class CraftBookPlugin extends JavaPlugin {
     }
 
     /**
-     * Declares the permissions the toggled areas need beyond the pair every mechanic has.
+     * What the blocks that answer redstone need, and the two light mechanics beside them.
      *
-     * <p>Saving, deleting and listing your own areas is ordinary; doing any of it under
-     * somebody else's name, or under the one everybody shares, is not.
+     * <p>The powerables have no permission of their own: a glowstone beside a lever is not
+     * something anybody builds, so there is nothing to allow or refuse. Only the two that somebody
+     * has to reach out and use are named here.
      */
+    private static void declareLightPermissions(PluginManager manager) {
+        declare(manager, LightSwitchListener.SWITCH_BUILD,
+                "Make a light switch.", PermissionDefault.OP);
+        declare(manager, LightSwitchListener.SWITCH_USE,
+                "Throw a light switch somebody has made.", PermissionDefault.TRUE);
+        declare(manager, Meters.LIGHT_STONE_USE,
+                "Read the light level off a block.", PermissionDefault.TRUE);
+        declare(manager, Meters.AMMETER_USE,
+                "Read how much redstone power a block carries.", PermissionDefault.TRUE);
+    }
+
     /** What the copiers need, which is a pair for each sign and two for the sign copier. */
     private static void declareCopierPermissions(PluginManager manager) {
         for (String sign : Copiers.SIGN_NAMES) {
@@ -276,6 +299,12 @@ public final class CraftBookPlugin extends JavaPlugin {
                 "Edit a line of the sign you have copied.", PermissionDefault.OP);
     }
 
+    /**
+     * Declares the permissions the toggled areas need beyond the pair every mechanic has.
+     *
+     * <p>Saving, deleting and listing your own areas is ordinary; doing any of it under
+     * somebody else's name, or under the one everybody shares, is not.
+     */
     private static void declareAreaPermissions(PluginManager manager) {
         declare(manager, AreaCommands.SAVE, "Save a region as an area.",
                 PermissionDefault.TRUE);

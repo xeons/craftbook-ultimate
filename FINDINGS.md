@@ -2019,3 +2019,58 @@ it. Making boats work on land is possible — it means moving the boat this plug
 tick, rather than asking the game to — but that is a new mechanic with new behaviour to agree on
 rather than a port, so it is not smuggled in under an old name.
 
+### 134. A light switch reached further one way than the other, and turned one light too many
+
+`LightSwitch` swept a box for torches to turn:
+
+```java
+for (int x = -maxRange; x < maxRange; x++)
+```
+
+Strictly less than, on all three axes. So a switch set to reach ten reached ten blocks west and
+nine east, ten down and nine up — a room lit from a switch on its east wall left a column dark at
+the far end, and nothing about the sign said why.
+
+The limit on how many it turned was checked in the wrong place too:
+
+```java
+toggledLights++;
+// ... turn the torch ...
+if (toggledLights > maxLights) return;
+```
+
+Counted, turned, then tested — and tested for *greater than*. A switch allowed twenty turned
+twenty-one before stopping.
+
+Which twenty-one was also arbitrary. The sweep ran in `x`, then `y`, then `z` order from the
+corner, so the torches that got turned were the ones furthest west and down, not the ones near the
+switch. A builder clicking a switch in a large room saw a patch light up somewhere behind them.
+
+**Rewrite:** `LightSwitches.reach` returns a ball, symmetric on every axis, sorted nearest first,
+and the binding stops at the limit rather than one past it. Nearest first is the part worth having:
+the limit exists so one switch cannot rewrite half a world, and when it bites it should bite on the
+lights furthest from the person who threw it.
+
+### 135. Netherrack and LightNetherrack were the same mechanic, written twice
+
+Both put a fire above a block while it was powered and took it away when it was not. Side by side:
+
+```java
+// Netherrack
+if (loc.getBlockType() == BlockTypes.FIRE || loc.getBlockType() == BlockTypes.AIR)
+    loc.setBlock(powered ? FIRE : AIR);
+
+// LightNetherrack
+if (powered)  { if (fireLoc.getBlockType() == AIR)  fireLoc.setBlock(FIRE); }
+else          { if (fireLoc.getBlockType() == FIRE) fireLoc.setBlock(AIR);  }
+```
+
+The same outcome for every input, written two ways. The only real difference was that
+`LightNetherrack` let an operator name the block it worked on and `Netherrack` had netherrack
+hardcoded, and both were separately switchable — so a server could switch one off and still have
+the other lighting fires on netherrack, with no way to tell which one was doing it.
+
+**Rewrite:** one `Powerable.Fire`, registered under `Netherrack`, with the blocks it works on as
+`mechanics.fire-blocks`. That is the more general of the two behaviours and the more familiar of
+the two names.
+

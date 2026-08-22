@@ -106,6 +106,13 @@ public final class ConfigDocument {
     private static final String LIFT_TOLERANCE = "mechanics.lift-tolerance";
     private static final String MAX_AREA_BLOCKS = "mechanics.max-area-blocks";
     private static final String MAX_AREAS = "mechanics.max-areas-per-name";
+    private static final String GLOWSTONE_OFF = "mechanics.glowstone-off-block";
+    private static final String FIRE_BLOCKS = "mechanics.fire-blocks";
+    private static final String DEPOWER_ON_REMOVAL = "mechanics.depower-on-source-removal";
+    private static final String LIGHT_SWITCH_RANGE = "mechanics.light-switch-range";
+    private static final String LIGHT_SWITCH_LIGHTS = "mechanics.light-switch-max-lights";
+    private static final String LIGHT_STONE_ITEM = "mechanics.light-stone-item";
+    private static final String AMMETER_ITEM = "mechanics.ammeter-item";
 
     /** Puts the default of every setting the file does not already carry into it. */
     private static void fillIn(ConfigTree tree) {
@@ -169,6 +176,13 @@ public final class ConfigDocument {
         setIfAbsent(tree, LIFT_TOLERANCE, mechanics.liftTolerance());
         setIfAbsent(tree, MAX_AREA_BLOCKS, mechanics.maxAreaBlocks());
         setIfAbsent(tree, MAX_AREAS, mechanics.maxAreasPerNamespace());
+        setIfAbsent(tree, GLOWSTONE_OFF, mechanics.glowstoneOffBlock().asString());
+        setIfAbsent(tree, FIRE_BLOCKS, names(mechanics.fireBlocks()));
+        setIfAbsent(tree, DEPOWER_ON_REMOVAL, mechanics.depowerOnSourceRemoval());
+        setIfAbsent(tree, LIGHT_SWITCH_RANGE, mechanics.lightSwitchRange());
+        setIfAbsent(tree, LIGHT_SWITCH_LIGHTS, mechanics.lightSwitchMaxLights());
+        setIfAbsent(tree, LIGHT_STONE_ITEM, mechanics.lightStoneItem().asString());
+        setIfAbsent(tree, AMMETER_ITEM, mechanics.ammeterItem().asString());
     }
 
     private static void setIfAbsent(ConfigTree tree, String path, Object value) {
@@ -444,6 +458,37 @@ public final class ConfigDocument {
         tree.comment(MAX_AREAS, List.of(
                 "The most areas any one name may have saved. Zero is no limit.",
                 "Saving over an area that already exists does not count against this."));
+
+        tree.comment(GLOWSTONE_OFF, List.of(
+                "",
+                "What a glowstone looks like while it is dark. Powering it turns it back into",
+                "glowstone, and taking the power away turns it into this."));
+
+        tree.comment(FIRE_BLOCKS, List.of(
+                "What catches light on top of itself while it is powered. The block is never",
+                "changed; what changes is the air above it."));
+
+        tree.comment(DEPOWER_ON_REMOVAL, List.of(
+                "Whether a powered block goes out when the redstone feeding it is mined away.",
+                "Off by default, and deliberately: powering a light and then mining the redstone",
+                "is how a builder makes one that stays on. Switching a lever off still turns it",
+                "off either way — this is only about the power source being taken out of the",
+                "world."));
+
+        tree.comment(LIGHT_SWITCH_RANGE, List.of(
+                "",
+                "How far a light switch reaches out for torches. A sign may ask for less on its",
+                "third line."));
+
+        tree.comment(LIGHT_SWITCH_LIGHTS, List.of(
+                "The most torches one light switch turns. A sign may ask for fewer on its fourth",
+                "line."));
+
+        tree.comment(LIGHT_STONE_ITEM, List.of(
+                "What is held up to a block to read its light level off it."));
+
+        tree.comment(AMMETER_ITEM, List.of(
+                "What is held up to a block to read how much redstone power it carries."));
     }
 
     /** Turns what the file says into the settings the chips read. */
@@ -468,6 +513,7 @@ public final class ConfigDocument {
     /** Reads what an operator has said about the sign mechanics. */
     private MechanicSettings mechanics(ConfigTree tree, MechanicSettings defaults) {
         Set<Key> gateBlocks = names.blocks(tree.strings(GATE_BLOCKS), report);
+        Set<Key> fireBlocks = names.blocks(tree.strings(FIRE_BLOCKS), report);
         return new MechanicSettings(
                 Set.copyOf(tree.strings(MECHANICS_DISABLED)),
                 tree.bool(MECHANICS_REDSTONE, defaults.redstone()),
@@ -478,7 +524,17 @@ public final class ConfigDocument {
                 tree.bool(LIFT_BUTTONS, defaults.liftButtons()),
                 tree.integer(LIFT_TOLERANCE, defaults.liftTolerance()),
                 tree.integer(MAX_AREA_BLOCKS, defaults.maxAreaBlocks()),
-                tree.integer(MAX_AREAS, defaults.maxAreasPerNamespace()));
+                tree.integer(MAX_AREAS, defaults.maxAreasPerNamespace()),
+                names.block(tree.text(GLOWSTONE_OFF, defaults.glowstoneOffBlock().asString()))
+                        .orElseGet(defaults::glowstoneOffBlock),
+                fireBlocks.isEmpty() ? defaults.fireBlocks() : fireBlocks,
+                tree.bool(DEPOWER_ON_REMOVAL, defaults.depowerOnSourceRemoval()),
+                tree.integer(LIGHT_SWITCH_RANGE, defaults.lightSwitchRange()),
+                tree.integer(LIGHT_SWITCH_LIGHTS, defaults.lightSwitchMaxLights()),
+                names.block(tree.text(LIGHT_STONE_ITEM, defaults.lightStoneItem().asString()))
+                        .orElseGet(defaults::lightStoneItem),
+                names.block(tree.text(AMMETER_ITEM, defaults.ammeterItem().asString()))
+                        .orElseGet(defaults::ammeterItem));
     }
 
     /** Reads what an operator has said about the minecart mechanics. */

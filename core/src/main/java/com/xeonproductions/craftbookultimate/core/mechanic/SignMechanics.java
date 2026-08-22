@@ -26,9 +26,10 @@ public final class SignMechanics {
     private static final Gate GATE = new Gate();
     private static final ToggleArea AREA = new ToggleArea();
     private static final HiddenSwitch HIDDEN = HiddenSwitch.instance();
+    private static final Marquee MARQUEE = Marquee.instance();
 
     private static final List<SignMechanic> ALL =
-            List.of(ELEVATOR, BRIDGE, DOOR, GATE, AREA, HIDDEN);
+            List.of(ELEVATOR, BRIDGE, DOOR, GATE, AREA, HIDDEN, MARQUEE);
 
     private SignMechanics() {}
 
@@ -45,6 +46,11 @@ public final class SignMechanics {
     /** The gate, which is the one that answers to a hand on its own material. */
     public static Gate gate() {
         return GATE;
+    }
+
+    /** The marquee, which is the one that only ever reads. */
+    public static Marquee marquee() {
+        return MARQUEE;
     }
 
     /** The hidden switch, which is the one whose own sign is never what gets clicked. */

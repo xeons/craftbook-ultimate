@@ -8,6 +8,7 @@ import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
+import com.xeonproductions.craftbookultimate.core.variable.Variables;
 import com.xeonproductions.craftbookultimate.core.world.BlockReference;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import java.util.Optional;
@@ -67,6 +68,17 @@ public interface MechanicWorld {
      */
     default AreaVault vault() {
         return AreaVault.empty();
+    }
+
+    /**
+     * The variables the whole server shares.
+     *
+     * <p>Reached from here for the same reason the saved areas are: a mechanic reaches everything
+     * through this seam, and a world with no store behind it holds no variables rather than
+     * refusing to answer. Only the marquee wants them, and it only ever reads.
+     */
+    default Variables variables() {
+        return new Variables();
     }
 
     /** Whether the chunk holding a position is loaded and safe to read. */

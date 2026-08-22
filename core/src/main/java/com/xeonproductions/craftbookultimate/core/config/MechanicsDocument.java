@@ -500,6 +500,14 @@ public final class MechanicsDocument {
                 "",
                 "Hands out the map numbered on its own sign, one blank map at a time."));
 
+        tree.comment(Mechanics.MARQUEE, List.of(
+                "",
+                "A sign that tells whoever clicks it what a variable says. Line 3 names the",
+                "variable and line 4 the namespace, which is the shared one when it is blank.",
+                "",
+                "It only ever reads. The variables themselves are made with /var, and a sign",
+                "naming one nobody has made is refused as it is written."));
+
         tree.comment(Mechanics.NETHERRACK, List.of(
                 "",
                 "A block that catches light on top of itself while it is powered."));

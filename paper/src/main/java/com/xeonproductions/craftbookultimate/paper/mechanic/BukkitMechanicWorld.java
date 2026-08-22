@@ -10,6 +10,7 @@ import com.xeonproductions.craftbookultimate.core.mechanic.MechanicWorld;
 import com.xeonproductions.craftbookultimate.core.mechanic.PostedSign;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
+import com.xeonproductions.craftbookultimate.core.variable.Variables;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
@@ -36,8 +37,14 @@ import org.jspecify.annotations.NullMarked;
  * is never a constraint in practice.
  */
 @NullMarked
-public record BukkitMechanicWorld(World world, AreaVault vault, RegionSchedulers schedulers)
+public record BukkitMechanicWorld(
+        World world, AreaVault vault, RegionSchedulers schedulers, Variables variables)
         implements MechanicWorld {
+
+    @Override
+    public Variables variables() {
+        return variables;
+    }
 
     /** How long a wooden button stays pressed, which is longer than a stone one. */
     private static final long WOODEN_BUTTON_TICKS = 30;

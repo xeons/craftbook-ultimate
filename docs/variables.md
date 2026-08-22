@@ -7,13 +7,14 @@ it still there after a restart.
 That is what makes a scoreboard, a shop till, a quest counter or a stock level possible without
 any of the redstone involved being in the same chunk.
 
-Three chips work with them:
+Three chips work with them, and one sign that is not a chip at all:
 
-| Chip | What it does |
+| Sign | What it does |
 | --- | --- |
 | `[VAR100]` | Does a sum to a variable — add one, double it, take ten away. |
 | `[VAR170]` | Drives its output high once a variable has reached a number. |
 | `[VAR200]` | Counts what is in the chest above it and adds the total to a variable. |
+| `[Marquee]` | Tells whoever right-clicks it what a variable says. |
 
 ---
 
@@ -157,6 +158,39 @@ Line 4  coal
 
 Old-style item names work here as they do everywhere else: `35:14` is red wool, and signs written
 before the flattening go on working.
+
+---
+
+## `[Marquee]` — showing a variable to somebody
+
+```
+Line 3  the variable
+Line 4  the namespace, or blank for the shared one
+```
+
+No redstone, no inputs and no outputs. Right-click the sign and it tells you what the variable
+says — that is the whole of it.
+
+```
+Line 2  [Marquee]
+Line 3  coal_stock
+```
+
+It is the readout to go with the other three. `[VAR200]` counts a chest into `coal_stock` and a
+`[Marquee]` beside the shop door tells a customer what is in it. `/var get` answers the same
+question, but only for somebody who already knows the variable is there and how it is spelt.
+
+Reading somebody else's works the same way it does everywhere: `alice|score` on line 3, or `score`
+on line 3 with `alice` on line 4. You need `craftbook.variables.use.other` to build one that reads a
+namespace that is not yours.
+
+The variable must exist when the sign is written, and a sign naming one nobody has made is refused
+on the spot. If the variable is deleted **afterwards** the sign stays where it is and says so when
+somebody clicks it — a sign cannot be un-built retrospectively.
+
+**A note on the name.** `MC2999` and `MC3456` are also called marquees, and they are nothing to do
+with this: those are chasing lights, one lamp or one wireless band stepping along a row. The word
+means both a row of chasing bulbs and a board with writing on it, and CraftBook has one of each.
 
 Leave line 4 blank and it counts everything in the chest, whatever it is.
 

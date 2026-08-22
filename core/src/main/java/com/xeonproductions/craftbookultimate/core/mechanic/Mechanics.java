@@ -82,6 +82,9 @@ public final class Mechanics {
     /** Hands out a numbered map. */
     public static final String MAP_COPIER = "MapCopier";
 
+    /** A sign that tells whoever clicks it what a variable says. */
+    public static final String MARQUEE = "Marquee";
+
     /** A block that catches light on top of itself while it is powered. */
     public static final String NETHERRACK = "Netherrack";
 
@@ -129,6 +132,7 @@ public final class Mechanics {
             LIGHT_STONE,
             LIGHT_SWITCH,
             MAP_COPIER,
+            MARQUEE,
             NETHERRACK,
             SIGN_COPIER,
             SNOW,

@@ -10,6 +10,7 @@ import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.core.stock.SimpleStockpile;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpiles;
+import com.xeonproductions.craftbookultimate.core.variable.Variables;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,6 +46,7 @@ public final class SimpleMechanicWorld implements MechanicWorld {
 
     private Stockpile stockpile = SimpleStockpile.empty();
     private AreaVault vault = AreaVault.empty();
+    private Variables variables = new Variables();
     private int minHeight = DEFAULT_MIN_HEIGHT;
     private int maxHeight = DEFAULT_MAX_HEIGHT;
 
@@ -195,6 +197,17 @@ public final class SimpleMechanicWorld implements MechanicWorld {
     /** Gives the mechanics a bottomless supply, which is what an admin sign has. */
     public SimpleMechanicWorld withUnlimitedStockpile() {
         return withStockpile(Stockpiles.unlimited());
+    }
+
+    /** Gives the world the variables a marquee reads. */
+    public SimpleMechanicWorld withVariables(Variables variables) {
+        this.variables = variables;
+        return this;
+    }
+
+    @Override
+    public Variables variables() {
+        return variables;
     }
 
     /** Gives the world somewhere the saved areas are kept. */

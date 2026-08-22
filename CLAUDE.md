@@ -81,8 +81,9 @@ to a hand and to redstone.**
 | The boat habits, beside the cart ones under `vehicles` | Done |
 | Ladders that fall, and the six dispenser machines | Done |
 | The hidden switch, on the sign mechanic seam | Done |
+| The marquee, which reads a variable onto a sign | Done |
 | The tree lopper and the vein miner, on one engine | Done |
-| Mechanics other than those, the copiers and the minecart ones | 10 left |
+| Mechanics other than those, the copiers and the minecart ones | 9 left |
 | Sponge build: module, adapters, world seam, entity bindings | Done |
 | Sponge build: the native layer over Minecraft's own code | Done |
 | Sponge build: entry point, config, chips running | Done |
@@ -90,7 +91,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2315 tests passing**.
+**2329 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -435,6 +436,16 @@ written, through `ICLogic#reviewSign`. That hook is new, and it is the IC counte
 store rather than in the blocks beside the sign, so a sign naming one nobody has made would be
 silently dead and its builder would have nothing to tell that from a wiring fault. Almost no chip
 needs it; these three do.
+
+`[Marquee]` is a fourth reader and the only one that is not a chip: a sign that tells whoever
+clicks it what a variable says. It is on the `SignMechanic` seam and makes the same check through
+`SignMechanic#review`, which is what those two hooks exist for. The variables reach it through
+`MechanicWorld#variables()`, added the way `vault()` already was — a mechanic reaches everything
+through that seam, and a world with no store behind it holds no variables rather than refusing to
+answer.
+
+Two chips and a mechanic are called marquees and they are unrelated. `MC2999` and `MC3456` are
+chasing lights; this is a board with writing on it. The word means both.
 
 **A variable that goes away afterwards is not an error.** It cannot be — a chip cannot be refused
 retrospectively, and throwing from inside one that ticks would take the region with it. So

@@ -273,17 +273,16 @@ including the two upstream lacks.
 
 Compare both sources for these. Where they differ, this fork's behaviour is the one to keep.
 
-`BetterPlants`, `Bookshelf`, `CommandSigns`, `CookingPot`, `Marquee`, `PaintingSwitcher`,
-`RedstoneJukebox`,
-`Variables` (store, commands and the three chips are done — the `%name%` substitution in chat and
-commands is what is left of it; see **Variables: what is left of them** above).
+`BetterPlants`, `Bookshelf`, `CommandSigns`, `CookingPot`, `PaintingSwitcher`, `RedstoneJukebox`,
+`Variables` (store, commands, the three chips and the marquee sign are done — the `%name%`
+substitution in chat and commands is what is left of it; see **Variables: what is left of them**
+above).
 
-`Marquee` is 99 lines upstream and works against the variable store that already exists; the
-`%name%` substitution is what `CommandSigns` actually needs.
+The `%name%` substitution is what `CommandSigns` actually needs, and is the reason to do it.
 
 **Done from this list:** `Ammeter`, `BetterPhysics`, `BounceBlocks`, `Chairs`, `DispenserRecipes`,
-`GlowStone`, `HeadDrops`, `HiddenSwitch`, `JackOLantern`, `LightStone`, `LightSwitch`, `Netherrack`,
-`SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `XPStorer`.
+`GlowStone`, `HeadDrops`, `HiddenSwitch`, `JackOLantern`, `LightStone`, `LightSwitch`, `Marquee`,
+`Netherrack`, `SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `XPStorer`.
 
 **New rather than ported:** `VeinMiner`.
 

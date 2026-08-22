@@ -123,6 +123,7 @@ the source being taken out of the world. `GlowStone`, `JackOLantern` and `Nether
 | `BetterPhysics` | `falling-ladders` — whether a ladder falls when what it stood on goes away |
 | `DispenserRecipes` | `cannon`, `fan`, `vacuum`, `fire-arrows`, `snow-shooter`, `xp-shooter` |
 | `HiddenSwitch` | `any-side` |
+| `Marquee` | — |
 | `Netherrack` | `fire-blocks` — what catches light on top of itself while powered |
 | `SignCopier` | — |
 | `Snow` | `piling`, `dispersion`, `freezes-water`, `melts-in-sunlight`, `partial-melt-only`, `snowballs-pile` |
@@ -261,6 +262,25 @@ The fan and the vacuum reach five blocks along the open air in front of the disp
 with every block, so a wall stops the draught. That is the fork's behaviour; upstream's fan reaches
 one block and pushes at a fixed strength, and upstream has no vacuum at all.
 
+### The marquee is a readout, not a chaser
+
+`[Marquee]` on a sign, a variable's name on line 3, and a namespace on line 4 if it is not the
+shared one. Right-click it and it tells you what that variable says. A score beside a scoreboard, a
+stock count on a shop wall, a countdown at a gate.
+
+`/var get` answers the same question, but only for somebody who already knows the variable is there
+and how it is spelt. The sign is a builder putting the answer where other people will find it.
+
+The variable has to exist before the sign may name one, and a sign naming one nobody has made is
+refused as it is written. That is the same rule the `VAR100`, `VAR170` and `VAR200` chips follow and
+for the same reason: what a variable is called lives in the store rather than in the blocks beside
+the sign, so a sign naming a missing one would be silently dead. A variable deleted *afterwards* is
+not an error — a sign cannot be refused retrospectively — so the sign says so when it is clicked.
+
+**Two different things are called a marquee**, and it is worth knowing which is which. `MC2999` and
+`MC3456` are chasing lights: one output, or one wireless band, stepping along a row. This is the
+other sense of the word, a board with something written on it, and it shares no code with either.
+
 ### Snow is not like the others
 
 Snow is the one mechanic where `enabled: true` by itself still does nothing. Its six parts each
@@ -357,6 +377,9 @@ Both reach every mechanic here, not only the ones with signs.
 `enabled: true`; you are holding something on its `tools` list; the block is on its `blocks` list;
 and you have not turned it off for yourself with `/treelopper toggle`. Creative mode never fells or
 mines, deliberately — a creative swing already takes the block it hit.
+
+**A marquee sign was refused.** It names a variable nobody has made. `/var define <name> 0` first,
+or `/var list` to see what there is.
 
 **A change did nothing.** `/craftbook reload`. If it still did nothing, look in the console: an
 entry that could not be understood is complained about by name as the file is read.

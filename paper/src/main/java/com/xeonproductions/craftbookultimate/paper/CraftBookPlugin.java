@@ -246,7 +246,11 @@ public final class CraftBookPlugin extends JavaPlugin {
                 this);
 
         MechanicDispatcher mechanics =
-                new MechanicDispatcher(chipServices.configuration(), areaVault, regionSchedulers);
+                new MechanicDispatcher(
+                        chipServices.configuration(),
+                        areaVault,
+                        regionSchedulers,
+                        chipServices.variables());
         getServer().getPluginManager().registerEvents(new MechanicInteractListener(mechanics), this);
         getServer().getPluginManager().registerEvents(new MechanicRedstoneListener(mechanics), this);
         getServer().getPluginManager().registerEvents(new LiftMoveListener(mechanics), this);

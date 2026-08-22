@@ -12,6 +12,7 @@ import com.xeonproductions.craftbookultimate.core.mechanic.PostedSign;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanic;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanics;
 import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
+import com.xeonproductions.craftbookultimate.core.variable.Variables;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
 import java.util.Locale;
 import java.util.Optional;
@@ -65,17 +66,22 @@ public final class MechanicDispatcher {
     private final Configuration configuration;
     private final AreaVault vault;
     private final RegionSchedulers schedulers;
+    private final Variables variables;
 
     public MechanicDispatcher(
-            Configuration configuration, AreaVault vault, RegionSchedulers schedulers) {
+            Configuration configuration,
+            AreaVault vault,
+            RegionSchedulers schedulers,
+            Variables variables) {
         this.configuration = configuration;
         this.vault = vault;
         this.schedulers = schedulers;
+        this.variables = variables;
     }
 
-    /** The world as a mechanic sees it, with the saved areas behind it. */
+    /** The world as a mechanic sees it, with the saved areas and the variables behind it. */
     public BukkitMechanicWorld worldOf(World world) {
-        return new BukkitMechanicWorld(world, vault, schedulers);
+        return new BukkitMechanicWorld(world, vault, schedulers, variables);
     }
 
     /**

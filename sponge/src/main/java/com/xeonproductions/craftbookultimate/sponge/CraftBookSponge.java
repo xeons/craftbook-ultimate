@@ -197,8 +197,9 @@ public final class CraftBookSponge {
         try {
             services.configuration().replaceWith(configFile.load());
         } catch (IOException e) {
-            logger.error("Could not read {}, so the defaults are in use: {}",
-                    configFile.path(), e.getMessage());
+            // The message names whichever of the two files could not be read.
+            logger.error("Could not read the settings, so the defaults are in use: {}",
+                    e.getMessage());
             services.configuration().replaceWith(Settings.DEFAULTS);
         }
     }
@@ -226,7 +227,8 @@ public final class CraftBookSponge {
         adoptAlreadyLoadedChunks(Sponge.server(), manager);
 
         return Component.text(
-                "Reread " + configFile.path().getFileName() + ". "
+                "Reread " + configFile.path().getFileName() + " and "
+                        + configFile.mechanicsPath().getFileName() + ". "
                         + manager.loadedCount() + " chips are running.",
                 NamedTextColor.GREEN);
     }

@@ -85,6 +85,7 @@ public record Settings(
                 .maxPlanterWidth(maxPlanterWidth)
                 .placeableBlocks(placeableBlocks)
                 .carts(carts)
+                .vehicles(vehicles)
                 .mechanics(mechanics)
                 .pipes(pipes);
     }
@@ -96,6 +97,20 @@ public record Settings(
      */
     public boolean allowsWorld(String world) {
         return enabled && !disabledWorlds.contains(world.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * Whether a mechanic runs in a world.
+     *
+     * <p>Both halves of the question at once, because a mechanic that asks only one of them is a
+     * trap: a server switching the plugin off in the nether expects that to reach every mechanic,
+     * not the ones that happened to remember.
+     *
+     * @param mechanic the mechanic's name, such as {@code Bridge}
+     * @param world the world's name
+     */
+    public boolean runsMechanicIn(String mechanic, String world) {
+        return allowsWorld(world) && mechanics.allows(mechanic);
     }
 
     /**

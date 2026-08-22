@@ -3,183 +3,85 @@
 
 package com.xeonproductions.craftbookultimate.core.config;
 
-import com.xeonproductions.craftbookultimate.core.world.Blocks;
+import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
-import net.kyori.adventure.key.Key;
-import com.xeonproductions.craftbookultimate.core.mechanic.SneakState;
-import com.xeonproductions.craftbookultimate.core.mechanic.XpStorers;
 import org.jspecify.annotations.NullMarked;
 
 /**
- * What an operator has said about the sign mechanics.
+ * What an operator has said about the mechanics.
  *
- * <p>The bridges and doors take their limits from the settings the building chips already use,
- * because they are the same limits: how wide a structure may be, how far it may run, and what it
- * may be made of. What is here is what only these mechanics have — the gates, which are made of
- * something else and found a different way, and the lifts, which build nothing at all.
+ * <p>One record per mechanic, rather than every setting laid out flat. What holds them together is
+ * only which mechanics are switched off and the two rules belonging to no single mechanic; a
+ * question about gates is answered by {@link GateSettings} and nothing else has to be read to
+ * answer it.
+ *
+ * <p>The bridges and doors take their building limits from {@link Settings} rather than from here,
+ * because they are the same limits the building chips use: how wide a structure may be, how far it
+ * may run, and what it may be made of. Nothing peculiar to those two exists, which is why neither
+ * has a record of its own.
  *
  * @param disabled the mechanics that never run, by name, compared without regard to case
  * @param redstone whether redstone reaching a mechanic's sign works it
- * @param gateBlocks what a gate may be made of
- * @param gateRadius how far around its sign a gate looks for its own material
- * @param gateClicking whether clicking a gate's material works the gate as well as its sign does
- * @param liftJumping whether jumping and crouching work a lift
- * @param liftButtons whether a button in front of a lift's sign works it
- * @param liftTolerance how far a lift will drop somebody to find them a floor
- * @param maxAreaBlocks the most blocks one saved area may hold, or zero for no limit
- * @param maxAreasPerNamespace the most areas one name may have saved, or zero for no limit
- * @param glowstoneOffBlock what a glowstone is while it is dark
- * @param fireBlocks what catches light on top of itself while it is powered
  * @param depowerOnSourceRemoval whether a powered block goes out when the redstone feeding it is
  *     mined away, rather than staying as it was
- * @param lightSwitchRange how far a light switch reaches, unless its sign says otherwise
- * @param lightSwitchMaxLights the most torches one light switch turns, unless its sign says
- *     otherwise
- * @param lightStoneItem what is held to read a light level off a block
- * @param ammeterItem what is held to read a redstone power level off a block
- * @param bounceBlocks what may throw somebody when a [Jump] sign is under it
- * @param autoBounceBlocks what throws somebody with no sign at all, and how hard
- * @param bounceSensitivity how much of a jump counts as one
- * @param teleporterButtons whether a button opposite a teleporter sign works it
- * @param teleporterRequireSign whether the far end of a teleport needs a sign of its own
- * @param teleporterRange how far a teleporter may send somebody, or a negative number for no limit
- * @param xpStorerBlock what turns experience into bottles when it is clicked
- * @param xpPerBottle how much experience one bottle costs
- * @param xpRequiresBottle whether the player must be carrying empty bottles to fill
- * @param xpSneakState whether the player must be crouching to use one
+ * @param gate what a gate is made of and how far it looks for it
+ * @param elevator how the lifts are worked
+ * @param area how large and how many the saved areas may be
+ * @param powerables what the blocks answering redstone turn into
+ * @param lightSwitch how far a light switch reaches and how much it turns
+ * @param meters what is held up to a block to read it
+ * @param bounce what throws somebody who jumps on it
+ * @param teleporter how far somebody may be sent, and from where
+ * @param xp what bottles experience, and what a bottle costs
  * @param snow how snow piles, slumps and melts
  */
 @NullMarked
 public record MechanicSettings(
         Set<String> disabled,
         boolean redstone,
-        Set<Key> gateBlocks,
-        int gateRadius,
-        boolean gateClicking,
-        boolean liftJumping,
-        boolean liftButtons,
-        int liftTolerance,
-        int maxAreaBlocks,
-        int maxAreasPerNamespace,
-        Key glowstoneOffBlock,
-        Set<Key> fireBlocks,
         boolean depowerOnSourceRemoval,
-        int lightSwitchRange,
-        int lightSwitchMaxLights,
-        Key lightStoneItem,
-        Key ammeterItem,
-        Set<Key> bounceBlocks,
-        Map<Key, String> autoBounceBlocks,
-        double bounceSensitivity,
-        boolean teleporterButtons,
-        boolean teleporterRequireSign,
-        double teleporterRange,
-        Key xpStorerBlock,
-        int xpPerBottle,
-        boolean xpRequiresBottle,
-        SneakState xpSneakState,
+        GateSettings gate,
+        ElevatorSettings elevator,
+        AreaSettings area,
+        PowerableSettings powerables,
+        LightSwitchSettings lightSwitch,
+        MeterSettings meters,
+        BounceSettings bounce,
+        TeleporterSettings teleporter,
+        XpSettings xp,
         SnowSettings snow) {
 
-    /** Every kind of fence, which is what most gates are made of. */
-    private static final String[] FENCES = {
-        "oak_fence", "spruce_fence", "birch_fence", "jungle_fence", "acacia_fence",
-        "dark_oak_fence", "pale_oak_fence", "mangrove_fence", "cherry_fence", "bamboo_fence",
-        "crimson_fence", "warped_fence", "nether_brick_fence"
-    };
-
-    /** Every kind of glass pane, which is what a gate somebody wants to see through is made of. */
-    private static final String[] PANES = {
-        "glass_pane", "white_stained_glass_pane", "orange_stained_glass_pane",
-        "magenta_stained_glass_pane", "light_blue_stained_glass_pane",
-        "yellow_stained_glass_pane", "lime_stained_glass_pane", "pink_stained_glass_pane",
-        "gray_stained_glass_pane", "light_gray_stained_glass_pane", "cyan_stained_glass_pane",
-        "purple_stained_glass_pane", "blue_stained_glass_pane", "brown_stained_glass_pane",
-        "green_stained_glass_pane", "red_stained_glass_pane", "black_stained_glass_pane"
-    };
-
-    /** The most a gate may reach, however wide an operator makes it. */
-    public static final int MAX_GATE_RADIUS = 16;
-
-    /** What a glowstone is while it is dark, as the fork had it. */
-    public static final Key DEFAULT_GLOWSTONE_OFF = Key.key("minecraft:soul_sand");
-
-    /** What catches light on top of itself while it is powered, as the fork had it. */
-    public static final Key DEFAULT_FIRE_BLOCK = Key.key("minecraft:netherrack");
-
-    /** How far a light switch reaches out for torches, as the fork had it. */
-    public static final int DEFAULT_LIGHT_SWITCH_RANGE = 10;
-
-    /** How many it turns before it stops, as the fork had it. */
-    public static final int DEFAULT_LIGHT_SWITCH_LIGHTS = 20;
-
-    /** What is held up to a block to read its light level. */
-    public static final Key DEFAULT_LIGHT_STONE_ITEM = Key.key("minecraft:glowstone_dust");
-
-    /** What is held up to a block to read its redstone power. */
-    public static final Key DEFAULT_AMMETER_ITEM = Key.key("minecraft:charcoal");
-
-    /** What throws somebody when a sign under it says how hard. */
-    public static final Key DEFAULT_BOUNCE_BLOCK = Key.key("minecraft:diamond_block");
-
-    /** What throws somebody with no sign at all. */
-    public static final Key DEFAULT_AUTO_BOUNCE_BLOCK = Key.key("minecraft:orange_terracotta");
-
-    /** How hard it throws them, in the frozen grammar a sign would use. */
-    public static final String DEFAULT_AUTO_BOUNCE = "2,1,2";
-
-    /** How much of a jump counts as one, as the fork had it. */
-    public static final double DEFAULT_BOUNCE_SENSITIVITY = 0.1;
-
-    /** What turns experience into bottles, as the fork had it. */
-    public static final Key DEFAULT_XP_STORER_BLOCK = Key.key("minecraft:spawner");
-
     /** The mechanics as they have always been built. */
-    public static final MechanicSettings DEFAULTS = new MechanicSettings(
-            Set.of(), true, defaultGateBlocks(), 5, true, true, true, 5, 5000, 30,
-            DEFAULT_GLOWSTONE_OFF, Set.of(DEFAULT_FIRE_BLOCK), false,
-            DEFAULT_LIGHT_SWITCH_RANGE, DEFAULT_LIGHT_SWITCH_LIGHTS, DEFAULT_LIGHT_STONE_ITEM,
-            DEFAULT_AMMETER_ITEM,
-            Set.of(DEFAULT_BOUNCE_BLOCK),
-            Map.of(DEFAULT_AUTO_BOUNCE_BLOCK, DEFAULT_AUTO_BOUNCE),
-            DEFAULT_BOUNCE_SENSITIVITY, true, true, -1,
-            DEFAULT_XP_STORER_BLOCK, XpStorers.DEFAULT_PER_BOTTLE, false, SneakState.MUST_NOT,
-            SnowSettings.DEFAULTS);
+    public static final MechanicSettings DEFAULTS = builder().build();
 
-    /** Copies the collections and holds every limit to something a mechanic can work with. */
+    /** Copies the list of what is switched off. */
     public MechanicSettings {
-        disabled = lowercased(disabled);
-        gateBlocks = Collections.unmodifiableSet(new LinkedHashSet<>(gateBlocks));
-        fireBlocks = Collections.unmodifiableSet(new LinkedHashSet<>(fireBlocks));
-        bounceBlocks = Collections.unmodifiableSet(new LinkedHashSet<>(bounceBlocks));
-        autoBounceBlocks = Collections.unmodifiableMap(new LinkedHashMap<>(autoBounceBlocks));
-        bounceSensitivity = Math.max(0, bounceSensitivity);
-        xpPerBottle = Math.max(1, xpPerBottle);
-        lightSwitchRange = Math.max(0, lightSwitchRange);
-        lightSwitchMaxLights = Math.max(0, lightSwitchMaxLights);
-        gateRadius = Math.clamp(gateRadius, 1, MAX_GATE_RADIUS);
-        liftTolerance = Math.max(1, liftTolerance);
-        maxAreaBlocks = Math.max(0, maxAreaBlocks);
-        maxAreasPerNamespace = Math.max(0, maxAreasPerNamespace);
+        disabled = compared(disabled);
     }
 
-    /**
-     * Whether an area of a size may be saved.
-     *
-     * <p>A limit of zero is no limit rather than none allowed, which is what the setting has
-     * always been documented to mean.
-     */
-    public boolean allowsAreaOf(int blocks) {
-        return maxAreaBlocks == 0 || blocks <= maxAreaBlocks;
+    /** A set of settings to alter from the defaults. */
+    public static Builder builder() {
+        return new Builder();
     }
 
-    /** Whether a namespace already holding this many areas may have another. */
-    public boolean allowsAnotherArea(int held) {
-        return maxAreasPerNamespace == 0 || held < maxAreasPerNamespace;
+    /** These settings with everything the same but for what the builder is given. */
+    public Builder toBuilder() {
+        return new Builder()
+                .disabled(disabled)
+                .redstone(redstone)
+                .depowerOnSourceRemoval(depowerOnSourceRemoval)
+                .gate(gate)
+                .elevator(elevator)
+                .area(area)
+                .powerables(powerables)
+                .lightSwitch(lightSwitch)
+                .meters(meters)
+                .bounce(bounce)
+                .teleporter(teleporter)
+                .xp(xp)
+                .snow(snow);
     }
 
     /**
@@ -188,157 +90,194 @@ public record MechanicSettings(
      * @param mechanic the mechanic's name, such as {@code Bridge}
      */
     public boolean allows(String mechanic) {
-        return !disabled.contains(mechanic.toLowerCase(Locale.ROOT));
-    }
-
-    /** Whether a block is one a gate may be made of. */
-    public boolean isGateBlock(Key block) {
-        return gateBlocks.contains(block);
+        return !disabled.contains(Mechanics.compared(mechanic));
     }
 
     /** These settings with a different set of mechanics switched off. */
     public MechanicSettings withDisabled(Set<String> mechanics) {
-        return new MechanicSettings(
-                mechanics, redstone, gateBlocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, liftTolerance,
-                maxAreaBlocks, maxAreasPerNamespace,
-                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
-                bounceBlocks, autoBounceBlocks, bounceSensitivity,
-                teleporterButtons, teleporterRequireSign, teleporterRange,
-                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
+        return toBuilder().disabled(mechanics).build();
     }
 
     /** These settings with redstone allowed or refused. */
     public MechanicSettings withRedstone(boolean allowed) {
-        return new MechanicSettings(
-                disabled, allowed, gateBlocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, liftTolerance,
-                maxAreaBlocks, maxAreasPerNamespace,
-                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
-                bounceBlocks, autoBounceBlocks, bounceSensitivity,
-                teleporterButtons, teleporterRequireSign, teleporterRange,
-                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
+        return toBuilder().redstone(allowed).build();
     }
 
-    /** These settings with a different set of gate materials. */
-    public MechanicSettings withGateBlocks(Set<Key> blocks) {
-        return new MechanicSettings(
-                disabled, redstone, blocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, liftTolerance,
-                maxAreaBlocks, maxAreasPerNamespace,
-                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
-                bounceBlocks, autoBounceBlocks, bounceSensitivity,
-                teleporterButtons, teleporterRequireSign, teleporterRange,
-                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
+    /** These settings with powered blocks going out, or not, when their source is mined away. */
+    public MechanicSettings withDepowerOnSourceRemoval(boolean depowers) {
+        return toBuilder().depowerOnSourceRemoval(depowers).build();
     }
 
-    /** These settings with gates reaching a different distance. */
-    public MechanicSettings withGateRadius(int radius) {
-        return new MechanicSettings(
-                disabled, redstone, gateBlocks, radius, gateClicking,
-                liftJumping, liftButtons, liftTolerance,
-                maxAreaBlocks, maxAreasPerNamespace,
-                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
-                bounceBlocks, autoBounceBlocks, bounceSensitivity,
-                teleporterButtons, teleporterRequireSign, teleporterRange,
-                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
+    /** These settings with different gates. */
+    public MechanicSettings withGate(GateSettings gates) {
+        return toBuilder().gate(gates).build();
     }
 
-    /** These settings with clicking a gate's material allowed or refused. */
-    public MechanicSettings withGateClicking(boolean allowed) {
-        return new MechanicSettings(
-                disabled, redstone, gateBlocks, gateRadius, allowed,
-                liftJumping, liftButtons, liftTolerance,
-                maxAreaBlocks, maxAreasPerNamespace,
-                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
-                bounceBlocks, autoBounceBlocks, bounceSensitivity,
-                teleporterButtons, teleporterRequireSign, teleporterRange,
-                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
+    /** These settings with different lifts. */
+    public MechanicSettings withElevator(ElevatorSettings lifts) {
+        return toBuilder().elevator(lifts).build();
     }
 
-    /** These settings with jump lifts allowed or refused. */
-    public MechanicSettings withLiftJumping(boolean allowed) {
-        return new MechanicSettings(
-                disabled, redstone, gateBlocks, gateRadius, gateClicking,
-                allowed, liftButtons, liftTolerance,
-                maxAreaBlocks, maxAreasPerNamespace,
-                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
-                bounceBlocks, autoBounceBlocks, bounceSensitivity,
-                teleporterButtons, teleporterRequireSign, teleporterRange,
-                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
+    /** These settings with different limits on the saved areas. */
+    public MechanicSettings withArea(AreaSettings areas) {
+        return toBuilder().area(areas).build();
     }
 
-    /** These settings with button lifts allowed or refused. */
-    public MechanicSettings withLiftButtons(boolean allowed) {
-        return new MechanicSettings(
-                disabled, redstone, gateBlocks, gateRadius, gateClicking,
-                liftJumping, allowed, liftTolerance, maxAreaBlocks, maxAreasPerNamespace,
-                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
-                bounceBlocks, autoBounceBlocks, bounceSensitivity,
-                teleporterButtons, teleporterRequireSign, teleporterRange,
-                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
+    /** These settings with different blocks answering redstone. */
+    public MechanicSettings withPowerables(PowerableSettings blocks) {
+        return toBuilder().powerables(blocks).build();
     }
 
-    /** These settings with a different limit on how big one area may be. */
-    public MechanicSettings withMaxAreaBlocks(int blocks) {
-        return new MechanicSettings(
-                disabled, redstone, gateBlocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, liftTolerance, blocks, maxAreasPerNamespace,
-                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
-                bounceBlocks, autoBounceBlocks, bounceSensitivity,
-                teleporterButtons, teleporterRequireSign, teleporterRange,
-                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
+    /** These settings with light switches reaching differently. */
+    public MechanicSettings withLightSwitch(LightSwitchSettings switches) {
+        return toBuilder().lightSwitch(switches).build();
     }
 
-    /** These settings with a different limit on how many areas one name may have. */
-    public MechanicSettings withMaxAreasPerNamespace(int areas) {
-        return new MechanicSettings(
-                disabled, redstone, gateBlocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, liftTolerance, maxAreaBlocks, areas,
-                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
-                bounceBlocks, autoBounceBlocks, bounceSensitivity,
-                teleporterButtons, teleporterRequireSign, teleporterRange,
-                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
+    /** These settings with the meters read off different items. */
+    public MechanicSettings withMeters(MeterSettings dials) {
+        return toBuilder().meters(dials).build();
     }
 
-    /** These settings with lifts dropping somebody a different distance to find a floor. */
-    public MechanicSettings withLiftTolerance(int tolerance) {
-        return new MechanicSettings(
-                disabled, redstone, gateBlocks, gateRadius, gateClicking,
-                liftJumping, liftButtons, tolerance, maxAreaBlocks, maxAreasPerNamespace,
-                glowstoneOffBlock, fireBlocks, depowerOnSourceRemoval,
-                lightSwitchRange, lightSwitchMaxLights, lightStoneItem, ammeterItem,
-                bounceBlocks, autoBounceBlocks, bounceSensitivity,
-                teleporterButtons, teleporterRequireSign, teleporterRange,
-                xpStorerBlock, xpPerBottle, xpRequiresBottle, xpSneakState, snow);
+    /** These settings with different blocks throwing people. */
+    public MechanicSettings withBounce(BounceSettings bounces) {
+        return toBuilder().bounce(bounces).build();
     }
 
-    /** What a gate may be made of when nobody has said otherwise. */
-    private static Set<Key> defaultGateBlocks() {
-        Set<Key> blocks = new LinkedHashSet<>();
-        for (String[] group : new String[][] {FENCES, PANES}) {
-            for (String name : group) {
-                blocks.add(Blocks.key(name));
-            }
-        }
-        blocks.add(Blocks.key("iron_bars"));
-        return Collections.unmodifiableSet(blocks);
+    /** These settings with teleporters working differently. */
+    public MechanicSettings withTeleporter(TeleporterSettings teleporters) {
+        return toBuilder().teleporter(teleporters).build();
     }
 
-    private static Set<String> lowercased(Set<String> names) {
+    /** These settings with experience bottled differently. */
+    public MechanicSettings withXp(XpSettings experience) {
+        return toBuilder().xp(experience).build();
+    }
+
+    /** These settings with snow behaving differently. */
+    public MechanicSettings withSnow(SnowSettings snowfall) {
+        return toBuilder().snow(snowfall).build();
+    }
+
+    private static Set<String> compared(Set<String> names) {
         Set<String> copy = new LinkedHashSet<>();
         for (String name : names) {
-            copy.add(name.toLowerCase(Locale.ROOT));
+            copy.add(Mechanics.compared(name));
         }
         return Collections.unmodifiableSet(copy);
+    }
+
+    /** Assembles a set of settings, filling in the defaults for anything not given. */
+    public static final class Builder {
+
+        private Set<String> disabled = Set.of();
+        private boolean redstone = true;
+        private boolean depowerOnSourceRemoval = false;
+        private GateSettings gate = GateSettings.DEFAULTS;
+        private ElevatorSettings elevator = ElevatorSettings.DEFAULTS;
+        private AreaSettings area = AreaSettings.DEFAULTS;
+        private PowerableSettings powerables = PowerableSettings.DEFAULTS;
+        private LightSwitchSettings lightSwitch = LightSwitchSettings.DEFAULTS;
+        private MeterSettings meters = MeterSettings.DEFAULTS;
+        private BounceSettings bounce = BounceSettings.DEFAULTS;
+        private TeleporterSettings teleporter = TeleporterSettings.DEFAULTS;
+        private XpSettings xp = XpSettings.DEFAULTS;
+        private SnowSettings snow = SnowSettings.DEFAULTS;
+
+        private Builder() {}
+
+        /** The mechanics that never run. */
+        public Builder disabled(Set<String> mechanics) {
+            this.disabled = mechanics;
+            return this;
+        }
+
+        /** Whether redstone reaching a mechanic's sign works it. */
+        public Builder redstone(boolean allowed) {
+            this.redstone = allowed;
+            return this;
+        }
+
+        /** Whether a powered block goes out when the redstone feeding it is mined away. */
+        public Builder depowerOnSourceRemoval(boolean depowers) {
+            this.depowerOnSourceRemoval = depowers;
+            return this;
+        }
+
+        /** What a gate is made of and how far it looks for it. */
+        public Builder gate(GateSettings gates) {
+            this.gate = gates;
+            return this;
+        }
+
+        /** How the lifts are worked. */
+        public Builder elevator(ElevatorSettings lifts) {
+            this.elevator = lifts;
+            return this;
+        }
+
+        /** How large and how many the saved areas may be. */
+        public Builder area(AreaSettings areas) {
+            this.area = areas;
+            return this;
+        }
+
+        /** What the blocks answering redstone turn into. */
+        public Builder powerables(PowerableSettings blocks) {
+            this.powerables = blocks;
+            return this;
+        }
+
+        /** How far a light switch reaches and how much it turns. */
+        public Builder lightSwitch(LightSwitchSettings switches) {
+            this.lightSwitch = switches;
+            return this;
+        }
+
+        /** What is held up to a block to read it. */
+        public Builder meters(MeterSettings dials) {
+            this.meters = dials;
+            return this;
+        }
+
+        /** What throws somebody who jumps on it. */
+        public Builder bounce(BounceSettings bounces) {
+            this.bounce = bounces;
+            return this;
+        }
+
+        /** How far somebody may be sent, and from where. */
+        public Builder teleporter(TeleporterSettings teleporters) {
+            this.teleporter = teleporters;
+            return this;
+        }
+
+        /** What bottles experience, and what a bottle costs. */
+        public Builder xp(XpSettings experience) {
+            this.xp = experience;
+            return this;
+        }
+
+        /** How snow piles, slumps and melts. */
+        public Builder snow(SnowSettings snowfall) {
+            this.snow = snowfall;
+            return this;
+        }
+
+        public MechanicSettings build() {
+            return new MechanicSettings(
+                    disabled,
+                    redstone,
+                    depowerOnSourceRemoval,
+                    gate,
+                    elevator,
+                    area,
+                    powerables,
+                    lightSwitch,
+                    meters,
+                    bounce,
+                    teleporter,
+                    xp,
+                    snow);
+        }
     }
 }

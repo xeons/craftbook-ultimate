@@ -55,6 +55,11 @@ public final class LightSwitchListener implements Listener {
             return;
         }
 
+        if (!configuration.settings().runsMechanicIn(
+                LightSwitches.NAME, event.getClickedBlock().getWorld().getName())) {
+            return;
+        }
+
         MechanicSettings settings = configuration.settings().mechanics();
         if (event.getClickedBlock().getState() instanceof Sign sign
                 && throwSwitch(event, sign, settings)) {
@@ -72,8 +77,7 @@ public final class LightSwitchListener implements Listener {
             PlayerInteractEvent event, Sign sign, MechanicSettings settings) {
 
         SignLines lines = Signs.read(sign);
-        if (!LightSwitches.claims(lines.trimmedText(1))
-                || !settings.allows(LightSwitches.NAME)) {
+        if (!LightSwitches.claims(lines.trimmedText(1))) {
             return false;
         }
 

@@ -6,6 +6,8 @@ package com.xeonproductions.craftbookultimate.sponge.config;
 import com.xeonproductions.craftbookultimate.core.config.BlockNames;
 import com.xeonproductions.craftbookultimate.core.config.ConfigDocument;
 import com.xeonproductions.craftbookultimate.core.config.ConfigTree;
+import com.xeonproductions.craftbookultimate.core.config.MechanicSettings;
+import com.xeonproductions.craftbookultimate.core.config.MechanicsDocument;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.sponge.adapter.LegacyBlocks;
 import java.io.IOException;
@@ -17,6 +19,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import net.kyori.adventure.key.InvalidKeyException;
 import net.kyori.adventure.key.Key;
 import org.jspecify.annotations.NullMarked;
@@ -32,26 +35,32 @@ import org.spongepowered.configurate.yaml.NodeStyle;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 /**
- * The settings file on disk, read and written through Configurate.
+ * The settings files on disk, read and written through Configurate.
  *
- * <p>Deliberately the same {@code config.yml}, in the same YAML, saying the same things as the
- * Paper build's — {@link ConfigDocument} holds every name, default and explanation, and neither
- * platform has any of its own. An operator moving a server between the two keeps their settings.
+ * <p>Deliberately the same {@code config.yml} and {@code mechanics.yml}, in the same YAML, saying
+ * the same things as the Paper build's — {@link ConfigDocument} and {@link MechanicsDocument} hold
+ * every name, default and explanation, and neither platform has any of its own. An operator moving
+ * a server between the two keeps their settings.
  *
- * <p>What is here is the file itself and the two questions only a server can answer: what a block
- * name means, and what is in a block tag.
+ * <p>What is here is the files themselves and the two questions only a server can answer: what a
+ * block name means, and what is in a block tag.
  */
 @NullMarked
 public final class ConfigFile {
 
-    /** What the file is called inside the plugin's own folder. */
+    /** What the main file is called inside the plugin's own folder. */
     public static final String FILE_NAME = "config.yml";
+
+    /** What the mechanics file is called beside it. */
+    public static final String MECHANICS_FILE_NAME = "mechanics.yml";
 
     /** How a dotted path is cut into the steps Configurate addresses a node by. */
     private static final String PATH_SEPARATOR = "\\.";
 
     private final Path file;
+    private final Path mechanicsFile;
     private final ConfigDocument document;
+    private final MechanicsDocument mechanicsDocument;
 
     /**
      * @param directory the plugin's own folder
@@ -59,7 +68,10 @@ public final class ConfigFile {
      */
     public ConfigFile(Path directory, Consumer<String> report) {
         this.file = directory.resolve(FILE_NAME);
-        this.document = new ConfigDocument(new GameBlockNames(), report);
+        this.mechanicsFile = directory.resolve(MECHANICS_FILE_NAME);
+        BlockNames names = new GameBlockNames();
+        this.document = new ConfigDocument(names, report);
+        this.mechanicsDocument = new MechanicsDocument(names, report);
     }
 
     /** Where the settings are kept. */
@@ -67,10 +79,15 @@ public final class ConfigFile {
         return file;
     }
 
+    /** Where what an operator has said about the mechanics is kept. */
+    public Path mechanicsPath() {
+        return mechanicsFile;
+    }
+
     /**
-     * Reads the file, writing back anything it was missing.
+     * Reads both files, writing back anything either was missing.
      *
-     * @throws IOException if the file exists but cannot be read or written
+     * @throws IOException if a file exists but cannot be read or written
      */
     public Settings load() throws IOException {
         Path parent = file.getParent();
@@ -78,8 +95,22 @@ public final class ConfigFile {
             Files.createDirectories(parent);
         }
 
+        Settings settings = readAndWrite(file, document::applyTo);
+        MechanicSettings mechanics = readAndWrite(mechanicsFile, mechanicsDocument::applyTo);
+        return settings.toBuilder().mechanics(mechanics).build();
+    }
+
+    /**
+     * Reads one file through a document and writes back what the document filled in.
+     *
+     * <p>Both files are the same job with a different document, so the loading, the complaint
+     * about bad YAML and the saving are said once.
+     */
+    private static <T> T readAndWrite(Path from, Function<ConfigTree, T> reading)
+            throws IOException {
+
         YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
-                .path(file)
+                .path(from)
                 .nodeStyle(NodeStyle.BLOCK)
                 .indent(2)
                 .build();
@@ -88,17 +119,17 @@ public final class ConfigFile {
         try {
             root = loader.load();
         } catch (ConfigurateException e) {
-            throw new IOException("The settings file is not valid YAML", e);
+            throw new IOException(from.getFileName() + " is not valid YAML", e);
         }
 
-        Settings settings = document.applyTo(new NodeTree(root));
+        T read = reading.apply(new NodeTree(root));
 
         try {
             loader.save(root);
         } catch (ConfigurateException e) {
-            throw new IOException("The settings file could not be written", e);
+            throw new IOException(from.getFileName() + " could not be written", e);
         }
-        return settings;
+        return read;
     }
 
     /** Configurate's node tree, said the way the document reads a file. */

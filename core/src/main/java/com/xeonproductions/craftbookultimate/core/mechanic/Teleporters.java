@@ -21,7 +21,7 @@ import org.jspecify.annotations.NullMarked;
 public final class Teleporters {
 
     /** What this is called, for the setting that switches it off. */
-    public static final String NAME = "Teleporter";
+    public static final String NAME = Mechanics.TELEPORTER;
 
     /** The sign that makes one. */
     public static final String SIGN_NAME = "[Teleporter]";

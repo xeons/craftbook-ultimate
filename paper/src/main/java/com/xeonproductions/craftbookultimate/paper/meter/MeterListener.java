@@ -52,16 +52,17 @@ public final class MeterListener implements Listener {
         Material held = player.getInventory().getItemInMainHand().getType();
         Block clicked = event.getClickedBlock();
 
-        if (held == materialOf(settings.ammeterItem())
-                && settings.allows(Meters.NAME_AMMETER)
+        String world = clicked.getWorld().getName();
+        if (held == materialOf(settings.meters().ammeterItem())
+                && configuration.settings().runsMechanicIn(Meters.NAME_AMMETER, world)
                 && player.hasPermission(Meters.AMMETER_USE)) {
             player.sendMessage(Meters.power(clicked.getBlockPower()));
             event.setCancelled(true);
             return;
         }
 
-        if (held == materialOf(settings.lightStoneItem())
-                && settings.allows(Meters.NAME_LIGHT_STONE)
+        if (held == materialOf(settings.meters().lightStoneItem())
+                && configuration.settings().runsMechanicIn(Meters.NAME_LIGHT_STONE, world)
                 && player.hasPermission(Meters.LIGHT_STONE_USE)) {
             // The face that was clicked rather than the block itself, since a solid block has no
             // light in it and the question is how bright the side you are looking at is.

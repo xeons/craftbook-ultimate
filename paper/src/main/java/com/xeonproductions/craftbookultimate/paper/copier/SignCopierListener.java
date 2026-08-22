@@ -5,6 +5,7 @@ package com.xeonproductions.craftbookultimate.paper.copier;
 
 import com.xeonproductions.craftbookultimate.core.config.Configuration;
 import com.xeonproductions.craftbookultimate.core.copier.SignClipboard;
+import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
 import net.kyori.adventure.text.Component;
@@ -39,7 +40,7 @@ import org.jspecify.annotations.NullMarked;
 public final class SignCopierListener implements Listener {
 
     /** What this mechanic is called, for the setting that switches it off. */
-    public static final String NAME = "SignCopier";
+    public static final String NAME = Mechanics.SIGN_COPIER;
 
     /** The permission to copy and paste a sign. */
     public static final String USE = "craftbook.signcopier.use";
@@ -63,7 +64,8 @@ public final class SignCopierListener implements Listener {
 
         Player player = event.getPlayer();
         if (player.getInventory().getItemInMainHand().getType() != TOOL
-                || !configuration.settings().mechanics().allows(NAME)
+                || !configuration.settings().runsMechanicIn(
+                        NAME, event.getClickedBlock().getWorld().getName())
                 || !player.hasPermission(USE)) {
             return;
         }

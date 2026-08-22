@@ -49,14 +49,14 @@ public final class BounceListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
-        MechanicSettings settings = configuration.settings().mechanics();
-        if (!settings.allows(Bounces.NAME)) {
+        Location from = event.getFrom();
+        if (!configuration.settings()
+                .runsMechanicIn(Bounces.NAME, from.getWorld().getName())) {
             return;
         }
-
-        Location from = event.getFrom();
+        MechanicSettings settings = configuration.settings().mechanics();
         double rise = event.getTo().getY() - from.getY();
-        if (rise <= settings.bounceSensitivity()
+        if (rise <= settings.bounce().sensitivity()
                 || from.getY() - Math.floor(from.getY()) >= NEAR_THE_GROUND) {
             return;
         }
@@ -84,12 +84,12 @@ public final class BounceListener implements Listener {
     private static Optional<Bounces.Bounce> throwOf(Block stood, MechanicSettings settings) {
         Key block = stood.getType().getKey();
 
-        String automatic = settings.autoBounceBlocks().get(block);
+        String automatic = settings.bounce().automatic().get(block);
         if (automatic != null) {
             return Bounces.parse(automatic);
         }
 
-        if (!settings.bounceBlocks().contains(block)) {
+        if (!settings.bounce().blocks().contains(block)) {
             return Optional.empty();
         }
         if (!(stood.getRelative(BlockFace.DOWN).getState() instanceof Sign sign)) {

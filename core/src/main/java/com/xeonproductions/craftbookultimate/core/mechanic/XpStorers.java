@@ -20,7 +20,7 @@ import org.jspecify.annotations.NullMarked;
 public final class XpStorers {
 
     /** What this is called, for the setting that switches it off. */
-    public static final String NAME = "XPStorer";
+    public static final String NAME = Mechanics.XP_STORER;
 
     /** The sign a builder may put on one. */
     public static final String SIGN_NAME = "[XP]";

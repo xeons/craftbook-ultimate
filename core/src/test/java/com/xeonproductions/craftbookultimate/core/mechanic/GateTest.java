@@ -5,6 +5,7 @@ package com.xeonproductions.craftbookultimate.core.mechanic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.xeonproductions.craftbookultimate.core.config.GateSettings;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
@@ -259,7 +260,8 @@ class GateTest {
         void willNotTakeSomethingTheSettingsDoNotAllowAsAGate() {
             Settings onlyIron = Settings.builder()
                     .mechanics(Settings.DEFAULTS.mechanics()
-                            .withGateBlocks(java.util.Set.of(IRON_BARS)))
+                            .withGate(GateSettings.DEFAULTS
+                                    .withBlocks(java.util.Set.of(IRON_BARS))))
                     .build();
             withGate("[Gate]", OAK_FENCE);
             chest.with(OAK_FENCE, 64);
@@ -308,7 +310,8 @@ class GateTest {
         @Test
         void doesNotReachFurtherThanTheSettingsAllow() {
             Settings close = Settings.builder()
-                    .mechanics(Settings.DEFAULTS.mechanics().withGateRadius(1))
+                    .mechanics(Settings.DEFAULTS.mechanics()
+                            .withGate(GateSettings.DEFAULTS.withRadius(1)))
                     .build();
             withGate("[Gate]", OAK_FENCE);
             chest.with(OAK_FENCE, 64);
@@ -420,7 +423,8 @@ class GateTest {
         @Test
         void notAtAllWhenTheSettingsForbidIt() {
             Settings noClicking = Settings.builder()
-                    .mechanics(Settings.DEFAULTS.mechanics().withGateClicking(false))
+                    .mechanics(Settings.DEFAULTS.mechanics()
+                            .withGate(GateSettings.DEFAULTS.withClicking(false)))
                     .build();
             PostedSign clickable = new PostedSign(
                     SIGN,

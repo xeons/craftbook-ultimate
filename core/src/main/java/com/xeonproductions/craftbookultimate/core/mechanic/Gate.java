@@ -60,7 +60,7 @@ public final class Gate implements SignMechanic {
 
     @Override
     public String name() {
-        return "Gate";
+        return Mechanics.GATE;
     }
 
     @Override
@@ -74,7 +74,7 @@ public final class Gate implements SignMechanic {
         Settings settings = visit.settings();
         MechanicWorld world = visit.world();
 
-        int radius = style.small() ? SMALL_RADIUS : settings.mechanics().gateRadius();
+        int radius = style.small() ? SMALL_RADIUS : settings.mechanics().gate().radius();
         int drop = style.small() ? SMALL_DROP : radius;
         Vec3i origin = visit.sign().position();
         Panel search = Panel.between(
@@ -110,7 +110,7 @@ public final class Gate implements SignMechanic {
      * clicking a fence somewhere near an ordinary gate does nothing.
      */
     public boolean answersToTouchOn(PostedSign sign, Key block, Settings settings) {
-        if (!settings.mechanics().gateClicking() || !claims(sign.lines())) {
+        if (!settings.mechanics().gate().clicking() || !claims(sign.lines())) {
             return false;
         }
         Style style = styleOf(sign);
@@ -243,7 +243,7 @@ public final class Gate implements SignMechanic {
 
     /** Whether a block is one this gate is made of. */
     private static boolean isGate(Key block, Style style, Settings settings) {
-        return settings.mechanics().isGateBlock(block) && style.material().test(block);
+        return settings.mechanics().gate().allows(block) && style.material().test(block);
     }
 
     /** What a gate's sign says it is made of and how far it looks. */

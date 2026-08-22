@@ -22,7 +22,7 @@ import org.jspecify.annotations.NullMarked;
 public final class Bounces {
 
     /** What this is called, for the setting that switches it off. */
-    public static final String NAME = "BounceBlocks";
+    public static final String NAME = Mechanics.BOUNCE_BLOCKS;
 
     /** The sign that makes one. */
     public static final String SIGN_NAME = "[Jump]";

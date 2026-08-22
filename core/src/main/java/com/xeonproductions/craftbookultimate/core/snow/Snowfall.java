@@ -3,6 +3,7 @@
 
 package com.xeonproductions.craftbookultimate.core.snow;
 
+import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
 import com.xeonproductions.craftbookultimate.core.config.SnowSettings;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import java.util.List;
@@ -24,7 +25,7 @@ import org.jspecify.annotations.NullMarked;
 public final class Snowfall {
 
     /** What this is called, for the setting that switches it off. */
-    public static final String NAME = "Snow";
+    public static final String NAME = Mechanics.SNOW;
 
     /** The ways snow slumps: down first, then out. */
     private static final List<Vec3i> SLUMPS = List.of(

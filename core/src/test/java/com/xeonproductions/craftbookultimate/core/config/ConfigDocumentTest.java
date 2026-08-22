@@ -3,14 +3,12 @@
 
 package com.xeonproductions.craftbookultimate.core.config;
 
+import static com.xeonproductions.craftbookultimate.core.config.StubBlockNames.key;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import net.kyori.adventure.key.Key;
 import org.junit.jupiter.api.DisplayName;
@@ -47,8 +45,7 @@ class ConfigDocumentTest {
 
             assertThat(tree.values)
                     .containsKeys("enabled", "ics.max-radius", "vehicles.carts.climb-speed",
-                            "vehicles.boats.water-place-only", "pipes.max-length",
-                            "mechanics.gate-radius");
+                            "vehicles.boats.water-place-only", "pipes.max-length");
         }
 
         @Test
@@ -180,113 +177,4 @@ class ConfigDocumentTest {
         }
     }
 
-    private static Key key(String name) {
-        return Key.key(Key.MINECRAFT_NAMESPACE, name);
-    }
-
-    /**
-     * A settings file held in memory.
-     *
-     * <p>Flat, keyed by the dotted path, because that is the whole of what the document addresses a
-     * value by. Children are worked out by looking for the paths that start with one.
-     */
-    private static final class MapTree implements ConfigTree {
-
-        private final Map<String, Object> values = new LinkedHashMap<>();
-        private final Map<String, List<String>> comments = new LinkedHashMap<>();
-        private List<String> header = List.of();
-
-        @Override
-        public boolean has(String path) {
-            return values.containsKey(path);
-        }
-
-        @Override
-        public void set(String path, Object value) {
-            values.put(path, value);
-        }
-
-        @Override
-        public void comment(String path, List<String> lines) {
-            comments.put(path, lines);
-        }
-
-        @Override
-        public void header(List<String> lines) {
-            header = lines;
-        }
-
-        @Override
-        public boolean bool(String path, boolean fallback) {
-            return values.get(path) instanceof Boolean value ? value : fallback;
-        }
-
-        @Override
-        public String text(String path, String fallback) {
-            return values.get(path) instanceof String value ? value : fallback;
-        }
-
-        @Override
-        public int integer(String path, int fallback) {
-            return values.get(path) instanceof Number value ? value.intValue() : fallback;
-        }
-
-        @Override
-        public long count(String path, long fallback) {
-            return values.get(path) instanceof Number value ? value.longValue() : fallback;
-        }
-
-        @Override
-        public double number(String path, double fallback) {
-            return values.get(path) instanceof Number value ? value.doubleValue() : fallback;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public List<String> strings(String path) {
-            return values.get(path) instanceof List<?> value ? (List<String>) value : List.of();
-        }
-
-        @Override
-        public Set<String> childrenOf(String path) {
-            String prefix = path + ".";
-            Set<String> names = new LinkedHashSet<>();
-            for (String known : values.keySet()) {
-                if (!known.startsWith(prefix)) {
-                    continue;
-                }
-                String rest = known.substring(prefix.length());
-                int nested = rest.indexOf('.');
-                names.add(nested < 0 ? rest : rest.substring(0, nested));
-            }
-            return names;
-        }
-    }
-
-    /**
-     * A server that knows every block except the ones a test says it does not.
-     *
-     * <p>That way round because a real server knows thousands, including every block the defaults
-     * name — a stub knowing only a handful would fail to round-trip the defaults and would be
-     * testing itself rather than the document.
-     */
-    private static final class StubBlockNames implements BlockNames {
-
-        private final Set<String> unknown = new LinkedHashSet<>();
-
-        private final Map<String, Set<Key>> tags = new LinkedHashMap<>();
-
-        @Override
-        public Optional<Key> block(String written) {
-            String name = written.startsWith(Key.MINECRAFT_NAMESPACE + ":")
-                    ? written.substring(Key.MINECRAFT_NAMESPACE.length() + 1)
-                    : written;
-            return unknown.contains(name) ? Optional.empty() : Optional.of(key(name));
-        }
-
-        @Override
-        public Set<Key> tagged(String tag) {
-            return tags.getOrDefault(tag, Set.of());
-        }
-    }
 }

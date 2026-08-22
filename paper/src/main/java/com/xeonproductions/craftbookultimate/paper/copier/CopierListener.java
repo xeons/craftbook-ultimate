@@ -84,7 +84,8 @@ public final class CopierListener implements Listener {
 
         Player player = event.getPlayer();
         String name = claimed.get();
-        if (!configuration.settings().mechanics().allows(name)
+        if (!configuration.settings().runsMechanicIn(
+                        Copiers.mechanicOf(name), sign.getWorld().getName())
                 || !player.hasPermission(Copiers.usePermission(name))) {
             return;
         }

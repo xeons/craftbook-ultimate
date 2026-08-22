@@ -65,7 +65,7 @@ public final class ToggleArea implements SignMechanic {
 
     @Override
     public String name() {
-        return "Area";
+        return Mechanics.AREA;
     }
 
     @Override

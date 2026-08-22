@@ -87,7 +87,7 @@ public final class MechanicDispatcher {
             return run(onTheSign.get(), height, mechanicWorld, settings, actor);
         }
 
-        if (settings.mechanics().liftButtons() && Tag.BUTTONS.isTagged(clicked.getType())) {
+        if (settings.mechanics().elevator().buttons() && Tag.BUTTONS.isTagged(clicked.getType())) {
             Optional<PostedSign> behind = signBehind(mechanicWorld, clicked);
             if (behind.isPresent()
                     && SignMechanics.elevator().claims(behind.get().lines())) {
@@ -95,7 +95,7 @@ public final class MechanicDispatcher {
             }
         }
 
-        if (!who.isSneaking() && settings.mechanics().gateClicking()) {
+        if (!who.isSneaking() && settings.mechanics().gate().clicking()) {
             Optional<PostedSign> gateSign = gateSignFor(clicked, mechanicWorld, settings);
             if (gateSign.isPresent()) {
                 return run(gateSign.get(), height, mechanicWorld, settings, actor);
@@ -216,11 +216,11 @@ public final class MechanicDispatcher {
     private static Optional<PostedSign> gateSignFor(
             Block clicked, BukkitMechanicWorld world, Settings settings) {
         Material material = clicked.getType();
-        if (!settings.mechanics().isGateBlock(material.getKey())) {
+        if (!settings.mechanics().gate().allows(material.getKey())) {
             return Optional.empty();
         }
 
-        int radius = settings.mechanics().gateRadius();
+        int radius = settings.mechanics().gate().radius();
         World bukkitWorld = clicked.getWorld();
         int x = clicked.getX();
         int y = clicked.getY();

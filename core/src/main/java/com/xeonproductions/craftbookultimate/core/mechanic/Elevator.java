@@ -52,7 +52,7 @@ public final class Elevator implements SignMechanic {
 
     @Override
     public String name() {
-        return "Elevator";
+        return Mechanics.ELEVATOR;
     }
 
     @Override
@@ -151,7 +151,7 @@ public final class Elevator implements SignMechanic {
      */
     private static Optional<Vec3i> footingAt(MechanicVisit visit, Vec3i arrival) {
         MechanicWorld world = visit.world();
-        int tolerance = visit.settings().mechanics().liftTolerance();
+        int tolerance = visit.settings().mechanics().elevator().tolerance();
 
         int room = 0;
         Vec3i at = arrival;

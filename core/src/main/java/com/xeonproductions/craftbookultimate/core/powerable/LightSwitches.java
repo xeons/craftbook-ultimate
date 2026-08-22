@@ -3,6 +3,7 @@
 
 package com.xeonproductions.craftbookultimate.core.powerable;
 
+import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
 import com.xeonproductions.craftbookultimate.core.config.MechanicSettings;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
@@ -27,7 +28,7 @@ import org.jspecify.annotations.NullMarked;
 public final class LightSwitches {
 
     /** What this is called, for the setting that switches it off. */
-    public static final String NAME = "LightSwitch";
+    public static final String NAME = Mechanics.LIGHT_SWITCH;
 
     /** The names it claims, both of which are meant to look like a switch. */
     public static final List<String> SIGN_NAMES = List.of("[I]", "[|]");
@@ -60,15 +61,15 @@ public final class LightSwitches {
      */
     public static int rangeOf(SignLines lines, MechanicSettings settings) {
         return Math.min(
-                written(lines, RANGE_LINE, settings.lightSwitchRange()),
-                settings.lightSwitchRange());
+                written(lines, RANGE_LINE, settings.lightSwitch().range()),
+                settings.lightSwitch().range());
     }
 
     /** How many torches this sign turns, held the same way. */
     public static int lightsOf(SignLines lines, MechanicSettings settings) {
         return Math.min(
-                written(lines, LIGHTS_LINE, settings.lightSwitchMaxLights()),
-                settings.lightSwitchMaxLights());
+                written(lines, LIGHTS_LINE, settings.lightSwitch().maxLights()),
+                settings.lightSwitch().maxLights());
     }
 
     /**

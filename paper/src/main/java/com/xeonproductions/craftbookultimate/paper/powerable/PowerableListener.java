@@ -86,10 +86,13 @@ public final class PowerableListener implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
-        MechanicSettings settings = configuration.settings().mechanics();
-        if (!isPowerSource(event.getBlock().getType())) {
+        if (!isPowerSource(event.getBlock().getType())
+                || !configuration.settings()
+                        .allowsWorld(event.getBlock().getWorld().getName())) {
             return;
         }
+
+        MechanicSettings settings = configuration.settings().mechanics();
 
         List<Powerable> powerables = Powerables.all(settings);
         if (powerables.isEmpty()) {
@@ -141,7 +144,9 @@ public final class PowerableListener implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onRedstoneChange(BlockRedstoneEvent event) {
-        if (event.getOldCurrent() == event.getNewCurrent()) {
+        if (event.getOldCurrent() == event.getNewCurrent()
+                || !configuration.settings()
+                        .allowsWorld(event.getBlock().getWorld().getName())) {
             return;
         }
 

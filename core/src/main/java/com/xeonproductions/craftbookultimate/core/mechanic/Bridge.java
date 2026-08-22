@@ -39,7 +39,7 @@ public final class Bridge implements SignMechanic {
 
     @Override
     public String name() {
-        return "Bridge";
+        return Mechanics.BRIDGE;
     }
 
     @Override

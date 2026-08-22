@@ -3,6 +3,7 @@
 
 package com.xeonproductions.craftbookultimate.core.copier;
 
+import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -36,6 +37,21 @@ public final class Copiers {
 
     /** Every name these three claim. */
     public static final List<String> SIGN_NAMES = List.of(BANNER_SIGN, BOOK_SIGN, MAP_SIGN);
+
+    /**
+     * The mechanic a sign belongs to, which is what an operator switches off.
+     *
+     * <p>Not the same string as the sign name, and the map sign is not even a shortening of it:
+     * a builder writes {@code [Map]} on a sign and an operator writes {@code MapCopier} in the
+     * settings.
+     */
+    public static String mechanicOf(String signName) {
+        return switch (signName) {
+            case BANNER_SIGN -> Mechanics.BANNER_COPIER;
+            case BOOK_SIGN -> Mechanics.BOOK_COPIER;
+            default -> Mechanics.MAP_COPIER;
+        };
+    }
 
     /**
      * How many patterns a banner may carry and still be copied.

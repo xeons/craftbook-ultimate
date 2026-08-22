@@ -502,8 +502,8 @@ public final class CraftBookPlugin extends JavaPlugin {
             return true;
         } catch (IOException e) {
             getComponentLogger().error(
-                    Component.text("Could not read " + configFile.path()
-                            + "; carrying on with the settings already in force"), e);
+                    Component.text("Could not read the settings; carrying on with the "
+                            + "settings already in force"), e);
             return false;
         }
     }

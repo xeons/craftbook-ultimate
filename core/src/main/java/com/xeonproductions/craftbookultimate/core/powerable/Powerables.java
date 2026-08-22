@@ -4,6 +4,7 @@
 package com.xeonproductions.craftbookultimate.core.powerable;
 
 import com.xeonproductions.craftbookultimate.core.config.MechanicSettings;
+import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,13 +24,13 @@ import org.jspecify.annotations.NullMarked;
 public final class Powerables {
 
     /** Glowstone, which goes dark rather than away. */
-    public static final String GLOWSTONE = "GlowStone";
+    public static final String GLOWSTONE = Mechanics.GLOW_STONE;
 
     /** A carved pumpkin that lights up. */
-    public static final String JACK_O_LANTERN = "JackOLantern";
+    public static final String JACK_O_LANTERN = Mechanics.JACK_O_LANTERN;
 
     /** Netherrack, and whatever else an operator says catches light. */
-    public static final String NETHERRACK = "Netherrack";
+    public static final String NETHERRACK = Mechanics.NETHERRACK;
 
     /** What a lit glowstone is. */
     public static final Key GLOWSTONE_ON = Key.key("minecraft:glowstone");
@@ -47,10 +48,11 @@ public final class Powerables {
     public static List<Powerable> all(MechanicSettings settings) {
         List<Powerable> powerables = new ArrayList<>(3);
         add(powerables, settings, new Powerable.Swap(
-                GLOWSTONE, settings.glowstoneOffBlock(), GLOWSTONE_ON));
+                GLOWSTONE, settings.powerables().glowstoneOffBlock(), GLOWSTONE_ON));
         add(powerables, settings, new Powerable.Swap(
                 JACK_O_LANTERN, PUMPKIN_OFF, PUMPKIN_ON));
-        add(powerables, settings, new Powerable.Fire(NETHERRACK, settings.fireBlocks()));
+        add(powerables, settings, new Powerable.Fire(
+                NETHERRACK, settings.powerables().fireBlocks()));
         return List.copyOf(powerables);
     }
 

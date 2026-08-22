@@ -58,10 +58,11 @@ public final class TeleporterListener implements Listener {
             return;
         }
 
-        MechanicSettings settings = configuration.settings().mechanics();
-        if (!settings.allows(Teleporters.NAME)) {
+        if (!configuration.settings().runsMechanicIn(
+                Teleporters.NAME, event.getClickedBlock().getWorld().getName())) {
             return;
         }
+        MechanicSettings settings = configuration.settings().mechanics();
 
         Optional<Sign> found = signFor(event.getClickedBlock(), settings);
         if (found.isEmpty()) {
@@ -104,14 +105,14 @@ public final class TeleporterListener implements Listener {
         World world = from.getWorld();
         Vec3d here = new Vec3d(from.getX(), from.getY(), from.getZ());
 
-        if (!Teleporters.withinRange(here, to, settings.teleporterRange())) {
+        if (!Teleporters.withinRange(here, to, settings.teleporter().range())) {
             player.sendMessage(Component.text(
                     "That is too far away to teleport to.", NamedTextColor.RED));
             return;
         }
 
         Location landing = new Location(world, to.x(), to.y(), to.z());
-        if (settings.teleporterRequireSign() && !hasTeleporterSign(landing)) {
+        if (settings.teleporter().requireSign() && !hasTeleporterSign(landing)) {
             player.sendMessage(Component.text(
                     "There is no teleporter sign at the other end.", NamedTextColor.RED));
             return;
@@ -174,7 +175,7 @@ public final class TeleporterListener implements Listener {
         if (clicked.getState() instanceof Sign sign) {
             return Optional.of(sign);
         }
-        if (!settings.teleporterButtons() || !Tag.BUTTONS.isTagged(clicked.getType())) {
+        if (!settings.teleporter().buttons() || !Tag.BUTTONS.isTagged(clicked.getType())) {
             return Optional.empty();
         }
         if (!(clicked.getBlockData() instanceof Directional facing)) {

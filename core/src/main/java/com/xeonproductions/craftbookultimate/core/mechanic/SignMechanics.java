@@ -68,7 +68,7 @@ public final class SignMechanics {
 
     /** Whether a mechanic runs at all here. */
     public static boolean isRunning(SignMechanic mechanic, Settings settings, String world) {
-        return settings.allowsWorld(world) && settings.mechanics().allows(mechanic.name());
+        return settings.runsMechanicIn(mechanic.name(), world);
     }
 
     /** Every sign name any mechanic answers to, for anything that needs the whole list. */

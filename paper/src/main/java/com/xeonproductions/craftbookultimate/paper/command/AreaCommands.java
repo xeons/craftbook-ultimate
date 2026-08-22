@@ -158,16 +158,16 @@ public final class AreaCommands {
         MechanicSettings settings = configuration.settings().mechanics();
         boolean unlimited = who.hasPermission(BYPASS_LIMIT);
 
-        if (!unlimited && !settings.allowsAreaOf(anchor.volume())) {
+        if (!unlimited && !settings.area().allowsAreaOf(anchor.volume())) {
             error(who, "That is " + anchor.volume() + " blocks, and an area may hold "
-                    + settings.maxAreaBlocks() + ".");
+                    + settings.area().maxBlocks() + ".");
             return 0;
         }
         if (!unlimited
                 && !vault.has(name.get())
-                && !settings.allowsAnotherArea(vault.countIn(namespace))) {
+                && !settings.area().allowsAnother(vault.countIn(namespace))) {
             error(who, "There are already " + vault.countIn(namespace) + " areas under "
-                    + namespace + ", and " + settings.maxAreasPerNamespace() + " are allowed.");
+                    + namespace + ", and " + settings.area().maxPerNamespace() + " are allowed.");
             return 0;
         }
 

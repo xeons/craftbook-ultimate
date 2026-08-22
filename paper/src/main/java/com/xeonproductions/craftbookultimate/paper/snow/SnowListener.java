@@ -4,7 +4,7 @@
 package com.xeonproductions.craftbookultimate.paper.snow;
 
 import com.xeonproductions.craftbookultimate.core.config.Configuration;
-import com.xeonproductions.craftbookultimate.core.config.MechanicSettings;
+import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.config.SnowSettings;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.snow.Snowfall;
@@ -48,12 +48,12 @@ public final class SnowListener implements Listener {
      */
     @EventHandler(ignoreCancelled = true)
     public void onForm(BlockFormEvent event) {
-        SnowSettings snow = snowSettings();
+        Block block = event.getBlock();
+        SnowSettings snow = snowSettings(block);
         if (!snow.anythingAtAll() || !isSnow(event.getNewState().getType())) {
             return;
         }
 
-        Block block = event.getBlock();
         Snowfall snowfall = new Snowfall(new BukkitSnowWorld(block.getWorld()), snow);
         snowfall.tick(at(block));
     }
@@ -61,14 +61,16 @@ public final class SnowListener implements Listener {
     /** Leaves snow where a snowball lands, for a server that has asked for it. */
     @EventHandler(ignoreCancelled = true)
     public void onSnowballLand(ProjectileHitEvent event) {
-        SnowSettings snow = snowSettings();
-        if (!snow.snowballsPile()
-                || !(event.getEntity() instanceof Snowball)
-                || event.getHitBlock() == null) {
+        if (!(event.getEntity() instanceof Snowball) || event.getHitBlock() == null) {
             return;
         }
 
         Block hit = event.getHitBlock();
+        SnowSettings snow = snowSettings(hit);
+        if (!snow.snowballsPile()) {
+            return;
+        }
+
         Block landing = event.getHitBlockFace() == null
                 ? hit.getRelative(0, 1, 0)
                 : hit.getRelative(event.getHitBlockFace());
@@ -76,9 +78,17 @@ public final class SnowListener implements Listener {
         new Snowfall(new BukkitSnowWorld(hit.getWorld()), snow).pile(at(landing));
     }
 
-    private SnowSettings snowSettings() {
-        MechanicSettings settings = configuration.settings().mechanics();
-        return settings.allows(Snowfall.NAME) ? settings.snow() : SnowSettings.DEFAULTS;
+    /**
+     * How snow behaves where a block is, which is nothing at all where it has been switched off.
+     *
+     * <p>The defaults are what nothing switched on looks like, so a world snow does not run in
+     * answers the same as a server that has never configured it.
+     */
+    private SnowSettings snowSettings(Block where) {
+        Settings settings = configuration.settings();
+        return settings.runsMechanicIn(Snowfall.NAME, where.getWorld().getName())
+                ? settings.mechanics().snow()
+                : SnowSettings.DEFAULTS;
     }
 
     private static boolean isSnow(Material material) {

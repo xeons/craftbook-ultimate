@@ -54,7 +54,7 @@ public final class LiftMoveListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onMove(PlayerMoveEvent event) {
-        if (!dispatcher.settings().mechanics().liftJumping()) {
+        if (!dispatcher.settings().mechanics().elevator().jumping()) {
             return;
         }
 

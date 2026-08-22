@@ -48,10 +48,11 @@ public final class XpStorerListener implements Listener {
             return;
         }
 
-        MechanicSettings settings = configuration.settings().mechanics();
-        if (!settings.allows(XpStorers.NAME)) {
+        if (!configuration.settings().runsMechanicIn(
+                XpStorers.NAME, event.getClickedBlock().getWorld().getName())) {
             return;
         }
+        MechanicSettings settings = configuration.settings().mechanics();
 
         Material block = materialOf(settings);
         if (block == null || event.getClickedBlock().getType() != block) {
@@ -59,7 +60,7 @@ public final class XpStorerListener implements Listener {
         }
 
         Player player = event.getPlayer();
-        if (!settings.xpSneakState().passes(player.isSneaking())
+        if (!settings.xp().sneaking().passes(player.isSneaking())
                 || !player.hasPermission(XpStorers.USE)) {
             return;
         }
@@ -71,14 +72,14 @@ public final class XpStorerListener implements Listener {
     /** Fills as many bottles as the player's experience pays for, and keeps the change. */
     private static void bottle(Player player, MechanicSettings settings) {
         int experience = player.calculateTotalExperiencePoints();
-        int perBottle = settings.xpPerBottle();
+        int perBottle = settings.xp().perBottle();
 
-        int held = settings.xpRequiresBottle()
+        int held = settings.xp().requiresBottle()
                 ? player.getInventory().all(Material.GLASS_BOTTLE).values().stream()
                         .mapToInt(ItemStack::getAmount).sum()
                 : Integer.MAX_VALUE;
 
-        if (settings.xpRequiresBottle() && held == 0) {
+        if (settings.xp().requiresBottle() && held == 0) {
             player.sendMessage(Component.text(
                     "You need an empty bottle for this.", NamedTextColor.RED));
             return;
@@ -100,7 +101,7 @@ public final class XpStorerListener implements Listener {
             return;
         }
 
-        if (settings.xpRequiresBottle()) {
+        if (settings.xp().requiresBottle()) {
             player.getInventory().removeItem(new ItemStack(Material.GLASS_BOTTLE, bottles));
         }
 
@@ -118,7 +119,7 @@ public final class XpStorerListener implements Listener {
 
     /** The block this works on, or nothing where the server has no such block. */
     private static @Nullable Material materialOf(MechanicSettings settings) {
-        NamespacedKey key = NamespacedKey.fromString(settings.xpStorerBlock().asString());
+        NamespacedKey key = NamespacedKey.fromString(settings.xp().block().asString());
         return key == null ? null : Registry.MATERIAL.get(key);
     }
 }

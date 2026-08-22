@@ -5,6 +5,7 @@ package com.xeonproductions.craftbookultimate.core.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
 import com.xeonproductions.craftbookultimate.core.world.Blocks;
 import java.util.Set;
 import net.kyori.adventure.key.Key;
@@ -40,6 +41,36 @@ class SettingsTest {
             Settings settings = Settings.builder().disabledWorlds(Set.of("World_Nether")).build();
 
             assertThat(settings.allowsWorld("world_nether")).isFalse();
+        }
+
+        @Test
+        void runsAMechanicUntilSomethingSaysOtherwise() {
+            assertThat(Settings.DEFAULTS.runsMechanicIn(Mechanics.GATE, "world")).isTrue();
+        }
+
+        @Test
+        void keepsAMechanicOutOfAWorldTheWholePluginIsOutOf() {
+            Settings settings = Settings.builder().disabledWorlds(Set.of("nether")).build();
+
+            assertThat(settings.runsMechanicIn(Mechanics.GATE, "nether")).isFalse();
+            assertThat(settings.runsMechanicIn(Mechanics.GATE, "world")).isTrue();
+        }
+
+        @Test
+        void stopsEveryMechanicWhenTheWholePluginIsSwitchedOff() {
+            Settings settings = Settings.builder().enabled(false).build();
+
+            assertThat(settings.runsMechanicIn(Mechanics.GATE, "world")).isFalse();
+        }
+
+        @Test
+        void stopsOnlyTheMechanicThatWasNamed() {
+            Settings settings = Settings.builder()
+                    .mechanics(MechanicSettings.DEFAULTS.withDisabled(Set.of(Mechanics.GATE)))
+                    .build();
+
+            assertThat(settings.runsMechanicIn(Mechanics.GATE, "world")).isFalse();
+            assertThat(settings.runsMechanicIn(Mechanics.BRIDGE, "world")).isTrue();
         }
 
         @Test

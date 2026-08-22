@@ -3,7 +3,6 @@
 
 package com.xeonproductions.craftbookultimate.core.config;
 
-import com.xeonproductions.craftbookultimate.core.mechanic.SneakState;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,6 +24,10 @@ import org.jspecify.annotations.NullMarked;
  *
  * <p>An entry that cannot be understood is reported and skipped rather than taking the rest of the
  * file down with it.
+ *
+ * <p>The mechanics are not here. They are a file of their own, read by {@link MechanicsDocument},
+ * because there are twenty of them and an operator changes those far more often than a limit on
+ * how far a chip may reach.
  *
  * <p>Every setting's name, default and explanation lives here rather than in either binding, so
  * the two platforms cannot drift into disagreeing about what an operator's file means. Reading and
@@ -97,40 +100,6 @@ public final class ConfigDocument {
     private static final String PIPES_MAX_LENGTH = "pipes.max-length";
     private static final String PIPES_STACK_PER_PULL = "pipes.stack-per-pull";
 
-    private static final String MECHANICS_DISABLED = "mechanics.disabled";
-    private static final String MECHANICS_REDSTONE = "mechanics.redstone";
-    private static final String GATE_BLOCKS = "mechanics.gate-blocks";
-    private static final String GATE_RADIUS = "mechanics.gate-radius";
-    private static final String GATE_CLICKING = "mechanics.gate-clicking";
-    private static final String LIFT_JUMPING = "mechanics.lift-jumping";
-    private static final String LIFT_BUTTONS = "mechanics.lift-buttons";
-    private static final String LIFT_TOLERANCE = "mechanics.lift-tolerance";
-    private static final String MAX_AREA_BLOCKS = "mechanics.max-area-blocks";
-    private static final String MAX_AREAS = "mechanics.max-areas-per-name";
-    private static final String GLOWSTONE_OFF = "mechanics.glowstone-off-block";
-    private static final String FIRE_BLOCKS = "mechanics.fire-blocks";
-    private static final String DEPOWER_ON_REMOVAL = "mechanics.depower-on-source-removal";
-    private static final String LIGHT_SWITCH_RANGE = "mechanics.light-switch-range";
-    private static final String LIGHT_SWITCH_LIGHTS = "mechanics.light-switch-max-lights";
-    private static final String LIGHT_STONE_ITEM = "mechanics.light-stone-item";
-    private static final String AMMETER_ITEM = "mechanics.ammeter-item";
-    private static final String BOUNCE_BLOCKS = "mechanics.bounce-blocks";
-    private static final String AUTO_BOUNCE_BLOCKS = "mechanics.auto-bounce-blocks";
-    private static final String BOUNCE_SENSITIVITY = "mechanics.bounce-sensitivity";
-    private static final String TELEPORTER_BUTTONS = "mechanics.teleporter-buttons";
-    private static final String TELEPORTER_REQUIRE_SIGN = "mechanics.teleporter-require-sign";
-    private static final String TELEPORTER_RANGE = "mechanics.teleporter-range";
-    private static final String XP_BLOCK = "mechanics.xp-storer-block";
-    private static final String XP_PER_BOTTLE = "mechanics.xp-per-bottle";
-    private static final String XP_REQUIRES_BOTTLE = "mechanics.xp-requires-bottle";
-    private static final String XP_SNEAK = "mechanics.xp-sneak-state";
-    private static final String SNOW_PILING = "mechanics.snow.piling";
-    private static final String SNOW_DISPERSION = "mechanics.snow.dispersion";
-    private static final String SNOW_FREEZES = "mechanics.snow.freezes-water";
-    private static final String SNOW_MELTS = "mechanics.snow.melts-in-sunlight";
-    private static final String SNOW_PARTIAL_MELT = "mechanics.snow.partial-melt-only";
-    private static final String SNOWBALLS_PILE = "mechanics.snow.snowballs-pile";
-
     /** Puts the default of every setting the file does not already carry into it. */
     private static void fillIn(ConfigTree tree) {
         Settings defaults = Settings.DEFAULTS;
@@ -182,41 +151,6 @@ public final class ConfigDocument {
         setIfAbsent(tree, PIPES_MAX_LENGTH, pipes.maxLength());
         setIfAbsent(tree, PIPES_STACK_PER_PULL, pipes.stackPerPull());
 
-        MechanicSettings mechanics = defaults.mechanics();
-        setIfAbsent(tree, MECHANICS_DISABLED, new ArrayList<>(mechanics.disabled()));
-        setIfAbsent(tree, MECHANICS_REDSTONE, mechanics.redstone());
-        setIfAbsent(tree, GATE_BLOCKS, names(mechanics.gateBlocks()));
-        setIfAbsent(tree, GATE_RADIUS, mechanics.gateRadius());
-        setIfAbsent(tree, GATE_CLICKING, mechanics.gateClicking());
-        setIfAbsent(tree, LIFT_JUMPING, mechanics.liftJumping());
-        setIfAbsent(tree, LIFT_BUTTONS, mechanics.liftButtons());
-        setIfAbsent(tree, LIFT_TOLERANCE, mechanics.liftTolerance());
-        setIfAbsent(tree, MAX_AREA_BLOCKS, mechanics.maxAreaBlocks());
-        setIfAbsent(tree, MAX_AREAS, mechanics.maxAreasPerNamespace());
-        setIfAbsent(tree, GLOWSTONE_OFF, mechanics.glowstoneOffBlock().asString());
-        setIfAbsent(tree, FIRE_BLOCKS, names(mechanics.fireBlocks()));
-        setIfAbsent(tree, DEPOWER_ON_REMOVAL, mechanics.depowerOnSourceRemoval());
-        setIfAbsent(tree, LIGHT_SWITCH_RANGE, mechanics.lightSwitchRange());
-        setIfAbsent(tree, LIGHT_SWITCH_LIGHTS, mechanics.lightSwitchMaxLights());
-        setIfAbsent(tree, LIGHT_STONE_ITEM, mechanics.lightStoneItem().asString());
-        setIfAbsent(tree, AMMETER_ITEM, mechanics.ammeterItem().asString());
-        setIfAbsent(tree, BOUNCE_BLOCKS, names(mechanics.bounceBlocks()));
-        mechanics.autoBounceBlocks().forEach((block, throwing) ->
-                setIfAbsent(tree, AUTO_BOUNCE_BLOCKS + "." + block.value(), throwing));
-        setIfAbsent(tree, BOUNCE_SENSITIVITY, mechanics.bounceSensitivity());
-        setIfAbsent(tree, TELEPORTER_BUTTONS, mechanics.teleporterButtons());
-        setIfAbsent(tree, TELEPORTER_REQUIRE_SIGN, mechanics.teleporterRequireSign());
-        setIfAbsent(tree, TELEPORTER_RANGE, mechanics.teleporterRange());
-        setIfAbsent(tree, XP_BLOCK, mechanics.xpStorerBlock().asString());
-        setIfAbsent(tree, XP_PER_BOTTLE, mechanics.xpPerBottle());
-        setIfAbsent(tree, XP_REQUIRES_BOTTLE, mechanics.xpRequiresBottle());
-        setIfAbsent(tree, XP_SNEAK, mechanics.xpSneakState().written());
-        setIfAbsent(tree, SNOW_PILING, mechanics.snow().piling());
-        setIfAbsent(tree, SNOW_DISPERSION, mechanics.snow().dispersion());
-        setIfAbsent(tree, SNOW_FREEZES, mechanics.snow().freezesWater());
-        setIfAbsent(tree, SNOW_MELTS, mechanics.snow().meltsInSunlight());
-        setIfAbsent(tree, SNOW_PARTIAL_MELT, mechanics.snow().partialMeltOnly());
-        setIfAbsent(tree, SNOWBALLS_PILE, mechanics.snow().snowballsPile());
     }
 
     private static void setIfAbsent(ConfigTree tree, String path, Object value) {
@@ -234,6 +168,9 @@ public final class ConfigDocument {
                 "about what may run at all. None of it changes what a sign means: a sign asking",
                 "for more than it is allowed gets as much as it is allowed, so changing a limit",
                 "shortens or lengthens what an existing build does rather than breaking it.",
+                "",
+                "The mechanics are not here. Bridges, gates, lifts, saved areas, snow and the",
+                "rest are in mechanics.yml beside this file, a section each.",
                 "",
                 "Changes take effect on the next /craftbook reload."));
 
@@ -438,155 +375,6 @@ public final class ConfigDocument {
         tree.comment(PIPES_STACK_PER_PULL, List.of(
                 "Whether one pulse moves a single stack. Turning this off empties as much of the",
                 "container as the pipe can find room for, which is faster and far more work."));
-
-        tree.comment("mechanics", List.of(
-                "",
-                "The sign mechanics: the bridges, doors, gates and lifts. How wide a bridge or a",
-                "door may be, how far it may run and what it may be made of come from the ics",
-                "section above, because those are the same limits."));
-
-        tree.comment(MECHANICS_DISABLED, List.of(
-                "Mechanics that never run, by name: Bridge, Door, Gate or Elevator.",
-                "The signs are left alone, not removed."));
-
-        tree.comment(MECHANICS_REDSTONE, List.of(
-                "",
-                "Whether redstone arriving beside a sign works the mechanic on it.",
-                "Power arriving shuts it and power leaving opens it, so a mechanic on a lever",
-                "always agrees with the lever."));
-
-        tree.comment(GATE_BLOCKS, List.of(
-                "",
-                "What a gate may be made of. An entry is a block name, a tag written with a",
-                "leading # such as #minecraft:fences, or a name from before the flattening.",
-                "The glass, iron and nether gate signs each take only their own material out of",
-                "this list; the plain sign takes any of it."));
-
-        tree.comment(GATE_RADIUS, List.of(
-                "",
-                "How far around its sign a gate looks for its own material. The D forms of each",
-                "gate sign ignore this and look barely past themselves, which is how two gates",
-                "standing side by side are kept from catching one another."));
-
-        tree.comment(GATE_CLICKING, List.of(
-                "Whether a gate whose sign ends in C answers to a hand on its own fence."));
-
-        tree.comment(LIFT_JUMPING, List.of(
-                "",
-                "Whether jumping and crouching work a [Lift UpDown] sign fixed to the block",
-                "somebody is standing on."));
-
-        tree.comment(LIFT_BUTTONS, List.of(
-                "Whether a button two blocks in front of a lift's sign works it."));
-
-        tree.comment(LIFT_TOLERANCE, List.of(
-                "How far a lift will drop somebody below the far sign to find them a floor.",
-                "Beyond this it says there is no floor rather than dropping them down a shaft."));
-
-        tree.comment(MAX_AREA_BLOCKS, List.of(
-                "",
-                "The most blocks one saved area may hold. Zero is no limit.",
-                "An area is saved with /area save and lives in the areas folder, one file of",
-                "blocks and one saying where they go."));
-
-        tree.comment(MAX_AREAS, List.of(
-                "The most areas any one name may have saved. Zero is no limit.",
-                "Saving over an area that already exists does not count against this."));
-
-        tree.comment(GLOWSTONE_OFF, List.of(
-                "",
-                "What a glowstone looks like while it is dark. Powering it turns it back into",
-                "glowstone, and taking the power away turns it into this."));
-
-        tree.comment(FIRE_BLOCKS, List.of(
-                "What catches light on top of itself while it is powered. The block is never",
-                "changed; what changes is the air above it."));
-
-        tree.comment(DEPOWER_ON_REMOVAL, List.of(
-                "Whether a powered block goes out when the redstone feeding it is mined away.",
-                "Off by default, and deliberately: powering a light and then mining the redstone",
-                "is how a builder makes one that stays on. Switching a lever off still turns it",
-                "off either way — this is only about the power source being taken out of the",
-                "world."));
-
-        tree.comment(LIGHT_SWITCH_RANGE, List.of(
-                "",
-                "How far a light switch reaches out for torches. A sign may ask for less on its",
-                "third line."));
-
-        tree.comment(LIGHT_SWITCH_LIGHTS, List.of(
-                "The most torches one light switch turns. A sign may ask for fewer on its fourth",
-                "line."));
-
-        tree.comment(LIGHT_STONE_ITEM, List.of(
-                "What is held up to a block to read its light level off it."));
-
-        tree.comment(AMMETER_ITEM, List.of(
-                "What is held up to a block to read how much redstone power it carries."));
-
-        tree.comment(BOUNCE_BLOCKS, List.of(
-                "",
-                "What throws somebody who jumps on it, when a [Jump] sign under it says how hard."));
-
-        tree.comment(AUTO_BOUNCE_BLOCKS, List.of(
-                "What throws somebody with no sign at all, and how hard. The throw is written the",
-                "way a sign writes it: a number for straight up, three for a push along the",
-                "ground, and a leading ! to ignore which way the jumper is facing."));
-
-        tree.comment(BOUNCE_SENSITIVITY, List.of(
-                "How much of a jump counts as one. Lower notices a smaller hop."));
-
-        tree.comment(TELEPORTER_BUTTONS, List.of(
-                "",
-                "Whether a button on the far side of a teleporter sign works it, so a builder can",
-                "hide the sign behind the wall."));
-
-        tree.comment(TELEPORTER_REQUIRE_SIGN, List.of(
-                "Whether the far end needs a teleporter sign of its own. On, this means a",
-                "teleporter can only send somebody where a builder has said they may arrive."));
-
-        tree.comment(TELEPORTER_RANGE, List.of(
-                "How far a teleporter may send somebody. A negative number is no limit."));
-
-        tree.comment(XP_BLOCK, List.of(
-                "",
-                "What turns the experience somebody is carrying into bottles when it is clicked."));
-
-        tree.comment(XP_PER_BOTTLE, List.of(
-                "How much experience one bottle costs. Whatever will not pay for a whole bottle",
-                "stays with the player rather than being lost."));
-
-        tree.comment(XP_REQUIRES_BOTTLE, List.of(
-                "Whether the player has to be carrying empty bottles for it to fill."));
-
-        tree.comment(XP_SNEAK, List.of(
-                "Whether the player must be crouching to use one: must, must-not or either."));
-
-        tree.comment("mechanics.snow", List.of(
-                "",
-                "How snow behaves. Every part of it is off out of the box: a server that has never",
-                "been configured runs snow exactly as the game does. Unlike the mechanics above,",
-                "nothing here is built and nothing has a sign — switching any of it on changes",
-                "every snowy block in the world."));
-
-        tree.comment(SNOW_PILING, List.of(
-                "Whether snow keeps piling past the height the game stops at."));
-
-        tree.comment(SNOW_DISPERSION, List.of(
-                "Whether a pile slumps into the lower ground beside it, so drifts settle into a",
-                "slope rather than standing in columns."));
-
-        tree.comment(SNOW_FREEZES, List.of("Whether water under snow turns to ice."));
-
-        tree.comment(SNOW_MELTS, List.of(
-                "Whether snow in the warm and under open sky goes away again."));
-
-        tree.comment(SNOW_PARTIAL_MELT, List.of(
-                "Whether melting stops at the depth the game would have left, rather than",
-                "clearing the ground entirely."));
-
-        tree.comment(SNOWBALLS_PILE, List.of(
-                "Whether a thrown snowball leaves snow where it lands."));
     }
 
     /** Turns what the file says into the settings the chips read. */
@@ -604,61 +392,7 @@ public final class ConfigDocument {
                 .carts(carts(tree, defaults.carts()))
                 .vehicles(vehicles(tree, defaults.vehicles()))
                 .pipes(pipes(tree, defaults.pipes()))
-                .mechanics(mechanics(tree, defaults.mechanics()))
                 .build();
-    }
-
-    /** Reads what an operator has said about the sign mechanics. */
-    private MechanicSettings mechanics(ConfigTree tree, MechanicSettings defaults) {
-        Set<Key> gateBlocks = names.blocks(tree.strings(GATE_BLOCKS), report);
-        Set<Key> fireBlocks = names.blocks(tree.strings(FIRE_BLOCKS), report);
-        Set<Key> bounceBlocks = names.blocks(tree.strings(BOUNCE_BLOCKS), report);
-
-        // Each named block carries the throw it gives, in the same grammar a [Jump] sign uses.
-        Map<Key, String> autoBounces = new LinkedHashMap<>();
-        for (String written : tree.childrenOf(AUTO_BOUNCE_BLOCKS)) {
-            Optional<Key> block = names.block(written);
-            if (block.isEmpty()) {
-                report.accept("No block called " + written + ", so nothing bounces off it");
-                continue;
-            }
-            autoBounces.put(block.get(), tree.text(AUTO_BOUNCE_BLOCKS + "." + written, ""));
-        }
-
-        return new MechanicSettings(
-                Set.copyOf(tree.strings(MECHANICS_DISABLED)),
-                tree.bool(MECHANICS_REDSTONE, defaults.redstone()),
-                gateBlocks.isEmpty() ? defaults.gateBlocks() : gateBlocks,
-                tree.integer(GATE_RADIUS, defaults.gateRadius()),
-                tree.bool(GATE_CLICKING, defaults.gateClicking()),
-                tree.bool(LIFT_JUMPING, defaults.liftJumping()),
-                tree.bool(LIFT_BUTTONS, defaults.liftButtons()),
-                tree.integer(LIFT_TOLERANCE, defaults.liftTolerance()),
-                tree.integer(MAX_AREA_BLOCKS, defaults.maxAreaBlocks()),
-                tree.integer(MAX_AREAS, defaults.maxAreasPerNamespace()),
-                names.block(tree.text(GLOWSTONE_OFF, defaults.glowstoneOffBlock().asString()))
-                        .orElseGet(defaults::glowstoneOffBlock),
-                fireBlocks.isEmpty() ? defaults.fireBlocks() : fireBlocks,
-                tree.bool(DEPOWER_ON_REMOVAL, defaults.depowerOnSourceRemoval()),
-                tree.integer(LIGHT_SWITCH_RANGE, defaults.lightSwitchRange()),
-                tree.integer(LIGHT_SWITCH_LIGHTS, defaults.lightSwitchMaxLights()),
-                names.block(tree.text(LIGHT_STONE_ITEM, defaults.lightStoneItem().asString()))
-                        .orElseGet(defaults::lightStoneItem),
-                names.block(tree.text(AMMETER_ITEM, defaults.ammeterItem().asString()))
-                        .orElseGet(defaults::ammeterItem),
-                bounceBlocks.isEmpty() ? defaults.bounceBlocks() : bounceBlocks,
-                autoBounces.isEmpty() ? defaults.autoBounceBlocks() : autoBounces,
-                tree.number(BOUNCE_SENSITIVITY, defaults.bounceSensitivity()),
-                tree.bool(TELEPORTER_BUTTONS, defaults.teleporterButtons()),
-                tree.bool(TELEPORTER_REQUIRE_SIGN, defaults.teleporterRequireSign()),
-                tree.number(TELEPORTER_RANGE, defaults.teleporterRange()),
-                names.block(tree.text(XP_BLOCK, defaults.xpStorerBlock().asString()))
-                        .orElseGet(defaults::xpStorerBlock),
-                tree.integer(XP_PER_BOTTLE, defaults.xpPerBottle()),
-                tree.bool(XP_REQUIRES_BOTTLE, defaults.xpRequiresBottle()),
-                SneakState.of(tree.text(XP_SNEAK, defaults.xpSneakState().written()),
-                        defaults.xpSneakState()),
-                snow(tree, defaults.snow()));
     }
 
     /** Reads what an operator has said about the minecart mechanics. */
@@ -720,17 +454,6 @@ public final class ConfigDocument {
                 tree.bool(BOAT_RUN_DOWN, defaults.runDownEntities()),
                 tree.bool(BOAT_RUN_DOWN_HURTS, defaults.runDownOnlyHurts()),
                 tree.bool(BOAT_RUN_DOWN_BOATS, defaults.runDownOtherBoats()));
-    }
-
-    /** How snow piles, slumps and melts. */
-    private static SnowSettings snow(ConfigTree tree, SnowSettings defaults) {
-        return new SnowSettings(
-                tree.bool(SNOW_PILING, defaults.piling()),
-                tree.bool(SNOW_DISPERSION, defaults.dispersion()),
-                tree.bool(SNOW_FREEZES, defaults.freezesWater()),
-                tree.bool(SNOW_MELTS, defaults.meltsInSunlight()),
-                tree.bool(SNOW_PARTIAL_MELT, defaults.partialMeltOnly()),
-                tree.bool(SNOWBALLS_PILE, defaults.snowballsPile()));
     }
 
     /** How every cart behaves, whether or not it is standing on a mechanism. */

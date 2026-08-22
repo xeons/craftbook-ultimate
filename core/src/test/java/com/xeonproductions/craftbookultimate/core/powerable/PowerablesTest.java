@@ -106,9 +106,9 @@ class PowerablesTest {
             SignLines blank = SignLines.of("", "[I]", "", "");
 
             assertThat(LightSwitches.rangeOf(blank, SETTINGS))
-                    .isEqualTo(SETTINGS.lightSwitchRange());
+                    .isEqualTo(SETTINGS.lightSwitch().range());
             assertThat(LightSwitches.lightsOf(blank, SETTINGS))
-                    .isEqualTo(SETTINGS.lightSwitchMaxLights());
+                    .isEqualTo(SETTINGS.lightSwitch().maxLights());
         }
 
         @Test
@@ -126,9 +126,9 @@ class PowerablesTest {
             SignLines greedy = SignLines.of("", "[I]", "500", "500");
 
             assertThat(LightSwitches.rangeOf(greedy, SETTINGS))
-                    .isEqualTo(SETTINGS.lightSwitchRange());
+                    .isEqualTo(SETTINGS.lightSwitch().range());
             assertThat(LightSwitches.lightsOf(greedy, SETTINGS))
-                    .isEqualTo(SETTINGS.lightSwitchMaxLights());
+                    .isEqualTo(SETTINGS.lightSwitch().maxLights());
         }
 
         @Test
@@ -137,7 +137,7 @@ class PowerablesTest {
             SignLines rubbish = SignLines.of("", "[I]", "far", "lots");
 
             assertThat(LightSwitches.rangeOf(rubbish, SETTINGS))
-                    .isEqualTo(SETTINGS.lightSwitchRange());
+                    .isEqualTo(SETTINGS.lightSwitch().range());
         }
 
         @Test

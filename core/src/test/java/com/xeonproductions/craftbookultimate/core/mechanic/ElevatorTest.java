@@ -5,6 +5,7 @@ package com.xeonproductions.craftbookultimate.core.mechanic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.xeonproductions.craftbookultimate.core.config.ElevatorSettings;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
@@ -278,7 +279,8 @@ class ElevatorTest {
     @Test
     void willNotDropSomebodyFurtherThanTheSettingsAllow() {
         Settings tight = Settings.builder()
-                .mechanics(Settings.DEFAULTS.mechanics().withLiftTolerance(2))
+                .mechanics(Settings.DEFAULTS.mechanics()
+                        .withElevator(ElevatorSettings.DEFAULTS.withTolerance(2)))
                 .build();
         world.withSign(SIGN, BlockFace.SOUTH, "", Elevator.UP, "", "")
                 .withSign(UPPER_SIGN, BlockFace.SOUTH, "", Elevator.STOP, "", "")

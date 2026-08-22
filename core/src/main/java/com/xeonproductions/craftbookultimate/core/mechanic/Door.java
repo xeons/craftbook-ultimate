@@ -38,7 +38,7 @@ public final class Door implements SignMechanic {
 
     @Override
     public String name() {
-        return "Door";
+        return Mechanics.DOOR;
     }
 
     @Override

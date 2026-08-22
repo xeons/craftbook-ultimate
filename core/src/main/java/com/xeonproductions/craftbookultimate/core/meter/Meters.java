@@ -3,6 +3,7 @@
 
 package com.xeonproductions.craftbookultimate.core.meter;
 
+import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
@@ -30,10 +31,10 @@ public final class Meters {
     public static final int LIT_ENOUGH = 9;
 
     /** What is held up to a block to read its power, unless an operator says otherwise. */
-    public static final String NAME_AMMETER = "Ammeter";
+    public static final String NAME_AMMETER = Mechanics.AMMETER;
 
     /** What is held up to a block to read its light, unless an operator says otherwise. */
-    public static final String NAME_LIGHT_STONE = "LightStone";
+    public static final String NAME_LIGHT_STONE = Mechanics.LIGHT_STONE;
 
     /** The permission to read a power level. */
     public static final String AMMETER_USE = "craftbook.ammeter.use";

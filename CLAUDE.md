@@ -71,7 +71,9 @@ to a hand and to redstone.**
 | Variables, and the three upstream chips that read them | Done |
 | Test bed: a rig per chip, built from the catalogue | Done |
 | Debugging: the IC stick, the commands, the report | Done |
-| Mechanics other than those and the minecart ones | Not started |
+| The copiers: banner, book, map and sign | Done |
+| The boat habits, beside the cart ones under `vehicles` | Done |
+| Mechanics other than those, the copiers and the minecart ones | Not started |
 | Sponge build: module, adapters, world seam, entity bindings | Done |
 | Sponge build: the native layer over Minecraft's own code | Done |
 | Sponge build: entry point, config, chips running | Done |
@@ -79,7 +81,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2050 tests passing**.
+**2074 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -210,7 +212,7 @@ amounted to anyway.
 **Not ported:** CartWarp, and it will not be. Its whole purpose was teleporting a cart to a
 CBWarp, and CBWarps is on the dropped list, so there is nothing for it to warp to.
 
-## The habits every cart has
+## The habits every cart and boat has
 
 Seven of the minecart mechanics are not mechanisms at all. Nothing is built, nothing carries a
 sign, and each one changes what every cart in the world does: empty carts decay, a rider takes the
@@ -229,7 +231,7 @@ mechanic does nothing until somebody builds one, while a habit changes every car
 moment it is switched on. It also matches the legacy fork, whose `enabled-mechanics` began as a
 list of one.
 
-The settings are `carts.habits` in `config.yml`, held in `CartHabits`. Two of them are numbers
+The settings are `vehicles.carts` in `config.yml`, held in `CartHabits`. Two of them are numbers
 rather than switches, and each turns its own habit off at zero: waiting no time before taking an
 empty cart away, and climbing at no speed, both mean not doing it.
 

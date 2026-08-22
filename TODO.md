@@ -113,9 +113,13 @@ reason: one readable thing a builder and an operator can both act on beats survi
 
 ## Mechanics
 
-The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 33 are
-ported, 3 are dropped by decision, and **34 are left**. The bridge, the door, the gate, the lift
-and the toggled area are done, and so is the greater part of the rails. Those listed as unique to
+The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 38 are
+ported, 5 are dropped or cannot be done, and **27 are left**. (73 files carry the annotation;
+`EmptyDecay`, `ExitRemover` and `RemoveEntities` each have a cart class and a boat class, and both
+of each are now done.)
+
+The bridge, the door, the gate, the lift and the toggled area are done, the copiers are done, and
+so is the greater part of the rails. Those listed as unique to
 this fork have no upstream equivalent to compare against, so the legacy source is the only
 specification.
 
@@ -131,7 +135,7 @@ one implementation answers for both.
 
 `EmptyDecay`, `ExitRemover`, `ItemPickup`, `MobBlocker`, `MoreRails`, `NoCollide` and
 `RemoveEntities` carry no sign and are built from nothing. They are together in `CartBehaviour` and
-in the one listener that asks it, and their settings are together under `carts.habits`. Every one
+in the one listener that asks it, and their settings are together under `vehicles.carts`. Every one
 is off until an operator says otherwise, since each changes every cart on the server rather than
 one place on the track.
 
@@ -161,13 +165,24 @@ filter `MegaPipes` never built is finished, on the `[Pipe]` sign's third and fou
 and the only source that worked hardcoded into `ExtractorMultiBlock`. What was worth keeping was its
 shape rather than its code, and the shape is what was kept.
 
+### The copiers: done
+
+`BannerCopier`, `BookCopier`, `MapCopier` and `SignCopier`. The first three are wall signs on a
+bookshelf that hand out a copy of the banner above them, the written book in a frame beside them, or
+the map their first line numbers. `SignCopier` has no sign at all: black dye copies what one sign
+says onto another, and `/sign edit` changes a line before it is pasted.
+
+All four are in one listener, in the spirit of the carts and the sign mechanics, since all of them
+answer the same right-click. They are deliberately **not** on the `SignMechanic` seam: every
+mechanic there is about blocks, and these are about the item in somebody's hand, which a
+`MechanicVisit` does not carry and should not have to.
+
 ### Unique to this fork
 
 | Mechanic | What it does |
 | --- | --- |
 | `Footprints` | Cosmetic particles where players walk. |
-| `BannerCopier`, `BookCopier`, `MapCopier` | Duplicate a held item onto blanks. Kept despite vanilla equivalents. |
-| `PageReader` | Reads a book's pages aloud. |
+| `PageReader` | A library of books kept in files, with its own commands. 1054 lines in the fork, and its own piece of work rather than a copier. |
 | `LightNetherrack` | Netherrack lit by redstone. |
 
 ### Shared with upstream
@@ -180,14 +195,21 @@ Compare both sources for these. Where they differ, this fork's behaviour is the 
 `SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `XPStorer`, `DispenserRecipes`,
 `Variables` (store, commands and the three chips are done — the `%name%` substitution in chat and
 commands is what is left of it; see **Variables: what is left of them** above),
-and the `boat` set — `LandBoats`, `WaterPlaceOnly`, `SpeedModifiers`, and boat-going copies of
-`EmptyDecay`, `ExitRemover` and `RemoveEntities`. Those three are separate classes from the
-minecart ones now ported, and the same habits applied to boats; whether they join `CartHabits` or
-get a section of their own is a decision for when the boats arrive.
+The `boat` set is **done, less two that cannot be**. `WaterPlaceOnly` and the boat-going
+`EmptyDecay`, `ExitRemover` and `RemoveEntities` are in `BoatHabits`, decided in `BoatBehaviour` and
+bound by `BoatHabitListener`, beside the cart habits under a new `vehicles` section rather than
+inside `carts`. `LandBoats` and `SpeedModifiers` are **not ported**: the server fields both write
+are read nowhere on Paper and only one of four survives on Sponge, so the settings would have looked
+as though they worked while doing nothing. See finding 133.
 
 ### Dropped by decision
 
 `CBWarps`, `ChunkAnchor`, the Pastebin report upload, and the vendored bStats metrics.
+
+`LandBoats` and `SpeedModifiers` are dropped for a different reason: not a decision about what this
+plugin should do, but because neither can be done through any API either platform has. Finding 133
+has the evidence. Making boats work on land is possible as a *new* mechanic that moves the boat
+itself; that is a thing to agree on rather than a port.
 
 ## Infrastructure not yet built
 
@@ -232,7 +254,7 @@ at all. Worth checking early, in roughly this order:
     swaps it in and out, and an area holding a chest keeps what was in the chest.
 19. An `[Eject]` sign sets a rider down on the platform behind it, and a `[Reverse]` sign turns
     back a cart that comes at it from the wrong side while letting the other way through.
-20. Nothing under `carts.habits` does anything until it is switched on, and then: a cart climbs a
+20. Nothing under `vehicles.carts` does anything until it is switched on, and then: a cart climbs a
     ladder, crosses a pressure plate, gathers a stack it can hold whole and leaves one it cannot,
     passes through an empty cart, and decays once nobody has got back in.
 21. A powered sticky piston empties a chest along a run of glass into another; a stained run keeps

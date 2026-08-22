@@ -38,7 +38,10 @@ class LicenceHeadersTest {
 
     /** Both modules' sources, from the module this test runs in. */
     private static final List<Path> TREES =
-            List.of(Path.of("..", "core", "src"), Path.of("..", "paper", "src"));
+            List.of(
+                    Path.of("..", "core", "src"),
+                    Path.of("..", "paper", "src"),
+                    Path.of("..", "sponge", "src"));
 
     @Test
     @DisplayName("names the licence it is under, on its first line")

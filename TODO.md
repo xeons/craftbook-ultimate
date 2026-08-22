@@ -240,3 +240,32 @@ at all. Worth checking early, in roughly this order:
     whatever its panes touch; a named and enchanted tool comes out of the far end unchanged; and
     breaking one block of a pipe is enough for the next pulse to follow the new shape.
 22. Region behaviour on an actual Folia server.
+
+## The Sponge build
+
+`sponge/` binds the same `core` to **SpongeAPI 20** on SpongeVanilla for Minecraft 26.2.
+`docs/sponge.md` says what the build is, how it is put together and what it cannot do.
+
+What is there: the module and its build wiring, the scheduler, the direction and position adapters,
+the legacy block reader and the Paper-side `/craftbook legacytable` that generates the table it
+reads, the world seam, the entity bindings and a stockpile. Core's 23.9k lines compile against
+SpongeAPI 20 and Adventure 4.26.1.
+
+The platform-independent files that were sitting in `paper/` have moved to `core`, so both
+platforms share one catalogue rather than two that drift.
+
+What is not: the rest of the bindings. In the order they need doing, since each rests on the ones
+above it:
+
+| Layer | What it is |
+| --- | --- |
+| Plugin entry point, config | `@Plugin` class, `RegisterCommandEvent`, config through Configurate |
+| `ChipState` | `BlockChipState`, with pins read through block state keys |
+| `ICManager`, `ICInstance` | Chip lifecycle |
+| Listeners | Sign change, chunk load, break, and redstone through `ChangeBlockEvent.Post` |
+| Rest of the entity seam | `Roster`, `Announcer`, `Illusions` |
+| Stockpiles | `NearbyStockpiles`, and the spread stockpile the carts use |
+| Mechanics, carts, pipes | Three dispatchers and their world bindings |
+| Commands | Sponge's `Command.Parameterized`, not Brigadier |
+| Areas | Sponge schematics rather than `org.bukkit.structure` |
+| Test bed, debugging | `TestbedBuilder`, the debug stick through `RegisterDataEvent` |

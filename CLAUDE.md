@@ -72,6 +72,8 @@ to a hand and to redstone.**
 | Test bed: a rig per chip, built from the catalogue | Done |
 | Debugging: the IC stick, the commands, the report | Done |
 | Mechanics other than those and the minecart ones | Not started |
+| Sponge build: module, adapters, world seam, entity bindings | Done |
+| Sponge build: the rest of the bindings | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
 **2010 tests passing**.
@@ -87,6 +89,7 @@ Adventure and JSpecify come from the server.
 ```
 core/    platform-independent domain model; no server API on its classpath
 paper/   Paper 26.x bindings: plugin, schedulers, adapters, catalogue
+sponge/  SpongeVanilla 26.2 bindings (SpongeAPI 20); see docs/sponge.md
 src/     legacy Sponge sources, kept only as a behavioural reference
 ```
 

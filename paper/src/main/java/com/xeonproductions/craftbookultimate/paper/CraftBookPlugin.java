@@ -31,6 +31,7 @@ import com.xeonproductions.craftbookultimate.paper.command.CheckCommands;
 import com.xeonproductions.craftbookultimate.paper.command.ConfigCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
 import com.xeonproductions.craftbookultimate.paper.command.DebugCommands;
+import com.xeonproductions.craftbookultimate.paper.command.LegacyTableCommands;
 import com.xeonproductions.craftbookultimate.paper.command.MusicCommands;
 import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
 import com.xeonproductions.craftbookultimate.paper.command.TestbedCommands;
@@ -332,7 +333,8 @@ public final class CraftBookPlugin extends JavaPlugin {
                                 icManagerTarget(),
                                 debugActions(),
                                 debugSticksTarget(),
-                                schedulersTarget()))
+                                schedulersTarget()),
+                        new LegacyTableCommands(this))
                 .registerOn(this);
     }
 

@@ -49,6 +49,7 @@ public final class SimpleChipWorld implements ChipWorld {
     private final Set<Vec3i> growing = new HashSet<>();
     private final Set<Vec3i> plantable = new HashSet<>();
     private final Set<Vec3i> powered = new HashSet<>();
+    private final Set<Vec3i> fedPower = new HashSet<>();
     private final Set<Vec3i> unreadable = new HashSet<>();
     private final Map<Vec3i, Map<Key, Integer>> drops = new HashMap<>();
     private final Map<Vec3i, BlockFace> facings = new HashMap<>();
@@ -249,6 +250,14 @@ public final class SimpleChipWorld implements ChipWorld {
     }
 
     @Override
+    public Optional<Boolean> receivingPowerAt(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position) || unreadable.contains(position)) {
+            return Optional.empty();
+        }
+        return Optional.of(powered.contains(position) || fedPower.contains(position));
+    }
+
+    @Override
     public boolean isPassable(Vec3i position) {
         // Nothing here knows which blocks a player can stand in, so only the placed ones are
         // solid. A test that needs a passable block placed says so with withPassable.
@@ -360,6 +369,17 @@ public final class SimpleChipWorld implements ChipWorld {
     /** Marks a position as receiving redstone power. */
     public SimpleChipWorld withPowered(Vec3i position) {
         powered.add(position);
+        return this;
+    }
+
+    /**
+     * Marks a position as having power pushed at it without carrying any itself.
+     *
+     * <p>What a plain block with a lever on its side reads as: nothing to the trigger reader and
+     * something to the power sensor.
+     */
+    public SimpleChipWorld withPowerArriving(Vec3i position) {
+        fedPower.add(position);
         return this;
     }
 

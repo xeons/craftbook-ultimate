@@ -204,6 +204,72 @@ public final class Sensing {
     }
 
     /**
+     * Reports whether no matching stack is lying nearby.
+     *
+     * <p>{@link #itemNear()} with its answer turned over, reading its sign in exactly the same
+     * way. The pair are the same shape as the and and the nand: a builder who wants the opposite
+     * of a reading should not have to spend an inverter and two blocks of space on it.
+     *
+     * <p>A line 3 the chip cannot read leaves the output <em>low</em>, which is the one place the
+     * two are not mirror images. A sensor that cannot tell has not found nothing; it has found
+     * nothing out, and reporting an empty world would be worse than doing nothing.
+     */
+    public static SelfTriggeringICLogic itemNotNear() {
+        return sensor(state -> {
+            Optional<ItemCriteria> wanted = criteriaOn(state);
+            if (wanted.isEmpty()) {
+                state.setMainOutput(false);
+                return;
+            }
+
+            int range = (int) boundedNumber(
+                    state.sign().trimmedText(AREA_LINE), 1, MAX_ITEM_RANGE, DEFAULT_NEAR_RANGE);
+
+            for (DroppedItem item : state.world().itemsNear(state.backPosition(), range)) {
+                if (item.isPresent() && wanted.get().matches(item.stack())) {
+                    state.setMainOutput(false);
+                    return;
+                }
+            }
+            state.setMainOutput(true);
+        });
+    }
+
+    /**
+     * Reports whether anything nearby is moving.
+     *
+     * <p>Line 3 says what counts and defaults to anything alive; line 4 is how far to reach. The
+     * output is high while something within reach is going somewhere and low while everything in
+     * it is standing still.
+     *
+     * <p>Only whether, never how fast. A speed to compare against would be a number every builder
+     * had to learn and none of them could see.
+     *
+     * <p>Its lines are the way round the other creature sensors have them, which is <em>not</em>
+     * the way upstream wrote this one — upstream puts the reach on line 3 and the creature on
+     * line 4. That is safe to change here and nowhere else: this is the one chip upstream never
+     * finished registering, so there is no sign anywhere in any world that means the other thing.
+     * See finding 139.
+     */
+    public static SelfTriggeringICLogic movementNear() {
+        return sensor(state -> {
+            EntitySpec wanted =
+                    subjectOn(state, new EntitySpec.Category(EntitySpec.Group.CREATURES));
+            double range = boundedNumber(
+                    state.sign().trimmedText(AREA_LINE), 1, MAX_NEAR_RANGE, DEFAULT_NEAR_RANGE);
+
+            for (Bystander bystander
+                    : state.world().bystandersNear(Vec3d.centreOf(state.backPosition()), range)) {
+                if (bystander.isPresent() && bystander.isMoving() && wanted.matches(bystander)) {
+                    state.setMainOutput(true);
+                    return;
+                }
+            }
+            state.setMainOutput(false);
+        });
+    }
+
+    /**
      * Reports whether a nearby player is holding a matching item.
      *
      * <p>The same checks as {@link #itemNear()} on line 3, and the same reach on line 4, but read

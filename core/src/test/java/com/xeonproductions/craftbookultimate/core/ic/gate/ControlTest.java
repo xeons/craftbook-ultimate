@@ -458,4 +458,91 @@ class ControlTest {
             assertThat(state.output(0)).isTrue();
         }
     }
+
+    @Nested
+    @DisplayName("power sensor")
+    class PowerSensor {
+
+        private static final Vec3i SIGN = new Vec3i(0, 64, 0);
+
+        private SimpleChipState.Builder chip(SimpleChipWorld world, String target) {
+            return SimpleChipState.forLayout(PinLayout.THREE_I_SO)
+                    .at(SIGN, BlockFace.SOUTH)
+                    .world(world)
+                    .sign("SENSE POWER", "[MC1266]", target, "");
+        }
+
+        @Test
+        void showsThePowerAtWhereItIsPointed() {
+            SimpleChipWorld world = new SimpleChipWorld().withPowered(SIGN.add(3, 0, 0));
+            SimpleChipState state = chip(world, "3:0:0").build();
+
+            Control.powerSensor().tick(state);
+
+            assertThat(state.output(0)).isTrue();
+        }
+
+        @Test
+        void alsoShowsPowerThatIsMerelyArriving() {
+            // The whole of what separates this chip from the trigger reader: a plain block with a
+            // lever on its side is carrying nothing and being pushed at by something.
+            SimpleChipWorld world = new SimpleChipWorld().withPowerArriving(SIGN.add(3, 0, 0));
+            SimpleChipState state = chip(world, "3:0:0").build();
+
+            Control.powerSensor().tick(state);
+
+            assertThat(state.output(0)).isTrue();
+        }
+
+        @Test
+        void whereTheTriggerReaderShowsNothing() {
+            SimpleChipWorld world = new SimpleChipWorld().withPowerArriving(SIGN.add(3, 0, 0));
+            SimpleChipState state = chip(world, "3:0:0").build();
+
+            Control.triggerReader().tick(state);
+
+            assertThat(state.output(0)).isFalse();
+        }
+
+        @Test
+        void showsThatSomewhereUnpoweredIsUnpowered() {
+            SimpleChipState state =
+                    chip(new SimpleChipWorld(), "3:0:0").build().withRawOutput(0, true);
+
+            Control.powerSensor().tick(state);
+
+            assertThat(state.output(0)).isFalse();
+        }
+
+        @Test
+        void showsTheOppositeWhenAskedTo() {
+            SimpleChipWorld world = new SimpleChipWorld().withPowered(SIGN.add(1, 0, 0));
+            SimpleChipState state = chip(world, "!1:0:0").build().withRawOutput(0, true);
+
+            Control.powerSensor().tick(state);
+
+            assertThat(state.output(0)).isFalse();
+        }
+
+        @Test
+        void leavesItsOutputAloneWhereItCannotRead() {
+            Vec3i target = SIGN.add(0, 0, -20);
+            SimpleChipWorld world = new SimpleChipWorld().withUnreadable(target);
+            SimpleChipState state = chip(world, "0:0:-20").build().withRawOutput(0, true);
+
+            Control.powerSensor().tick(state);
+
+            assertThat(state.output(0)).isTrue();
+        }
+
+        @Test
+        void needsItsInputWhenItIsNotTicking() {
+            SimpleChipWorld world = new SimpleChipWorld().withPowered(SIGN.add(1, 0, 0));
+            SimpleChipState state = chip(world, "1:0:0").inputs(false, false, false).build();
+
+            Control.powerSensor().trigger(state);
+
+            assertThat(state.output(0)).isFalse();
+        }
+    }
 }

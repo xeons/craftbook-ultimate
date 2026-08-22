@@ -319,6 +319,126 @@ class SensingTest {
     }
 
     @Nested
+    @DisplayName("item not near")
+    class ItemNotNear {
+
+        @Test
+        void reportsHighWhenNothingMatchingIsLyingNearby() {
+            SimpleChipState state = chip("MC1265", "ID:diamond", "").build();
+
+            Sensing.itemNotNear().trigger(state);
+
+            assertThat(state.output(0)).isTrue();
+        }
+
+        @Test
+        void reportsLowWhenSomethingMatchingIs() {
+            world.withDroppedItem(BEHIND, SimpleDroppedItem.of("diamond", 1));
+            SimpleChipState state = chip("MC1265", "ID:diamond", "").build();
+
+            Sensing.itemNotNear().trigger(state);
+
+            assertThat(state.output(0)).isFalse();
+        }
+
+        @Test
+        void ignoresAStackOfSomethingElse() {
+            world.withDroppedItem(BEHIND, SimpleDroppedItem.of("dirt", 1));
+            SimpleChipState state = chip("MC1265", "ID:diamond", "").build();
+
+            Sensing.itemNotNear().trigger(state);
+
+            assertThat(state.output(0)).isTrue();
+        }
+
+        @Test
+        void isTheOppositeOfTheItemSensorOnTheSameSign() {
+            world.withDroppedItem(BEHIND, SimpleDroppedItem.of("diamond", 1));
+
+            SimpleChipState found = chip("MCX138", "ID:diamond", "").build();
+            SimpleChipState notFound = chip("MC1265", "ID:diamond", "").build();
+
+            Sensing.itemNear().trigger(found);
+            Sensing.itemNotNear().trigger(notFound);
+
+            assertThat(notFound.output(0)).isNotEqualTo(found.output(0));
+        }
+
+        @Test
+        void staysLowOnALineItCannotRead() {
+            // Not high: a sensor that cannot tell has not found an empty world.
+            SimpleChipState state = chip("MC1265", "item:diamond", "").build();
+
+            Sensing.itemNotNear().trigger(state);
+
+            assertThat(state.output(0)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("movement sensor")
+    class MovementSensor {
+
+        @Test
+        void reportsSomethingGoingSomewhere() {
+            world.withBystander(SimpleBystander.monster("zombie").at(STANDING).moving());
+            SimpleChipState state = chip("MC1267", "", "").build();
+
+            Sensing.movementNear().trigger(state);
+
+            assertThat(state.output(0)).isTrue();
+        }
+
+        @Test
+        void ignoresSomethingStandingStill() {
+            world.withBystander(SimpleBystander.monster("zombie").at(STANDING));
+            SimpleChipState state = chip("MC1267", "", "").build();
+
+            Sensing.movementNear().trigger(state);
+
+            assertThat(state.output(0)).isFalse();
+        }
+
+        @Test
+        void takesWhatCountsOffLineThree() {
+            world.withBystander(SimpleBystander.monster("zombie").at(STANDING).moving());
+            SimpleChipState state = chip("MC1267", "cow", "").build();
+
+            Sensing.movementNear().trigger(state);
+
+            assertThat(state.output(0)).isFalse();
+        }
+
+        @Test
+        void takesHowFarOffLineFour() {
+            world.withBystander(
+                    SimpleBystander.monster("zombie")
+                            .at(Vec3d.centreOf(BEHIND).add(8, 0, 0))
+                            .moving());
+
+            SimpleChipState near = chip("MC1267", "", "2").build();
+            SimpleChipState far = chip("MC1267", "", "10").build();
+
+            Sensing.movementNear().trigger(near);
+            Sensing.movementNear().trigger(far);
+
+            assertThat(near.output(0)).isFalse();
+            assertThat(far.output(0)).isTrue();
+        }
+
+        @Test
+        void needsItsInputWhenItIsNotTicking() {
+            world.withBystander(SimpleBystander.monster("zombie").at(STANDING).moving());
+            SimpleChipState state =
+                    chip("MC1267", "", "").inputs(false, false, false).build();
+
+            Sensing.movementNear().trigger(state);
+
+            assertThat(state.output(0)).isFalse();
+        }
+    }
+
+    @Nested
     @DisplayName("item near")
     class ItemNear {
 

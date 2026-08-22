@@ -187,6 +187,16 @@ public final class ICCatalogue {
                 .logic(Sensing::itemNear)
                 .build());
 
+        registry.register(ICDefinition.builder("MC1265", "INV SNS ITM")
+                .name("Item Not Near")
+                .description("Outputs high while no matching stack is lying within range.")
+                .selfTriggeringModel("MCZ265")
+                .thirdLine(required("one thing to check, or where the book is when reading from one",
+                        either(itemFilter(), offset())))
+                .fourthLine(optional("how far to reach, up to thirty blocks"))
+                .logic(Sensing::itemNotNear)
+                .build());
+
         registry.register(ICDefinition.builder("MCX139", "HELD ITEM NEAR?")
                 .name("Held Item Near")
                 .description("Outputs high while a player within range is holding a matching item.")
@@ -997,6 +1007,15 @@ public final class ICCatalogue {
                 .logic(Sensors::stormSensor)
                 .build());
 
+        registry.register(ICDefinition.builder("MC1267", "SENSE MOVE")
+                .name("Movement Sensor")
+                .description("Outputs high while something within range is moving.")
+                .selfTriggeringModel("MCZ267")
+                .thirdLine(optional("what counts, defaulting to anything alive", entity()))
+                .fourthLine(optional("how far to reach, up to ten blocks"))
+                .logic(Sensing::movementNear)
+                .build());
+
         registry.register(ICDefinition.builder("MCX205", "DETECT BLOCK")
                 .name("Block Detector")
                 .description("Detects a block above or below.")
@@ -1101,6 +1120,14 @@ public final class ICCatalogue {
                 .layout(PinLayout.AISO)
                 .thirdLine(optional("count:rate, optionally followed by :onCount"))
                 .logic(Control::monoflop)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1266", "SENSE POWER")
+                .name("Power Sensor")
+                .description("Outputs high while power is arriving at somewhere else in the world.")
+                .selfTriggeringModel("MCZ266")
+                .thirdLine(required("a step from the sign", offset()))
+                .logic(Control::powerSensor)
                 .build());
 
         registry.register(ICDefinition.builder("MCX295", "TRIGGER READER")

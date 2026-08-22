@@ -50,6 +50,8 @@ public final class SimpleBystander implements Bystander {
     private double damageTaken;
     private boolean present = true;
 
+    private boolean moving;
+
     public SimpleBystander(Key type) {
         this.type = type;
         this.position = Vec3d.ZERO;
@@ -226,6 +228,17 @@ public final class SimpleBystander implements Bystander {
     }
 
     /** Makes it something that is not alive, such as a minecart or a dropped stack. */
+    public SimpleBystander moving() {
+        this.moving = true;
+        return this;
+    }
+
+    @Override
+    public boolean isMoving() {
+        return moving;
+    }
+
+    /** Something standing where it is, which is what a test says nothing about. */
     public SimpleBystander asObject() {
         this.living = false;
         return this;

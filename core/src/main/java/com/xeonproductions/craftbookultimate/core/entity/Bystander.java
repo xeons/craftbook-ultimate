@@ -133,6 +133,17 @@ public interface Bystander {
     boolean isPresent();
 
     /**
+     * Whether it is moving, rather than standing where it was.
+     *
+     * <p>Only whether, never how fast: what a movement sensor wants is the difference between a
+     * still crowd and one going somewhere, and a number would be a threshold every builder had to
+     * learn. Something being carried along by a cart or a boat counts, since it is moving.
+     */
+    default boolean isMoving() {
+        return false;
+    }
+
+    /**
      * Sets it down somewhere else in the same world.
      *
      * <p>The same world deliberately: this is for putting a rider on the platform beside the cart

@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.key.Key;
@@ -402,18 +403,31 @@ public record BukkitChipWorld(World world) implements ChipWorld {
 
     @Override
     public Optional<Boolean> poweredAt(Vec3i position) {
+        return readingAt(position, Redstone::isPowered);
+    }
+
+    @Override
+    public Optional<Boolean> receivingPowerAt(Vec3i position) {
+        return readingAt(
+                position,
+                block -> block.isBlockPowered() || block.isBlockIndirectlyPowered());
+    }
+
+    /**
+     * Asks a question of a block that may be a long way off, or answers nothing.
+     *
+     * <p>The place may not be loaded, and on a server that splits regions across threads a distant
+     * place can belong to one this is not. Reading it anyway would be a race, so the answer is
+     * that there is no answer and the asking chip leaves its output alone.
+     */
+    private Optional<Boolean> readingAt(Vec3i position, Predicate<Block> question) {
         if (!isLoaded(position) || !isInBounds(position)) {
             return Optional.empty();
         }
-
-        // The place may be a long way off, and on a server that splits regions across threads a
-        // distant place can belong to one this is not. Reading it anyway would be a race, so the
-        // answer is that there is no answer.
         if (!Bukkit.isOwnedByCurrentRegion(world, position.x() >> 4, position.z() >> 4)) {
             return Optional.empty();
         }
-
-        return Optional.of(Redstone.isPowered(Positions.toBlock(world, position)));
+        return Optional.of(question.test(Positions.toBlock(world, position)));
     }
 
     @Override

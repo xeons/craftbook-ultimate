@@ -134,7 +134,7 @@ watching for somebody to walk past. Those have a second model number for the
 self-triggering form, given as **runs on its own** in their entry, and `[MC1420]S`
 asks the same of any chip that can do it.
 
-There are **117 chips**, answering to **146 model numbers**. 48 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
+There are **120 chips**, answering to **152 model numbers**. 48 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
 
 ## Every chip
 
@@ -162,6 +162,9 @@ There are **117 chips**, answering to **146 model numbers**. 48 of them are rest
 | [`MC1260`](#mc1260--water-sensor) | `SENSE WATER` | Water Sensor | Outputs high if water is detected. |
 | [`MC1261`](#mc1261--lava-sensor) | `SENSE LAVA` | Lava Sensor | Outputs high if lava is detected. |
 | [`MC1262`](#mc1262--light-sensor) | `SENSE LIGHT` | Light Sensor | Outputs high if the specified light level is detected. |
+| [`MC1265`](#mc1265--item-not-near) | `INV SNS ITM` | Item Not Near | Outputs high while no matching stack is lying within range. |
+| [`MC1266`](#mc1266--power-sensor) | `SENSE POWER` | Power Sensor | Outputs high while power is arriving at somewhere else in the world. |
+| [`MC1267`](#mc1267--movement-sensor) | `SENSE MOVE` | Movement Sensor | Outputs high while something within range is moving. |
 | [`MC1420`](#mc1420--clock) | `CLOCK` | Clock | Toggles its output every X ticks. |
 | [`MC1500`](#mc1500--player-online) | `PLAYER ONLINE?` | Player Online | Outputs high while a named player is logged in. |
 | [`MC1510`](#mc1510--player-messenger) | `MESSAGE PLAYER` | Player Messenger *(restricted)* | Says something to one named player, wherever they are. |
@@ -514,6 +517,42 @@ Outputs high if the specified light level is detected.
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1262`
+
+### MC1265 — Item Not Near
+
+Outputs high while no matching stack is lying within range.
+
+- **Write on the sign** — `[MC1265]`, or `=INV SNS ITM`
+- **Line 3** — one thing to check, or where the book is when reading from one *(required)*<br>  Takes `ID:<item>` `STACK:<1-64>` `NAME:<text>` `LORE:<text>` `<x>:<y>:<z>` `!<x>:<y>:<z>`
+- **Line 4** — how far to reach, up to thirty blocks
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Runs on its own as** — `[MCZ265]`
+- **Permission** — `craftbook.ic.safe.mc1265`
+
+### MC1266 — Power Sensor
+
+Outputs high while power is arriving at somewhere else in the world.
+
+- **Write on the sign** — `[MC1266]`, or `=SENSE POWER`
+- **Line 3** — a step from the sign *(required)*<br>  Takes `<x>:<y>:<z>` `!<x>:<y>:<z>`
+- **Line 4** — nothing
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Runs on its own as** — `[MCZ266]`
+- **Permission** — `craftbook.ic.safe.mc1266`
+
+### MC1267 — Movement Sensor
+
+Outputs high while something within range is moving.
+
+- **Write on the sign** — `[MC1267]`, or `=SENSE MOVE`
+- **Line 3** — what counts, defaulting to anything alive<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
+- **Line 4** — how far to reach, up to ten blocks
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Runs on its own as** — `[MCZ267]`
+- **Permission** — `craftbook.ic.safe.mc1267`
 
 ### MC1420 — Clock
 

@@ -51,6 +51,9 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public record BukkitBystander(Entity entity) implements Bystander {
 
+    /** How fast something has to be going to count as moving, squared. */
+    private static final double MOVING_SPEED_SQUARED = 0.01;
+
     /** The permission node a player's group membership is read from. */
     private static final String GROUP_PREFIX = "group.";
 
@@ -228,6 +231,13 @@ public record BukkitBystander(Entity entity) implements Bystander {
             riding.add(new BukkitBystander(passenger));
         }
         return riding;
+    }
+
+    @Override
+    public boolean isMoving() {
+        // Squared, so nothing has to take a root to answer a yes-or-no question. A tenth of a
+        // block a tick is walking pace; anything slower reads as standing still.
+        return entity.getVelocity().lengthSquared() >= MOVING_SPEED_SQUARED;
     }
 
     @Override

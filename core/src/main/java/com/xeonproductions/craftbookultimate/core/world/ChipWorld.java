@@ -228,6 +228,20 @@ public interface ChipWorld {
     Optional<Boolean> poweredAt(Vec3i position);
 
     /**
+     * Whether anything is feeding power into the block at a position.
+     *
+     * <p>Different from {@link #poweredAt}, and the difference is the whole of why two chips read
+     * a block's redstone. That one asks what the block itself is carrying or emitting; this one
+     * asks whether anything is pushing power at it, including a lever on the wall beside it or a
+     * repeater pointed into it — power the block passes on without holding.
+     *
+     * <p>Answers nothing under the same conditions and for the same reasons.
+     */
+    default Optional<Boolean> receivingPowerAt(Vec3i position) {
+        return poweredAt(position);
+    }
+
+    /**
      * Whether something could stand in the block at a position without being inside it.
      *
      * <p>Broader than being air: a torch, tall grass, an open door or a body of water all leave

@@ -5,12 +5,14 @@ package com.xeonproductions.craftbookultimate.core.ic.gate;
 
 import com.xeonproductions.craftbookultimate.core.control.Switchboard;
 import com.xeonproductions.craftbookultimate.core.ic.ChipState;
+import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
 import com.xeonproductions.craftbookultimate.core.ic.ICMode;
 import com.xeonproductions.craftbookultimate.core.ic.SelfTriggeringICLogic;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -106,7 +108,26 @@ public final class Control {
      * it is rather than reporting the place as unpowered.
      */
     public static SelfTriggeringICLogic triggerReader() {
-        return new TriggerReader();
+        return new TriggerReader(ChipWorld::poweredAt);
+    }
+
+    /**
+     * Reports whether power is arriving at somewhere else in the world.
+     *
+     * <p>The trigger reader with one word changed, and the same sign: line 3 is {@code x:y:z} as a
+     * step from the sign, optionally prefixed with {@code !} to show the opposite.
+     *
+     * <p>What differs is which question is asked of the far block. The trigger reader asks what
+     * that block is carrying or emitting; this asks whether anything is pushing power <em>at</em>
+     * it. A plain stone block with a lever on its side reads low there and high here, which is the
+     * whole of the difference and the reason both are worth having.
+     *
+     * <p>Written as one chip with two readings rather than two chips, because everything else
+     * about them — the offset grammar, the reach, the inversion, what to do when the far end
+     * cannot be read — is the same and would otherwise be the same twice.
+     */
+    public static SelfTriggeringICLogic powerSensor() {
+        return new TriggerReader(ChipWorld::receivingPowerAt);
     }
 
     /**
@@ -430,6 +451,13 @@ public final class Control {
     /** Shows the redstone at somewhere else in the world. */
     private static final class TriggerReader implements SelfTriggeringICLogic {
 
+        /** Which question this reader asks of the block it watches. */
+        private final BiFunction<ChipWorld, Vec3i, Optional<Boolean>> reading;
+
+        TriggerReader(BiFunction<ChipWorld, Vec3i, Optional<Boolean>> reading) {
+            this.reading = reading;
+        }
+
         /** The marker that makes the chip show the opposite of what it reads. */
         private static final char INVERT_MARKER = '!';
 
@@ -451,7 +479,7 @@ public final class Control {
             mirror(state);
         }
 
-        private static void mirror(ChipState state) {
+        private void mirror(ChipState state) {
             String written = state.sign().trimmedText(CONFIG_LINE);
             boolean invert = !written.isEmpty() && written.charAt(0) == INVERT_MARKER;
 
@@ -460,8 +488,7 @@ public final class Control {
                 return;
             }
 
-            state.world()
-                    .poweredAt(state.signPosition().add(step.get()))
+            reading.apply(state.world(), state.signPosition().add(step.get()))
                     .ifPresent(powered -> state.setMainOutput(invert != powered));
         }
 

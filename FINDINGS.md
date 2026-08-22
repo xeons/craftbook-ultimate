@@ -2159,3 +2159,34 @@ lopper's and the vein miner's tool lists are the same question and would have hi
 
 The general shape is worth noting: a setting that falls back to its default on a bad value cannot
 be tested by checking the default comes out right.
+
+### 139. Upstream's movement sensor was registered as a comment
+
+`MC1267 sense move` is not in upstream's catalogue. Its registration is there, and it is commented
+out:
+
+```java
+// FIXME registerIC("MC1267", "sense move", new MovementSensor.Factory(server), familySISO, familyAISO);
+```
+
+The class it names is complete and 136 lines long, so this is a chip that was written, wired up and
+then quietly withdrawn. The reason is visible in the class:
+
+```java
+@Override
+public void think(ChipState chip) {
+    check();
+}
+```
+
+`check()` answers whether anything nearby is moving, and `think` throws that answer away. A
+self-triggering movement sensor therefore never drives its output, which is the whole point of a
+sensor being self-triggering — nothing else can tell it to look, because movement is not an event
+anything raises. The pulsed form works, but a builder has to pulse it faster than things move.
+
+Ported here with the answer used, which is the one-word fix, and with the two configured lines the
+other way round: what to look for on line 3 and how far on line 4, matching every other creature
+sensor in this catalogue rather than upstream's reversed order for this one chip. That is normally
+forbidden — the sign format is frozen — and it is safe here for exactly one reason: a chip that was
+never registered has no signs anywhere in any world, so there is nothing to break. It is the only
+one of the twenty-four ported alongside it that could be changed at all.

@@ -43,6 +43,7 @@ import com.xeonproductions.craftbookultimate.paper.ic.BukkitAnnouncer;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitIllusions;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitRoster;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
+import com.xeonproductions.craftbookultimate.paper.listener.BoatHabitListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartHabitListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartRedstoneListener;
@@ -166,6 +167,8 @@ public final class CraftBookPlugin extends JavaPlugin {
                 new CartSignListener(carts, chipServices.configuration()), this);
         getServer().getPluginManager().registerEvents(
                 new CartHabitListener(carts, chipServices.configuration(), regionSchedulers), this);
+        getServer().getPluginManager().registerEvents(
+                new BoatHabitListener(chipServices.configuration(), regionSchedulers), this);
         getServer().getPluginManager().registerEvents(
                 new PipeListener(
                         new PipeDispatcher(chipServices.configuration(), pipeNetworks),

@@ -46,8 +46,9 @@ class ConfigDocumentTest {
             read();
 
             assertThat(tree.values)
-                    .containsKeys("enabled", "ics.max-radius", "carts.habits.climb-speed",
-                            "pipes.max-length", "mechanics.gate-radius");
+                    .containsKeys("enabled", "ics.max-radius", "vehicles.carts.climb-speed",
+                            "vehicles.boats.water-place-only", "pipes.max-length",
+                            "mechanics.gate-radius");
         }
 
         @Test

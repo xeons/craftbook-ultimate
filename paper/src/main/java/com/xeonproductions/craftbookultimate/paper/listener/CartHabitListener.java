@@ -234,6 +234,6 @@ public final class CartHabitListener implements Listener {
     }
 
     private CartHabits habits() {
-        return configuration.settings().carts().habits();
+        return configuration.settings().vehicles().carts();
     }
 }

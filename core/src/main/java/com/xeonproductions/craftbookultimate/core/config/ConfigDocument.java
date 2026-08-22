@@ -70,19 +70,28 @@ public final class ConfigDocument {
     private static final String CART_BOOSTERS = "carts.boosters";
     private static final String CART_LAUNCH_SPEED = "carts.launch-speed";
     private static final String CART_WATER_BUCKETS = "carts.return-water-buckets";
-    private static final String HABIT_DECAY_AFTER = "carts.habits.decay-empty-after";
-    private static final String HABIT_DECAY_AFTER_EXIT = "carts.habits.decay-only-after-exit";
-    private static final String HABIT_REMOVE_ON_EXIT = "carts.habits.remove-on-exit";
-    private static final String HABIT_GIVE_BACK = "carts.habits.give-cart-back";
-    private static final String HABIT_PICK_UP = "carts.habits.pick-up-items";
-    private static final String HABIT_BLOCK_MOBS = "carts.habits.block-mobs";
-    private static final String HABIT_CLIMB_SPEED = "carts.habits.climb-speed";
-    private static final String HABIT_PLATE_CROSSINGS = "carts.habits.plate-crossings";
-    private static final String HABIT_THROUGH_EMPTY = "carts.habits.pass-through-empty-carts";
-    private static final String HABIT_THROUGH_FULL = "carts.habits.pass-through-full-carts";
-    private static final String HABIT_RUN_DOWN = "carts.habits.run-down-what-it-hits";
-    private static final String HABIT_RUN_DOWN_HURTS = "carts.habits.run-down-only-hurts";
-    private static final String HABIT_RUN_DOWN_CARTS = "carts.habits.run-down-other-carts";
+    private static final String HABIT_DECAY_AFTER = "vehicles.carts.decay-empty-after";
+    private static final String HABIT_DECAY_AFTER_EXIT = "vehicles.carts.decay-only-after-exit";
+    private static final String HABIT_REMOVE_ON_EXIT = "vehicles.carts.remove-on-exit";
+    private static final String HABIT_GIVE_BACK = "vehicles.carts.give-cart-back";
+    private static final String HABIT_PICK_UP = "vehicles.carts.pick-up-items";
+    private static final String HABIT_BLOCK_MOBS = "vehicles.carts.block-mobs";
+    private static final String HABIT_CLIMB_SPEED = "vehicles.carts.climb-speed";
+    private static final String HABIT_PLATE_CROSSINGS = "vehicles.carts.plate-crossings";
+    private static final String HABIT_THROUGH_EMPTY = "vehicles.carts.pass-through-empty-carts";
+    private static final String HABIT_THROUGH_FULL = "vehicles.carts.pass-through-full-carts";
+    private static final String HABIT_RUN_DOWN = "vehicles.carts.run-down-what-it-hits";
+    private static final String HABIT_RUN_DOWN_HURTS = "vehicles.carts.run-down-only-hurts";
+    private static final String HABIT_RUN_DOWN_CARTS = "vehicles.carts.run-down-other-carts";
+
+    private static final String BOAT_DECAY_AFTER = "vehicles.boats.decay-empty-after";
+    private static final String BOAT_DECAY_AFTER_EXIT = "vehicles.boats.decay-only-after-exit";
+    private static final String BOAT_REMOVE_ON_EXIT = "vehicles.boats.remove-on-exit";
+    private static final String BOAT_GIVE_BACK = "vehicles.boats.give-boat-back";
+    private static final String BOAT_WATER_ONLY = "vehicles.boats.water-place-only";
+    private static final String BOAT_RUN_DOWN = "vehicles.boats.run-down-what-it-hits";
+    private static final String BOAT_RUN_DOWN_HURTS = "vehicles.boats.run-down-only-hurts";
+    private static final String BOAT_RUN_DOWN_BOATS = "vehicles.boats.run-down-other-boats";
     private static final String PIPES_ENABLED = "pipes.enabled";
     private static final String PIPES_MAX_LENGTH = "pipes.max-length";
     private static final String PIPES_STACK_PER_PULL = "pipes.stack-per-pull";
@@ -119,7 +128,7 @@ public final class ConfigDocument {
         carts.boosters().forEach((block, multiplier) ->
                 setIfAbsent(tree, CART_BOOSTERS + "." + block.value(), multiplier));
 
-        CartHabits habits = carts.habits();
+        CartHabits habits = defaults.vehicles().carts();
         setIfAbsent(tree, HABIT_DECAY_AFTER, habits.decayEmptyAfter());
         setIfAbsent(tree, HABIT_DECAY_AFTER_EXIT, habits.decayOnlyAfterExit());
         setIfAbsent(tree, HABIT_REMOVE_ON_EXIT, habits.removeOnExit());
@@ -133,6 +142,16 @@ public final class ConfigDocument {
         setIfAbsent(tree, HABIT_RUN_DOWN, habits.runDownEntities());
         setIfAbsent(tree, HABIT_RUN_DOWN_HURTS, habits.runDownOnlyHurts());
         setIfAbsent(tree, HABIT_RUN_DOWN_CARTS, habits.runDownOtherCarts());
+
+        BoatHabits boats = defaults.vehicles().boats();
+        setIfAbsent(tree, BOAT_DECAY_AFTER, boats.decayEmptyAfter());
+        setIfAbsent(tree, BOAT_DECAY_AFTER_EXIT, boats.decayOnlyAfterExit());
+        setIfAbsent(tree, BOAT_REMOVE_ON_EXIT, boats.removeOnExit());
+        setIfAbsent(tree, BOAT_GIVE_BACK, boats.giveBoatBack());
+        setIfAbsent(tree, BOAT_WATER_ONLY, boats.waterPlaceOnly());
+        setIfAbsent(tree, BOAT_RUN_DOWN, boats.runDownEntities());
+        setIfAbsent(tree, BOAT_RUN_DOWN_HURTS, boats.runDownOnlyHurts());
+        setIfAbsent(tree, BOAT_RUN_DOWN_BOATS, boats.runDownOtherBoats());
 
         PipeSettings pipes = defaults.pipes();
         setIfAbsent(tree, PIPES_ENABLED, pipes.enabled());
@@ -233,12 +252,29 @@ public final class ConfigDocument {
                 "a cart up and below one slows it down; the very large number is what sends a",
                 "cart off at its top speed."));
 
-        tree.comment("carts.habits", List.of(
+        tree.comment("vehicles", List.of(
                 "",
-                "How every cart behaves, whether or not it is standing on a mechanism. All of it",
-                "is off out of the box: a server that has never been configured runs carts",
-                "exactly as the game does. The two numbers switch their own habit off when they",
-                "are zero, since waiting no time and climbing at no speed both mean not doing it."));
+                "How everything a player rides behaves, with nothing built and no sign anywhere.",
+                "All of it is off out of the box: a server that has never been configured runs",
+                "carts and boats exactly as the game does. Carts and boats are kept apart even",
+                "where the habit is the same, because clearing abandoned carts off a station says",
+                "nothing whatever about the boats on a lake."));
+
+        tree.comment("vehicles.carts", List.of(
+                "",
+                "How every cart behaves, whether or not it is standing on a mechanism. The two",
+                "numbers switch their own habit off when they are zero, since waiting no time and",
+                "climbing at no speed both mean not doing it."));
+
+        tree.comment("vehicles.boats", List.of(
+                "",
+                "How every boat behaves, wherever it is floating. The wait switches decay off when",
+                "it is zero.",
+                "",
+                "The fork this was ported from also offered boats that work on land and boats with",
+                "a speed set on them. Neither is here: the server fields behind both are written",
+                "and never read, on this platform and on Sponge, so the settings would have done",
+                "nothing while looking as though they worked."));
 
         tree.comment(HABIT_DECAY_AFTER, List.of(
                 "How many ticks a cart may stand empty before it is taken away. 0 leaves empty",
@@ -292,6 +328,32 @@ public final class ConfigDocument {
         tree.comment(HABIT_RUN_DOWN_HURTS, List.of(
                 "Whether running something down stops at hurting it. Nothing is removed when",
                 "this is on, including the things that cannot be hurt."));
+
+        tree.comment(BOAT_DECAY_AFTER, List.of(
+                "How many ticks a boat may sit empty before it is taken away. 0 leaves empty",
+                "boats alone; " + BoatHabits.CUSTOMARY_DECAY_TICKS + " is two seconds."));
+
+        tree.comment(BOAT_DECAY_AFTER_EXIT, List.of(
+                "Whether only a boat somebody has got out of decays. Turning this off starts the",
+                "clock on every boat the moment it is placed, including ones nobody has touched."));
+
+        tree.comment(BOAT_REMOVE_ON_EXIT, List.of(
+                "Whether a boat is taken away the moment its rider steps out."));
+
+        tree.comment(BOAT_GIVE_BACK, List.of(
+                "Whether taking it away hands the rider the boat back."));
+
+        tree.comment(BOAT_WATER_ONLY, List.of(
+                "Whether a boat may only be put down on water, rather than anywhere at all."));
+
+        tree.comment(BOAT_RUN_DOWN, List.of(
+                "Whether an occupied boat hurts what it runs into."));
+
+        tree.comment(BOAT_RUN_DOWN_HURTS, List.of(
+                "Whether running something down stops at hurting it, rather than removing it."));
+
+        tree.comment(BOAT_RUN_DOWN_BOATS, List.of(
+                "Whether an occupied boat runs down other boats as well as creatures."));
 
         tree.comment(HABIT_RUN_DOWN_CARTS, List.of(
                 "Whether an occupied cart runs down other carts as well as creatures."));
@@ -397,6 +459,7 @@ public final class ConfigDocument {
                 .maxPlanterWidth(tree.integer(MAX_PLANTER_WIDTH, defaults.maxPlanterWidth()))
                 .placeableBlocks(names.blocks(tree.strings(PLACEABLE_BLOCKS), report))
                 .carts(carts(tree, defaults.carts()))
+                .vehicles(vehicles(tree, defaults.vehicles()))
                 .pipes(pipes(tree, defaults.pipes()))
                 .mechanics(mechanics(tree, defaults.mechanics()))
                 .build();
@@ -450,8 +513,7 @@ public final class ConfigDocument {
                 mechanicBlocks.isEmpty() ? defaults.blocks() : mechanicBlocks,
                 boosters.isEmpty() ? defaults.boosters() : boosters,
                 tree.number(CART_LAUNCH_SPEED, defaults.launchSpeed()),
-                tree.bool(CART_WATER_BUCKETS, defaults.returnWaterBuckets()),
-                habits(tree, defaults.habits()));
+                tree.bool(CART_WATER_BUCKETS, defaults.returnWaterBuckets()));
     }
 
     /** What an operator has said about the pipes. */
@@ -460,6 +522,24 @@ public final class ConfigDocument {
                 tree.bool(PIPES_ENABLED, defaults.enabled()),
                 tree.integer(PIPES_MAX_LENGTH, defaults.maxLength()),
                 tree.bool(PIPES_STACK_PER_PULL, defaults.stackPerPull()));
+    }
+
+    /** What an operator has said about how carts and boats behave everywhere. */
+    private static VehicleHabits vehicles(ConfigTree tree, VehicleHabits defaults) {
+        return new VehicleHabits(habits(tree, defaults.carts()), boats(tree, defaults.boats()));
+    }
+
+    /** How every boat behaves, wherever it is floating. */
+    private static BoatHabits boats(ConfigTree tree, BoatHabits defaults) {
+        return new BoatHabits(
+                tree.count(BOAT_DECAY_AFTER, defaults.decayEmptyAfter()),
+                tree.bool(BOAT_DECAY_AFTER_EXIT, defaults.decayOnlyAfterExit()),
+                tree.bool(BOAT_REMOVE_ON_EXIT, defaults.removeOnExit()),
+                tree.bool(BOAT_GIVE_BACK, defaults.giveBoatBack()),
+                tree.bool(BOAT_WATER_ONLY, defaults.waterPlaceOnly()),
+                tree.bool(BOAT_RUN_DOWN, defaults.runDownEntities()),
+                tree.bool(BOAT_RUN_DOWN_HURTS, defaults.runDownOnlyHurts()),
+                tree.bool(BOAT_RUN_DOWN_BOATS, defaults.runDownOtherBoats()));
     }
 
     /** How every cart behaves, whether or not it is standing on a mechanism. */

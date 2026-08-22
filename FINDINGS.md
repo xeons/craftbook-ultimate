@@ -1988,3 +1988,34 @@ it — up to four — and tells whoever broke it what they broke, saying so diff
 through the supporting block, since that is the case where they may not realise a chip was involved
 at all. It runs at `HIGHEST` with `ignoreCancelled`, so a break a protection plugin refuses does not
 report a chip destroyed that is still standing.
+
+### 133. Two boat mechanics wrote values that nothing has read for years
+
+`LandBoats` set a boat to work on dry land. `SpeedModifiers` set its top speed and its two
+decelerations. Both were `@Module` mechanics an operator could switch on, and both did nothing.
+
+The fork called Sponge 7's `Boat.setMoveOnLand`, `setMaxSpeed`, `setOccupiedDeceleration` and
+`setUnoccupiedDeceleration`. Those are not vanilla concepts. They are fields CraftBukkit added years
+ago and Sponge copied, and CraftBukkit's own comment beside them says what became of them:
+
+```java
+// PAIL: Some of these haven't worked since a few updates, and since 1.9 they are less and less applicable.
+public double maxSpeed = 0.4D;
+public double occupiedDeceleration = 0.2D;
+public double unoccupiedDeceleration = -1;
+public boolean landBoats = false;
+```
+
+On Paper 26.2 those four fields are declared in `AbstractBoat` and **read nowhere at all** —
+`CraftBoat` writes them and the boat's movement code never looks. On SpongeVanilla only `maxSpeed`
+survives, through one `@ModifyConstant` on `floatBoat`; `moveOnLand` and both decelerations are
+stored on the mixin and never consulted.
+
+So an operator switching either on got a setting that looked like it worked, changed nothing, and
+gave them no way to tell which. That is the worst shape a setting can have.
+
+**Rewrite:** neither is ported, and `BoatHabits` says so where somebody looking for them will read
+it. Making boats work on land is possible — it means moving the boat this plugin's own way, every
+tick, rather than asking the game to — but that is a new mechanic with new behaviour to agree on
+rather than a port, so it is not smuggled in under an old name.
+

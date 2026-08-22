@@ -26,7 +26,6 @@ import org.jspecify.annotations.NullMarked;
  * @param boosters how much each booster block multiplies a cart's speed by
  * @param launchSpeed how fast a mechanic that launches a cart launches it
  * @param returnWaterBuckets whether crafting in a cart gives back a full bucket or an empty one
- * @param habits how every cart behaves whether or not it is standing on a mechanism
  */
 @NullMarked
 public record CartSettings(
@@ -34,12 +33,11 @@ public record CartSettings(
         Map<String, Key> blocks,
         Map<Key, Double> boosters,
         double launchSpeed,
-        boolean returnWaterBuckets,
-        CartHabits habits) {
+        boolean returnWaterBuckets) {
 
     /** The mechanics as they have always been built. */
     public static final CartSettings DEFAULTS = new CartSettings(
-            Set.of(), defaultBlocks(), defaultBoosters(), 1.0, true, CartHabits.DEFAULTS);
+            Set.of(), defaultBlocks(), defaultBoosters(), 1.0, true);
 
     /** Copies the collections and holds the speed to something a cart can be pushed at. */
     public CartSettings {
@@ -83,13 +81,7 @@ public record CartSettings(
     /** These settings with a different set of mechanics switched off. */
     public CartSettings withDisabled(Set<String> mechanics) {
         return new CartSettings(
-                mechanics, blocks, boosters, launchSpeed, returnWaterBuckets, habits);
-    }
-
-    /** These settings with carts behaving differently everywhere. */
-    public CartSettings withHabits(CartHabits habits) {
-        return new CartSettings(
-                disabled, blocks, boosters, launchSpeed, returnWaterBuckets, habits);
+                mechanics, blocks, boosters, launchSpeed, returnWaterBuckets);
     }
 
     /** These settings with one mechanic built from a different block. */
@@ -98,18 +90,18 @@ public record CartSettings(
         Map<String, Key> changed = new LinkedHashMap<>(blocks);
         changed.put(mechanic.toLowerCase(Locale.ROOT), block);
         return new CartSettings(
-                disabled, changed, keptBoosters, launchSpeed, returnWaterBuckets, habits);
+                disabled, changed, keptBoosters, launchSpeed, returnWaterBuckets);
     }
 
     /** These settings with a different launch speed. */
     public CartSettings withLaunchSpeed(double speed) {
-        return new CartSettings(disabled, blocks, boosters, speed, returnWaterBuckets, habits);
+        return new CartSettings(disabled, blocks, boosters, speed, returnWaterBuckets);
     }
 
     /** These settings with a different set of booster blocks. */
     public CartSettings withBoosters(Map<Key, Double> boosters) {
         return new CartSettings(
-                disabled, blocks, boosters, launchSpeed, returnWaterBuckets, habits);
+                disabled, blocks, boosters, launchSpeed, returnWaterBuckets);
     }
 
     /**

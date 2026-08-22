@@ -45,6 +45,7 @@ public record Settings(
         int maxPlanterWidth,
         Set<Key> placeableBlocks,
         CartSettings carts,
+        VehicleHabits vehicles,
         MechanicSettings mechanics,
         PipeSettings pipes) {
 
@@ -170,6 +171,7 @@ public record Settings(
         private int maxPlanterWidth = 4;
         private Set<Key> placeableBlocks = DefaultBlocks.PLACEABLE;
         private CartSettings carts = CartSettings.DEFAULTS;
+        private VehicleHabits vehicles = VehicleHabits.DEFAULTS;
         private MechanicSettings mechanics = MechanicSettings.DEFAULTS;
         private PipeSettings pipes = PipeSettings.DEFAULTS;
 
@@ -229,6 +231,12 @@ public record Settings(
             return this;
         }
 
+        /** What an operator has said about how carts and boats behave everywhere. */
+        public Builder vehicles(VehicleHabits vehicles) {
+            this.vehicles = vehicles;
+            return this;
+        }
+
         /** What an operator has said about the pipes. */
         public Builder pipes(PipeSettings pipes) {
             this.pipes = pipes;
@@ -257,6 +265,7 @@ public record Settings(
                     maxPlanterWidth,
                     placeableBlocks,
                     carts,
+                    vehicles,
                     mechanics,
                     pipes);
         }

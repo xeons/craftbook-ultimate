@@ -113,8 +113,8 @@ reason: one readable thing a builder and an operator can both act on beats survi
 
 ## Mechanics
 
-The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 45 are
-ported, 5 are dropped or cannot be done, and **20 are left**. (73 files carry the annotation;
+The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 49 are
+ported, 5 are dropped or cannot be done, and **16 are left**. (73 files carry the annotation;
 `EmptyDecay`, `ExitRemover` and `RemoveEntities` each have a cart class and a boat class, and both
 of each are now done.)
 
@@ -197,6 +197,30 @@ bar twice to do it. One drawing now, two dials.
 
 Powering a block and then mining the redstone still leaves it lit. That is deliberate and old, and
 `mechanics.depower-on-source-removal` is how an operator asks for the other behaviour.
+
+Both halves of that are decided in the break handler, because the server decides neither for us:
+`BlockRedstoneEvent` is raised by a source when its own power changes, and breaking one goes
+through none of those paths. **Not yet verified in game** — findings 136 and the two before it were
+all found by standing in front of one of these, so the rest of it wants the same treatment.
+
+### Thrown, sent, bottled and snowed under: done
+
+`BounceBlocks` is a block with a `[Jump]` sign under it, or one an operator has named so it needs no
+sign. `Teleporter` is a sign naming a place in the same world, worked by a hand on it or on a button
+in front of it. `XPStorer` turns the experience somebody is carrying into bottles and hands back
+what would not pay for a whole one — the fork set them to zero and gave back what it had worked out,
+so a builder with nineteen points and a sixteen-point bottle lost the other three.
+
+`Snow` is not a mechanic anybody builds. Like the vehicle habits it changes the world everywhere the
+moment it is switched on, so it has a settings record of its own under `mechanics.snow` and every
+part of it starts off. `core/snow/` turns the game's two snow blocks into one number — a depth from
+nought to eight — which is what lets the piling, slumping and melting be arithmetic and be tested
+without a server. That paid for itself immediately: a test caught snow piled above a full block
+falling back into it and piling again for ever.
+
+**Not ported with it:** the fork's automatic mode for `XPStorer`, an `[XP]` sign and a chest that
+gathered loose experience orbs from a distance. It is off by default there too, so a server behaves
+the same out of the box; what is missing is an operator's ability to switch it on.
 
 ### Unique to this fork
 

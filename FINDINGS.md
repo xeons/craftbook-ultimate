@@ -2462,3 +2462,40 @@ the common case: nearly every name a server reads is a modern one.
 What is still not covered is the rest of `onEnable` on a real server. A test server does not run
 Paper's command lifecycle, so the commands are built here but never registered, and the listeners
 are registered but never fired.
+
+### 150. One chip could not drive another
+
+A chip drives its outputs by writing a lever:
+
+```java
+lever.setPowered(powered);
+block.setBlockData(lever, true);
+```
+
+and the only thing that ever ran a chip was `ICRedstoneListener`, on `BlockRedstoneEvent`. The
+server does not raise that event for this. Reading Paper's own sources, it is raised from pressure
+plates, daylight detectors, sculk sensors, target blocks, the container comparator counter, the
+redstone wire evaluators — and from `LeverBlock` in exactly two places, neither of them this one:
+
+```java
+// LeverBlock.useWithoutItem, when a player clicks it
+if (!CraftEventFactory.callBinaryRedstoneChange(level, pos, !wasPowered)) {
+// LeverBlock.onExplosionHit
+```
+
+A lever a player flips raises it. A lever an explosion hits raises it. A lever a plugin writes
+raises nothing, because writing block data never goes through `LeverBlock.pull`.
+
+So a chip's output was heard by the world and by no chip at all. Two chips could only be joined by
+running redstone dust between them, because the dust's own power change raises an event of its own
+— and nothing said so anywhere. The test bed builds levers directly on pins, which is the wiring
+that cannot work.
+
+Fixed by saying so directly: a chip that really changes one of its output levers tells the manager,
+which runs any chip reading that block or one of the six around it. The lever itself because two
+chips may share a pin, and the neighbours because a lever powers the block it is on. Each is a
+lookup in an index already kept for the redstone listener, a chip driving itself is already refused
+by `triggerAt`, and a ring of chips driving each other is already bounded by the trigger depth.
+
+Nothing in `core` changed: which chips exist and what they do was never wrong. What was missing was
+the platform telling itself about a block it had just written.

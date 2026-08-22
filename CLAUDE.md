@@ -91,7 +91,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2488 tests passing**.
+**2492 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -472,6 +472,12 @@ guide.
 Built from `ICCatalogue` rather than shipped as a schematic, for the reason `docs/ics.md` is
 generated: a chip added later would be missing from a saved plane and nobody would notice, and a
 rig wired from a remembered layout reads as a broken chip when it is the bed that is wrong.
+
+**A chip tells the manager when it writes a lever.** The server raises `BlockRedstoneEvent` for a
+lever a player clicks and for one an explosion hits, and for nothing a plugin writes — so a chip's
+output would be heard by the world and by no chip at all, and two chips could only be joined
+through redstone dust. `BlockChipState#setOutput` therefore reports the block it changed, and
+`ICManager` runs any chip reading it or one of the six around it. See finding 150.
 
 **Levers on both sides**, because that is what the plugin reads and writes. `BlockChipState`
 decides an input is wired by asking whether the pin block is a power source, and drives an output

@@ -103,7 +103,7 @@ public final class ICManager {
             for (BlockKey pin : instance.pinKeys()) {
                 byPin.computeIfAbsent(pin, ignored -> ConcurrentHashMap.newKeySet()).add(instance);
             }
-            instance.load(schedulers.at(block.getLocation()));
+            instance.load(schedulers.at(block.getLocation()), this::afterOutputChanged);
             markTitle(block, key, lines, instance.definition());
         });
         return created;
@@ -253,6 +253,33 @@ public final class ICManager {
     public Optional<ICInstance> at(Block block) {
         return Optional.ofNullable(bySign.get(Positions.keyOf(block)));
     }
+
+    /**
+     * Runs every chip that reads a lever this plugin has just written.
+     *
+     * <p>The server raises {@code BlockRedstoneEvent} for a lever a player clicks and for one an
+     * explosion hits, and for nothing else — writing a lever's block data raises none. So a chip
+     * driving its output would be heard by the world and by no chip at all, and one chip could
+     * never drive another without a run of redstone dust between them to raise an event of its
+     * own. See finding 150.
+     *
+     * <p>The lever and the six blocks around it, because a pin may be the lever itself where two
+     * chips share one, or the block beside it that the lever powers. Each is a lookup in an index
+     * already kept, and a chip driving itself is refused by {@link #triggerAt}.
+     */
+    private void afterOutputChanged(Block lever) {
+        triggerAt(lever);
+        for (org.bukkit.block.BlockFace face : POWERED_BY_A_LEVER) {
+            triggerAt(lever.getRelative(face));
+        }
+    }
+
+    /** The blocks a lever can carry its signal into. */
+    private static final org.bukkit.block.BlockFace[] POWERED_BY_A_LEVER = {
+        org.bukkit.block.BlockFace.UP, org.bukkit.block.BlockFace.DOWN,
+        org.bukkit.block.BlockFace.NORTH, org.bukkit.block.BlockFace.SOUTH,
+        org.bukkit.block.BlockFace.EAST, org.bukkit.block.BlockFace.WEST
+    };
 
     /**
      * Runs every chip that reads the block whose redstone state just changed.

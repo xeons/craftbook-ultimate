@@ -20,6 +20,7 @@ import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
 import org.bukkit.Material;
 import org.bukkit.World;
+import java.util.function.Consumer;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Powerable;
@@ -50,6 +51,7 @@ public final class BlockChipState implements ChipState {
     private final TimeSource time;
     private final ChipWorld chipWorld;
     private final ChipServices services;
+    private final Consumer<Block> outputChanged;
     private @org.jspecify.annotations.Nullable Stockpile stockpile;
 
     private BlockChipState(Builder builder) {
@@ -63,6 +65,7 @@ public final class BlockChipState implements ChipState {
         this.time = builder.time == null ? new WorldTime(builder.world) : builder.time;
         this.chipWorld = new BukkitChipWorld(builder.world);
         this.services = builder.services;
+        this.outputChanged = builder.outputChanged;
     }
 
     /** Reads the clocks a chip in a world cares about. */
@@ -172,6 +175,11 @@ public final class BlockChipState implements ChipState {
 
         lever.setPowered(powered);
         block.setBlockData(lever, true);
+
+        // The server raises no redstone event for a lever a plugin writes -- it raises one only
+        // for a lever a player clicks or an explosion hits -- so a chip reading this pin would
+        // never hear about it. Saying so directly is what lets one chip drive another.
+        outputChanged.accept(block);
     }
 
     @Override
@@ -263,6 +271,7 @@ public final class BlockChipState implements ChipState {
         private int triggeredInput = -1;
         private Scheduler scheduler = RejectingScheduler.INSTANCE;
         private ChipServices services = ChipServices.create();
+        private Consumer<Block> outputChanged = block -> {};
         private @org.jspecify.annotations.Nullable TimeSource time;
 
         private Builder(World world, Vec3i signPosition, BlockFace front, PinLayout layout) {
@@ -299,6 +308,16 @@ public final class BlockChipState implements ChipState {
         /** Records which input caused this run, or {@code -1} for a tick. */
         public Builder triggeredInput(int index) {
             this.triggeredInput = index;
+            return this;
+        }
+
+        /**
+         * What to tell when one of the chip's output levers really changes.
+         *
+         * <p>Defaults to telling nobody, which is right for a state built only to be read.
+         */
+        public Builder outputChanged(Consumer<Block> outputChanged) {
+            this.outputChanged = outputChanged;
             return this;
         }
 

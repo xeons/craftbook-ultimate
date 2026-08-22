@@ -35,6 +35,9 @@ public interface GameInternals {
     /** Whether a block would stay where it was put, rather than falling off. */
     Optional<Boolean> canSurvive(ServerWorld world, Vec3i position, Key block);
 
+    /** Feeds bonemeal to whatever is at a position, answering whether it took. */
+    Optional<Boolean> applyBonemeal(ServerWorld world, Vec3i position);
+
     /** Shows one player weather the world is not having. */
     boolean showSky(ServerPlayer player, Sky sky);
 
@@ -71,6 +74,11 @@ public interface GameInternals {
 
         @Override
         public Optional<Boolean> canSurvive(ServerWorld world, Vec3i position, Key block) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Boolean> applyBonemeal(ServerWorld world, Vec3i position) {
             return Optional.empty();
         }
 

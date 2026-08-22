@@ -3,11 +3,11 @@
 
 package com.xeonproductions.craftbookultimate.core.ic.gate;
 
-import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.entity.Bystander;
 import com.xeonproductions.craftbookultimate.core.ic.ChipState;
 import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
 import com.xeonproductions.craftbookultimate.core.ic.SelfTriggeringICLogic;
+import com.xeonproductions.craftbookultimate.core.ic.SignArea;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.world.ChipWorld;
@@ -29,9 +29,6 @@ public final class LightningChips {
 
     /** The line carrying the chance or the range. */
     private static final int EXTRA_LINE = 3;
-
-    /** Separates the area from the offset to its middle. */
-    private static final char CENTRE_SEPARATOR = '=';
 
     /** The furthest above or below itself a single bolt may be aimed. */
     private static final int MAX_HEIGHT_OFFSET = 255;
@@ -94,7 +91,7 @@ public final class LightningChips {
                 return;
             }
 
-            Area area = Area.on(state);
+            SignArea area = SignArea.on(state, PLACE_LINE, DEFAULT_AREA_RADIUS);
             int chance = boundedNumber(state.sign().trimmedText(EXTRA_LINE), 0, CERTAIN, CERTAIN);
             ChipWorld world = state.world();
             Vec3i centre = state.backPosition().add(area.centreOffset());
@@ -149,60 +146,6 @@ public final class LightningChips {
                 if (bystander.isPresent()) {
                     state.world().strikeLightning(bystander.position().toBlock());
                 }
-            }
-        }
-    }
-
-    /**
-     * The box a bolt strike covers.
-     *
-     * @param radiusX how far it reaches east and west
-     * @param radiusY how far it reaches up and down
-     * @param radiusZ how far it reaches north and south
-     * @param centreOffset how far the middle sits from the block the sign hangs on
-     */
-    private record Area(int radiusX, int radiusY, int radiusZ, Vec3i centreOffset) {
-
-        static Area on(ChipState state) {
-            String written = state.sign().trimmedText(PLACE_LINE);
-            int separator = written.indexOf(CENTRE_SEPARATOR);
-            String reach = separator < 0 ? written : written.substring(0, separator);
-            Vec3i offset =
-                    separator < 0
-                            ? Vec3i.ZERO
-                            : parseOffset(written.substring(separator + 1)).orElse(Vec3i.ZERO);
-
-            Settings settings = state.settings();
-            String[] parts = reach.split(",");
-            if (parts.length >= 3) {
-                return new Area(
-                        radius(parts[0], settings),
-                        radius(parts[1], settings),
-                        radius(parts[2], settings),
-                        offset);
-            }
-            int uniform = radius(reach, settings);
-            return new Area(uniform, uniform, uniform, offset);
-        }
-
-        /** A reach off the sign, held to what the settings allow a chip to cover. */
-        private static int radius(String written, Settings settings) {
-            return boundedNumber(written, 0, settings.maxRadius(), DEFAULT_AREA_RADIUS);
-        }
-
-        private static Optional<Vec3i> parseOffset(String written) {
-            String[] parts = written.split(":");
-            if (parts.length != 3) {
-                return Optional.empty();
-            }
-            try {
-                return Optional.of(
-                        new Vec3i(
-                                Integer.parseInt(parts[0].trim()),
-                                Integer.parseInt(parts[1].trim()),
-                                Integer.parseInt(parts[2].trim())));
-            } catch (NumberFormatException e) {
-                return Optional.empty();
             }
         }
     }

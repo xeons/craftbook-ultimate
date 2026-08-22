@@ -21,6 +21,7 @@ import net.minecraft.util.datafix.fixes.BlockStateData;
 import net.minecraft.util.datafix.fixes.ItemIdFix;
 import net.minecraft.util.datafix.fixes.ItemStackTheFlatteningFix;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BonemealableBlock;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.block.BlockState;
@@ -90,6 +91,34 @@ final class MinecraftInternals implements GameInternals {
         ServerLevel level = (ServerLevel) world;
         return Optional.of(((net.minecraft.world.level.block.state.BlockState) placing)
                 .canSurvive(level, new BlockPos(position.x(), position.y(), position.z())));
+    }
+
+    /**
+     * Feeds bonemeal to whatever is at a position, answering whether it took.
+     *
+     * <p>The game's own three questions, asked in the game's own order: whether the block is
+     * something bonemeal works on at all, whether this particular application succeeds — several
+     * plants only take some of the time — and then the growing itself. Nothing here decides what
+     * bonemeal does, so a plant added to the game later works without this being touched.
+     */
+    @Override
+    public Optional<Boolean> applyBonemeal(ServerWorld world, Vec3i position) {
+        ServerLevel level = (ServerLevel) world;
+        BlockPos pos = new BlockPos(position.x(), position.y(), position.z());
+        net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+
+        if (!(state.getBlock() instanceof BonemealableBlock growable)) {
+            return Optional.of(false);
+        }
+        if (!growable.isValidBonemealTarget(level, pos, state)) {
+            return Optional.of(false);
+        }
+        if (!growable.isBonemealSuccess(level, level.getRandom(), pos, state)) {
+            return Optional.of(false);
+        }
+
+        growable.performBonemeal(level, level.getRandom(), pos, state);
+        return Optional.of(true);
     }
 
     /**

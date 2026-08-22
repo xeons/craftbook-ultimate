@@ -49,6 +49,29 @@ public final class Blocks {
     /** Everything that counts as lava, flowing or still. */
     public static final Set<Key> LAVA = Set.of(LAVA_KEY);
 
+    /**
+     * Everything a digging chip refuses to take.
+     *
+     * <p>What the game itself will not let a player mine. A chip that could take these would let
+     * a builder dig through the floor of the world or empty a spawner room from a distance, so
+     * the drill and the breakers stop at them rather than reporting a fault.
+     */
+    public static final Set<Key> UNBREAKABLE = Set.of(
+            key("bedrock"),
+            key("barrier"),
+            key("end_portal"),
+            key("end_portal_frame"),
+            key("end_gateway"),
+            key("nether_portal"),
+            key("command_block"),
+            key("chain_command_block"),
+            key("repeating_command_block"),
+            key("structure_block"),
+            key("structure_void"),
+            key("jigsaw"),
+            key("light"),
+            key("reinforced_deepslate"));
+
     private Blocks() {}
 
     /** A vanilla block key from its name, so {@code stone} gives {@code minecraft:stone}. */

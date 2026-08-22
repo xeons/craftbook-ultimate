@@ -83,11 +83,9 @@ Note that `MC1421` is upstream's clock, so it cannot be taken at its own number 
 | Group | Models |
 | --- | --- |
 | Containers and logistics | `MC1209` collector — not the ranged one, this picks up only what lies on its own sign and hands it to a `Pipes` network — `MC1219` auto craft, `MC1229` sorter, `MC1233` item fan, `MC1242` stocker, `MC1243` distributer, `MC1245` cont stkr, `MC1268` sns cntns, `MC1269` sns p cntns |
-| Terrain and liquids | `MC1220` / `MC1221` block breakers, `MC1222` liq flood, `MC1223` terraform, `MC1225` pump, `MC1226` spigot, `MC1238` irrigate, `MC1248` driller |
 | Timing | `MC1421` clock, `MC2100` / `MC2101` / `MC2110` / `MC2111` delayers, `MC2500` / `MC2501` / `MC2510` / `MC2511` pulsers |
 | Weapons | `MC1218` block launch, `MC1224` time bomb, `MC1228` ent cannon, `MC1251` shoot fires, `MC1252` flame thrower, `MC1278` sentry gun |
 | Farming and animals | `MC1235` cultivator, `MC1244` animal harv, `MC1246` xp spawner, `MC1280` animal brd |
-| Sensors | `MC1265` inv sns itm, `MC1267` sense move |
 | World control | `MC1232` time set, `MC1237` fake time |
 | Radio | `MC1276` radio station, `MC1277` radio player |
 

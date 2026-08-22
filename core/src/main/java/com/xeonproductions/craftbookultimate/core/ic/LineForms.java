@@ -310,6 +310,21 @@ public final class LineForms {
                 "<x>:<y>:<z>", "!<x>:<y>:<z>");
     }
 
+    /**
+     * The box a chip works on, as one reach and an optional middle to measure it from.
+     *
+     * <p>The reader is {@link SignArea} itself, so what this promises and what the chips accept
+     * cannot come apart.
+     */
+    public static LineForm searchArea() {
+        return read(
+                "an area",
+                (written, context) ->
+                        SignArea.isReadable(written) ? Optional.of(written) : Optional.empty(),
+                "10",
+                "<radius>", "<x>,<y>,<z>", "<radius>=<x>:<y>:<z>");
+    }
+
     /** A block name with an offset in front of it, as the flex set reads one. */
     public static LineForm offsetAndBlock() {
         return read(

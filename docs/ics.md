@@ -134,7 +134,7 @@ watching for somebody to walk past. Those have a second model number for the
 self-triggering form, given as **runs on its own** in their entry, and `[MC1420]S`
 asks the same of any chip that can do it.
 
-There are **120 chips**, answering to **152 model numbers**. 48 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
+There are **128 chips**, answering to **157 model numbers**. 51 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
 
 ## Every chip
 
@@ -153,9 +153,17 @@ There are **120 chips**, answering to **152 model numbers**. 48 of them are rest
 | [`MC1205`](#mc1205--set-block-above) | `SET ABOVE` | Set Block Above *(restricted)* | Sets a block above the IC block. |
 | [`MC1206`](#mc1206--set-block-below) | `SET BELOW` | Set Block Below *(restricted)* | Sets a block below the IC block. |
 | [`MC1207`](#mc1207--flex-set-admin) | `FLEX SET ADMIN` | Flex Set Admin *(restricted)* | Sets a block at a specified location, without paying for it. |
+| [`MC1220`](#mc1220--block-breaker-below) | `A B BREAK` | Block Breaker Below | Breaks the block below, putting what it drops in the container above. |
+| [`MC1221`](#mc1221--block-breaker-above) | `B B BREAK` | Block Breaker Above | Breaks the block above, putting what it drops in the container below. |
+| [`MC1222`](#mc1222--liquid-flooder) | `LIQ FLOOD` | Liquid Flooder *(restricted)* | Fills an area with a liquid while driven and drains it when not. |
+| [`MC1223`](#mc1223--bonemeal-terraformer) | `TERRAFORM` | Bonemeal Terraformer | Feeds bonemeal from the container above to whatever grows in an area. |
+| [`MC1225`](#mc1225--pump) | `PUMP` | Pump | Lifts still liquid from below into buckets in the container above. |
+| [`MC1226`](#mc1226--spigot) | `SPIGOT` | Spigot *(restricted)* | Pours liquid out of buckets in the container below into an area. |
 | [`MC1230`](#mc1230--daylight-sensor) | `SENSE DAY` | Daylight Sensor | Outputs high while the world time is within the day. |
+| [`MC1238`](#mc1238--irrigator) | `IRRIGATE` | Irrigator | Waters dry farmland in an area from the container above. |
 | [`MC1240`](#mc1240--arrow-shooter) | `ARROW SHOOTER` | Arrow Shooter *(restricted)* | Shoots a single arrow out of the back of the sign. |
 | [`MC1241`](#mc1241--arrow-barrage) | `ARROW BARRAGE` | Arrow Barrage *(restricted)* | Shoots five arrows out of the back of the sign. |
+| [`MC1248`](#mc1248--driller) | `DRILLER` | Driller *(restricted)* | Digs a shaft downward, putting what it takes in the container above. |
 | [`MC1249`](#mc1249--block-replacer) | `BLOCK REPLACER` | Block Replacer *(restricted)* | Swaps a block between two kinds and lets the change spread outward. |
 | [`MC1250`](#mc1250--fireworks) | `FIREWORKS` | Fireworks *(restricted)* | Sets off a firework. |
 | [`MC1253`](#mc1253--programmable-firework-display) | `FIREWORK` | Programmable Firework Display *(restricted)* | Plays a firework display from a script. |
@@ -413,6 +421,74 @@ Sets a block at a specified location, without paying for it.
 - **Permission** — `craftbook.ic.restricted.mc1207`
 - **Restricted** — not granted to everybody by default
 
+### MC1220 — Block Breaker Below
+
+Breaks the block below, putting what it drops in the container above.
+
+- **Write on the sign** — `[MC1220]`, or `=A B BREAK`
+- **Line 3** — one block to break, or blank for whatever is there<br>  Takes `<block>` `<id>:<data>`
+- **Line 4** — true to keep the block whole rather than take its drops
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc1220`
+
+### MC1221 — Block Breaker Above
+
+Breaks the block above, putting what it drops in the container below.
+
+- **Write on the sign** — `[MC1221]`, or `=B B BREAK`
+- **Line 3** — one block to break, or blank for whatever is there<br>  Takes `<block>` `<id>:<data>`
+- **Line 4** — true to keep the block whole rather than take its drops
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc1221`
+
+### MC1222 — Liquid Flooder
+
+Fills an area with a liquid while driven and drains it when not.
+
+- **Write on the sign** — `[MC1222]`, or `=LIQ FLOOD`
+- **Line 3** — water or lava, defaulting to water<br>  Takes `water` `lava`
+- **Line 4** — the area to cover<br>  Takes `<radius>` `<x>,<y>,<z>` `<radius>=<x>:<y>:<z>`
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.restricted.mc1222`
+- **Restricted** — not granted to everybody by default
+
+### MC1223 — Bonemeal Terraformer
+
+Feeds bonemeal from the container above to whatever grows in an area.
+
+- **Write on the sign** — `[MC1223]`, or `=TERRAFORM`
+- **Line 3** — the area to cover<br>  Takes `<radius>` `<x>,<y>,<z>` `<radius>=<x>:<y>:<z>`
+- **Line 4** — nothing
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc1223`
+
+### MC1225 — Pump
+
+Lifts still liquid from below into buckets in the container above.
+
+- **Write on the sign** — `[MC1225]`, or `=PUMP`
+- **Line 3** — nothing
+- **Line 4** — nothing
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc1225`
+
+### MC1226 — Spigot
+
+Pours liquid out of buckets in the container below into an area.
+
+- **Write on the sign** — `[MC1226]`, or `=SPIGOT`
+- **Line 3** — the area to fill<br>  Takes `<radius>` `<x>,<y>,<z>` `<radius>=<x>:<y>:<z>`
+- **Line 4** — nothing
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.restricted.mc1226`
+- **Restricted** — not granted to everybody by default
+
 ### MC1230 — Daylight Sensor
 
 Outputs high while the world time is within the day.
@@ -424,6 +500,17 @@ Outputs high while the world time is within the day.
 - **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MC0230]`
 - **Permission** — `craftbook.ic.safe.mc1230`
+
+### MC1238 — Irrigator
+
+Waters dry farmland in an area from the container above.
+
+- **Write on the sign** — `[MC1238]`, or `=IRRIGATE`
+- **Line 3** — the area to water<br>  Takes `<radius>` `<x>,<y>,<z>` `<radius>=<x>:<y>:<z>`
+- **Line 4** — nothing
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc1238`
 
 ### MC1240 — Arrow Shooter
 
@@ -447,6 +534,18 @@ Shoots five arrows out of the back of the sign.
 - **Wiring** — `AISO`, 4 inputs, 1 output
 - **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1241`
+- **Restricted** — not granted to everybody by default
+
+### MC1248 — Driller
+
+Digs a shaft downward, putting what it takes in the container above.
+
+- **Write on the sign** — `[MC1248]`, or `=DRILLER`
+- **Line 3** — how wide a patch to dig under, up to sixteen
+- **Line 4** — how deep to go
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.restricted.mc1248`
 - **Restricted** — not granted to everybody by default
 
 ### MC1249 — Block Replacer
@@ -527,7 +626,6 @@ Outputs high while no matching stack is lying within range.
 - **Line 4** — how far to reach, up to thirty blocks
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Inputs** — only input 1 is read; the others are wired to nothing
-- **Runs on its own as** — `[MCZ265]`
 - **Permission** — `craftbook.ic.safe.mc1265`
 
 ### MC1266 — Power Sensor
@@ -539,7 +637,6 @@ Outputs high while power is arriving at somewhere else in the world.
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Inputs** — only input 1 is read; the others are wired to nothing
-- **Runs on its own as** — `[MCZ266]`
 - **Permission** — `craftbook.ic.safe.mc1266`
 
 ### MC1267 — Movement Sensor
@@ -551,7 +648,6 @@ Outputs high while something within range is moving.
 - **Line 4** — how far to reach, up to ten blocks
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Inputs** — only input 1 is read; the others are wired to nothing
-- **Runs on its own as** — `[MCZ267]`
 - **Permission** — `craftbook.ic.safe.mc1267`
 
 ### MC1420 — Clock

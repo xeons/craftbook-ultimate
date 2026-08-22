@@ -19,8 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
@@ -37,14 +37,18 @@ import org.bukkit.Registry;
 import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.AnaloguePowerable;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.Powerable;
+import org.bukkit.block.data.type.Farmland;
 import org.bukkit.entity.Entity;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.HumanEntity;
@@ -168,6 +172,62 @@ public record BukkitChipWorld(World world) implements ChipWorld {
             totals.merge(stack.getType().getKey(), stack.getAmount(), Integer::sum);
         }
         return totals;
+    }
+
+    @Override
+    public Map<Key, Integer> intactDropsAt(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return Map.of();
+        }
+
+        ItemStack pick = new ItemStack(Material.NETHERITE_PICKAXE);
+        pick.addUnsafeEnchantment(Enchantment.SILK_TOUCH, 1);
+
+        Map<Key, Integer> totals = new HashMap<>();
+        for (ItemStack stack : Positions.toBlock(world, position).getDrops(pick)) {
+            totals.merge(stack.getType().getKey(), stack.getAmount(), Integer::sum);
+        }
+        return totals;
+    }
+
+    @Override
+    public boolean isLiquidSource(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+        return Positions.toBlock(world, position).getBlockData() instanceof Levelled levelled
+                && levelled.getLevel() == 0;
+    }
+
+    @Override
+    public boolean applyBonemeal(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+        return Positions.toBlock(world, position).applyBoneMeal(BlockFace.UP);
+    }
+
+    @Override
+    public boolean isDryFarmland(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+        return Positions.toBlock(world, position).getBlockData() instanceof Farmland farmland
+                && farmland.getMoisture() < farmland.getMaximumMoisture();
+    }
+
+    @Override
+    public boolean waterFarmland(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+        Block block = Positions.toBlock(world, position);
+        if (!(block.getBlockData() instanceof Farmland farmland)) {
+            return false;
+        }
+        farmland.setMoisture(farmland.getMaximumMoisture());
+        block.setBlockData(farmland);
+        return true;
     }
 
     @Override

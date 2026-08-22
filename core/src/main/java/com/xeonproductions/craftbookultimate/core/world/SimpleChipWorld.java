@@ -52,6 +52,12 @@ public final class SimpleChipWorld implements ChipWorld {
     private final Set<Vec3i> fedPower = new HashSet<>();
     private final Set<Vec3i> unreadable = new HashSet<>();
     private final Map<Vec3i, Map<Key, Integer>> drops = new HashMap<>();
+    private final Map<Vec3i, Map<Key, Integer>> intactDrops = new HashMap<>();
+    private final Set<Vec3i> liquidSources = new HashSet<>();
+    private final Set<Vec3i> dryFarmland = new HashSet<>();
+    private final Set<Vec3i> bonemealed = new HashSet<>();
+    private final List<Vec3i> wateredFarmland = new ArrayList<>();
+    private final List<Vec3i> bonemealApplied = new ArrayList<>();
     private final Map<Vec3i, BlockFace> facings = new HashMap<>();
     private final Set<Vec3i> silentlyPlaced = new HashSet<>();
     private final List<PlacedItem> items = new ArrayList<>();
@@ -128,6 +134,75 @@ public final class SimpleChipWorld implements ChipWorld {
         }
         // With nothing said about it, a block yields itself, which is what most of them do.
         return isAir(position) ? Map.of() : Map.of(blockAt(position), 1);
+    }
+
+    @Override
+    public Map<Key, Integer> intactDropsAt(Vec3i position) {
+        Map<Key, Integer> whole = intactDrops.get(position);
+        return whole == null ? dropsAt(position) : Map.copyOf(whole);
+    }
+
+    @Override
+    public boolean isLiquidSource(Vec3i position) {
+        return liquidSources.contains(position);
+    }
+
+    @Override
+    public boolean applyBonemeal(Vec3i position) {
+        if (!bonemealed.contains(position)) {
+            return false;
+        }
+        bonemealApplied.add(position);
+        return true;
+    }
+
+    @Override
+    public boolean isDryFarmland(Vec3i position) {
+        return dryFarmland.contains(position);
+    }
+
+    @Override
+    public boolean waterFarmland(Vec3i position) {
+        if (!dryFarmland.remove(position)) {
+            return false;
+        }
+        wateredFarmland.add(position);
+        return true;
+    }
+
+    /** Makes a position hold a liquid that can be picked up in a bucket. */
+    public SimpleChipWorld withLiquidSource(Vec3i position, Key liquid) {
+        blocks.put(position, liquid);
+        liquidSources.add(position);
+        return this;
+    }
+
+    /** Makes a position hold farmland that wants watering. */
+    public SimpleChipWorld withDryFarmland(Vec3i position) {
+        dryFarmland.add(position);
+        return this;
+    }
+
+    /** Makes a position hold something bonemeal would work on. */
+    public SimpleChipWorld withSomethingToFertilise(Vec3i position) {
+        bonemealed.add(position);
+        return this;
+    }
+
+    /** Makes breaking a position with a tool that keeps blocks whole give something else. */
+    public SimpleChipWorld withIntactDrops(Vec3i position, Map<Key, Integer> whole) {
+        intactDrops.put(position, Map.copyOf(whole));
+        return this;
+    }
+
+    /** Every patch of farmland this world has been asked to water, in order. */
+    public List<Vec3i> wateredFarmland() {
+        return List.copyOf(wateredFarmland);
+    }
+
+    /** Every position this world has been asked to fertilise, in order. */
+    public List<Vec3i> bonemealApplied() {
+        return List.copyOf(bonemealApplied);
     }
 
     @Override

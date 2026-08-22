@@ -9,7 +9,9 @@ import static com.xeonproductions.craftbookultimate.core.ic.LineForms.either;
 import static com.xeonproductions.craftbookultimate.core.ic.LineForms.entity;
 import static com.xeonproductions.craftbookultimate.core.ic.LineForms.itemFilter;
 import static com.xeonproductions.craftbookultimate.core.ic.LineForms.offset;
+import static com.xeonproductions.craftbookultimate.core.ic.LineForms.oneOf;
 import static com.xeonproductions.craftbookultimate.core.ic.LineForms.offsetAndBlock;
+import static com.xeonproductions.craftbookultimate.core.ic.LineForms.searchArea;
 import static com.xeonproductions.craftbookultimate.core.ic.LineForms.variable;
 import static com.xeonproductions.craftbookultimate.core.ic.LineSpec.optional;
 import static com.xeonproductions.craftbookultimate.core.ic.LineSpec.required;
@@ -36,6 +38,7 @@ import com.xeonproductions.craftbookultimate.core.ic.gate.Messages;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Music;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Routing;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensing;
+import com.xeonproductions.craftbookultimate.core.ic.gate.Terrain;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Sensors;
 import com.xeonproductions.craftbookultimate.core.ic.gate.Transport;
 import com.xeonproductions.craftbookultimate.core.ic.gate.VariableChips;
@@ -90,8 +93,80 @@ public final class ICCatalogue {
         registerWeatherIllusions(registry);
         registerMusic(registry);
         registerVariables(registry);
+        registerTerrain(registry);
 
         return registry;
+    }
+
+    /**
+     * The chips that dig, flood, drain and water.
+     *
+     * <p>Every one of them pays into or out of a container beside the chip, so a builder supplies
+     * what they place and receives what they take.
+     */
+    private static void registerTerrain(ICRegistry registry) {
+        registry.register(ICDefinition.builder("MC1220", "A B BREAK")
+                .name("Block Breaker Below")
+                .description("Breaks the block below, putting what it drops in the container above.")
+                .thirdLine(optional("one block to break, or blank for whatever is there", block()))
+                .fourthLine(optional("true to keep the block whole rather than take its drops"))
+                .logic(Terrain::blockBreakerBelow)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1221", "B B BREAK")
+                .name("Block Breaker Above")
+                .description("Breaks the block above, putting what it drops in the container below.")
+                .thirdLine(optional("one block to break, or blank for whatever is there", block()))
+                .fourthLine(optional("true to keep the block whole rather than take its drops"))
+                .logic(Terrain::blockBreakerAbove)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1222", "LIQ FLOOD")
+                .name("Liquid Flooder")
+                .description("Fills an area with a liquid while driven and drains it when not.")
+                .restricted()
+                .thirdLine(optional("water or lava, defaulting to water", oneOf("water", "lava")))
+                .fourthLine(optional("the area to cover", searchArea()))
+                .logic(Terrain::liquidFlooder)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1223", "TERRAFORM")
+                .name("Bonemeal Terraformer")
+                .description("Feeds bonemeal from the container above to whatever grows in an area.")
+                .thirdLine(optional("the area to cover", searchArea()))
+                .logic(() -> Terrain.terraformer(THREAD_LOCAL_RANDOM))
+                .build());
+
+        registry.register(ICDefinition.builder("MC1225", "PUMP")
+                .name("Pump")
+                .description("Lifts still liquid from below into buckets in the container above.")
+                .noLines()
+                .logic(Terrain::pump)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1226", "SPIGOT")
+                .name("Spigot")
+                .description("Pours liquid out of buckets in the container below into an area.")
+                .restricted()
+                .thirdLine(optional("the area to fill", searchArea()))
+                .logic(Terrain::spigot)
+                .build());
+
+        registry.register(ICDefinition.builder("MC1238", "IRRIGATE")
+                .name("Irrigator")
+                .description("Waters dry farmland in an area from the container above.")
+                .thirdLine(optional("the area to water", searchArea()))
+                .logic(() -> Terrain.irrigator(THREAD_LOCAL_RANDOM))
+                .build());
+
+        registry.register(ICDefinition.builder("MC1248", "DRILLER")
+                .name("Driller")
+                .description("Digs a shaft downward, putting what it takes in the container above.")
+                .restricted()
+                .thirdLine(optional("how wide a patch to dig under, up to sixteen"))
+                .fourthLine(optional("how deep to go"))
+                .logic(() -> Terrain.driller(THREAD_LOCAL_RANDOM))
+                .build());
     }
 
     /**
@@ -190,7 +265,6 @@ public final class ICCatalogue {
         registry.register(ICDefinition.builder("MC1265", "INV SNS ITM")
                 .name("Item Not Near")
                 .description("Outputs high while no matching stack is lying within range.")
-                .selfTriggeringModel("MCZ265")
                 .thirdLine(required("one thing to check, or where the book is when reading from one",
                         either(itemFilter(), offset())))
                 .fourthLine(optional("how far to reach, up to thirty blocks"))
@@ -1010,7 +1084,6 @@ public final class ICCatalogue {
         registry.register(ICDefinition.builder("MC1267", "SENSE MOVE")
                 .name("Movement Sensor")
                 .description("Outputs high while something within range is moving.")
-                .selfTriggeringModel("MCZ267")
                 .thirdLine(optional("what counts, defaulting to anything alive", entity()))
                 .fourthLine(optional("how far to reach, up to ten blocks"))
                 .logic(Sensing::movementNear)
@@ -1125,7 +1198,6 @@ public final class ICCatalogue {
         registry.register(ICDefinition.builder("MC1266", "SENSE POWER")
                 .name("Power Sensor")
                 .description("Outputs high while power is arriving at somewhere else in the world.")
-                .selfTriggeringModel("MCZ266")
                 .thirdLine(required("a step from the sign", offset()))
                 .logic(Control::powerSensor)
                 .build());

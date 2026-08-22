@@ -70,6 +70,9 @@ import org.spongepowered.math.vector.Vector3d;
 @NullMarked
 public record SpongeChipWorld(ServerWorld world) implements ChipWorld {
 
+    /** How wet farmland gets, which is what watering a patch sets it to. */
+    private static final int WETTEST_FARMLAND = 7;
+
     /** How far around a block to ask the server for entities before checking exactly where they are. */
     private static final double ENTITY_SEARCH_RADIUS = 1.0;
 
@@ -197,6 +200,50 @@ public record SpongeChipWorld(ServerWorld world) implements ChipWorld {
 
         BlockType type = world.block(position.x(), position.y(), position.z()).type();
         return type.item().<Map<Key, Integer>>map(item -> Map.of(keyOf(item), 1)).orElseGet(Map::of);
+    }
+
+    @Override
+    public boolean isLiquidSource(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+        return world.block(position.x(), position.y(), position.z())
+                .get(Keys.FLUID_LEVEL)
+                .map(level -> level == 0)
+                .orElse(false);
+    }
+
+    @Override
+    public boolean applyBonemeal(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+        return GameInternals.get().applyBonemeal(world, position).orElse(false);
+    }
+
+    @Override
+    public boolean isDryFarmland(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+        return world.block(position.x(), position.y(), position.z())
+                .get(Keys.MOISTURE)
+                .map(moisture -> moisture < WETTEST_FARMLAND)
+                .orElse(false);
+    }
+
+    @Override
+    public boolean waterFarmland(Vec3i position) {
+        if (!isLoaded(position) || !isInBounds(position)) {
+            return false;
+        }
+        BlockState state = world.block(position.x(), position.y(), position.z());
+        if (state.get(Keys.MOISTURE).isEmpty()) {
+            return false;
+        }
+        return state.with(Keys.MOISTURE, WETTEST_FARMLAND)
+                .map(wet -> world.setBlock(position.x(), position.y(), position.z(), wet))
+                .orElse(false);
     }
 
     @Override

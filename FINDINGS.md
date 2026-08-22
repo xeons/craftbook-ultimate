@@ -2190,3 +2190,105 @@ sensor in this catalogue rather than upstream's reversed order for this one chip
 forbidden — the sign format is frozen — and it is safe here for exactly one reason: a chip that was
 never registered has no signs anywhere in any world, so there is nothing to break. It is the only
 one of the twenty-four ported alongside it that could be changed at all.
+
+### 140. The liquid flooder's area line was documented but never read
+
+`LiquidFlood` tells a builder its fourth line is the area:
+
+```java
+public String[] getLineHelp() {
+    return new String[]{"+owater/lava", "+oradius=x:y:z offset"};
+}
+```
+
+but reads both the liquid and the radius from the same line, the third:
+
+```java
+liquid = getSign().getLine(2).equalsIgnoreCase("lava") ? "lava" : "water";
+radius = ICUtil.parseRadius(getSign()).toBlockPoint();
+```
+
+`parseRadius(ChangedSign)` defaults to line index 2, so it is handed the word `water` or `lava`.
+`parseUnsafeRadius` calls `Double.parseDouble` on it, throws `NumberFormatException`, and the
+catch in `parseRadius` swallows it and returns the default of ten on every axis.
+
+So every liquid flooder ever built floods the same ten blocks in each direction, whatever its
+fourth line says, and nothing anywhere reports that the line was ignored. The same call is made
+correctly by `Spigot`, which really does keep its area on line 3, which is probably where the
+confusion came from.
+
+Fixed by reading the area from the line the sign says it is on. A world of existing flooders keeps
+working: they were all flooding ten blocks, and a blank fourth line still means ten.
+
+### 141. The block breaker reported success for blocks it had not broken
+
+`BlockBreaker.breakBlock` returns `true` for anything that is not air, not a moving piston and not
+blacklisted — and only then checks whether the block matches the filter on line 3:
+
+```java
+if (item == null || item.equalsFuzzy(BukkitAdapter.adapt(brokenData))) {
+    ICUtil.collectItem(...);
+    broken.setType(Material.AIR);
+}
+
+return true;
+```
+
+A breaker set to take only diamond ore therefore drives its output high while sitting over stone,
+which is exactly backwards for the usual build — a breaker wired to a counter, or to a piston that
+advances the seam, runs on as though it were working.
+
+It also caches the block it works on in a field:
+
+```java
+private Block broken;
+if (broken == null) { ... }
+```
+
+so a chip whose sign is rebuilt somewhere else keeps breaking the old position until the server
+restarts.
+
+Both fixed: the output says whether a block was actually taken, and the position is worked out
+from the sign every time.
+
+### 142. The driller took a block before checking there was room for it
+
+`Driller.drillLine` collects the drops and then clears the block:
+
+```java
+ICUtil.collectItem(this, BlockVector3.at(0, 1, 0), BlockUtil.getBlockDrops(blockToBreak, tool));
+brokenType = blockToBreak.getType();
+blockToBreak.setType(Material.AIR);
+```
+
+`ICUtil.collectItem` drops on the floor whatever the container will not take, so a driller with a
+full chest above it strips the shaft and scatters the spoil. The harvester in the same codebase
+gets this right and leaves the crop standing.
+
+Fixed by asking for room first and leaving the block alone when there is none, which is what the
+rest of this catalogue does. The driller also refused nothing but bedrock; here it refuses
+everything the game itself will not let a player mine, so a drill cannot quietly eat a spawner or
+an end portal frame.
+
+### 143. The terraformer paid for growth it did not cause
+
+`BonemealTerraformer` consumes bonemeal before it knows whether anything will come of it, and
+refunds it in only two of its ten cases — saplings and mushrooms:
+
+```java
+if (Tag.SAPLINGS.isTagged(b.getType())) {
+    if (consumeBonemeal()) {
+        if (!growTree(b, ...)) refundBonemeal();
+```
+
+The other eight paths spend a bonemeal and return whether or not the block changed, and several of
+them are behind a one-in-fifteen or one-in-thirty roll that usually fails. A terraformer over an
+area of plain grass therefore burns through a chest of bonemeal to produce the occasional flower.
+
+It also carries its own table of what bonemeal does — ten hand-written cases, one of which tests
+`b.getData() < 0x15` on sugar cane, a pre-flattening check that cannot be true of a modern block.
+Anything the game learned to fertilise after that table was written is not in it.
+
+Fixed by asking the game to apply the bonemeal and spending one only where it took. The table is
+gone: `applyBoneMeal` on Paper and `BonemealableBlock` on Sponge both answer what the game itself
+would do, so a plant added in a later version works with nothing here being changed.

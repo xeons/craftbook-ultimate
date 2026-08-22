@@ -92,6 +92,46 @@ public interface ChipWorld {
     Map<Key, Integer> dropsAt(Vec3i position);
 
     /**
+     * What breaking the block at a position would yield to a tool that keeps the block whole.
+     *
+     * <p>Silk touch, asked for as a question rather than by handing a tool over, so no chip has to
+     * know what tool the game wants for the block in front of it.
+     */
+    default Map<Key, Integer> intactDropsAt(Vec3i position) {
+        return dropsAt(position);
+    }
+
+    /**
+     * Whether the block at a position is a liquid standing still rather than one running.
+     *
+     * <p>Only a source block can be picked up in a bucket, and only a running one wants filling
+     * in, so this is the whole of what the pump and the spigot need to tell them apart.
+     */
+    default boolean isLiquidSource(Vec3i position) {
+        return isWater(position) || isLava(position);
+    }
+
+    /**
+     * Feeds bonemeal to whatever is at a position, answering whether it took.
+     *
+     * <p>The game's own bonemeal rather than this plugin's idea of it, so a chip fertilises
+     * exactly what a player kneeling there with a handful would, and a plant added to the game
+     * later works without anything here being taught about it.
+     */
+    boolean applyBonemeal(Vec3i position);
+
+    /**
+     * Whether the block at a position is farmland that wants watering.
+     *
+     * <p>False for farmland already wet and false for anything that is not farmland, so an
+     * irrigator asks one question rather than two.
+     */
+    boolean isDryFarmland(Vec3i position);
+
+    /** Waters the farmland at a position, answering whether there was any to water. */
+    boolean waterFarmland(Vec3i position);
+
+    /**
      * The items lying on the ground near a position.
      *
      * @param centre the block to measure from

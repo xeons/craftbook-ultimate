@@ -6,6 +6,7 @@ package com.xeonproductions.craftbookultimate.core.pipe;
 import com.xeonproductions.craftbookultimate.core.config.PipeSettings;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,6 +73,33 @@ public final class PipeNetworks {
     public boolean remembers(UUID world, Vec3i input) {
         Map<Vec3i, PipeNetwork> networks = known.get(world);
         return networks != null && networks.containsKey(input);
+    }
+
+    /**
+     * Which remembered pipes mention a block.
+     *
+     * <p>The same index invalidation uses, read rather than emptied, so a tool asking "what pipe
+     * is this block part of" costs one lookup instead of a search. It answers for a pipe that has
+     * run at least once and for nothing else, which is the honest limit: nothing has been worked
+     * out about a pipe nobody has ever powered.
+     *
+     * <p>A block <em>beside</em> a run is indexed as well as one in it, since placing a block
+     * against the end of a pipe lengthens it. Ask {@link PipeNetwork#touches} to tell the two
+     * apart.
+     */
+    public Set<Vec3i> inputsTouching(UUID world, Vec3i block) {
+        Map<Vec3i, Set<Vec3i>> index = usedBy.get(world);
+        if (index == null) {
+            return Set.of();
+        }
+        Set<Vec3i> inputs = index.get(block);
+        return inputs == null ? Set.of() : Set.copyOf(inputs);
+    }
+
+    /** What a remembered pipe was found to reach, or nothing if it is not remembered. */
+    public Optional<PipeNetwork> remembered(UUID world, Vec3i input) {
+        Map<Vec3i, PipeNetwork> networks = known.get(world);
+        return networks == null ? Optional.empty() : Optional.ofNullable(networks.get(input));
     }
 
     /**

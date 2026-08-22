@@ -37,7 +37,10 @@ public enum DebugMode {
     TICKING("Ticking", "List every chip currently ticking on its own"),
 
     /** Show what a wireless chip's band is doing. */
-    BAND("Band", "Show what a wireless chip's band is carrying");
+    BAND("Band", "Show what a wireless chip's band is carrying"),
+
+    /** Show where a pipe reaches, and in what order. */
+    PIPE("Pipe", "Show where a pipe takes from and everywhere it reaches");
 
     /** The order the stick cycles through, which leaves out nothing. */
     public static final List<DebugMode> CYCLE = List.of(values());
@@ -69,6 +72,17 @@ public enum DebugMode {
     /** The permission needed to use this mode. */
     public String permission() {
         return PERMISSION + "." + name().toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Whether this mode reads a block rather than a chip.
+     *
+     * <p>Every other mode needs a chip and says so when there is none. A pipe has no sign and no
+     * chip behind it, so this one is pointed at an ordinary block, and the caller has to know
+     * which question to ask before it can complain about the answer.
+     */
+    public boolean readsAnyBlock() {
+        return this == PIPE;
     }
 
     /** The mode after this one, wrapping round. */

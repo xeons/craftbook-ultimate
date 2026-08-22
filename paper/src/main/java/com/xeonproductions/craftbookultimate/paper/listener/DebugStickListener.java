@@ -78,18 +78,25 @@ public final class DebugStickListener implements Listener {
 
     /** Runs the stick's mode against whatever was clicked, if it is a chip. */
     private void useOn(Player player, ItemStack held, Block block) {
+        DebugMode mode = sticks.modeOf(held);
+        if (!player.hasPermission(mode.permission())) {
+            player.sendMessage(Component.text(
+                    "You may not use the " + mode.title() + " mode.", NamedTextColor.RED));
+            return;
+        }
+
+        // A pipe has no sign and no chip behind it, so this mode is pointed at an ordinary block
+        // and must not be turned away for not being a chip.
+        if (mode.readsAnyBlock()) {
+            actions.pipe(player, block);
+            return;
+        }
+
         Optional<ICInstance> chip = manager.at(block);
         if (chip.isEmpty()) {
             player.sendMessage(Component.text(
                     "There is no chip here. Point the stick at a chip's own sign.",
                     NamedTextColor.RED));
-            return;
-        }
-
-        DebugMode mode = sticks.modeOf(held);
-        if (!player.hasPermission(mode.permission())) {
-            player.sendMessage(Component.text(
-                    "You may not use the " + mode.title() + " mode.", NamedTextColor.RED));
             return;
         }
         if (!actions.applies(mode, chip.get())) {

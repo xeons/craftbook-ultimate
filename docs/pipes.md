@@ -218,6 +218,12 @@ Your operator can change it. See **For operators** below.
 
 ## When it does not work
 
+> **Ask the plugin first.** A debug stick set to **Pipe** mode, or `/craftbook debug pipe`, tells
+> you what the plugin actually believes about the pipe in front of you: which grammar it read the
+> run as, where it takes from, everywhere it reaches and in what order. Point it at the piston, or
+> at any block of a pipe that has carried something at least once. Most of what follows is
+> guessing at what that would have told you outright. See `docs/debugging.md`.
+
 **Nothing moves at all.**
 Check the piston is getting redstone, and that power is *arriving* rather than already on. Check
 which way it faces: a sticky piston must face the chest it empties, an extractor must face away from

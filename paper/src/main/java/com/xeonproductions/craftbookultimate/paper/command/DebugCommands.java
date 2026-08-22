@@ -109,6 +109,18 @@ public final class DebugCommands {
         }
 
         Block block = Positions.toBlock(player.getWorld(), Selections.pointedAtBy(player));
+
+        // A pipe has no chip behind it, so this mode reads the block itself. It runs on the
+        // region owning that block, which is the region owning the whole pipe: a pipe is a line
+        // of touching blocks and so never spans two.
+        if (mode.readsAnyBlock()) {
+            schedulers.executeAt(
+                    player.getWorld(),
+                    Positions.toDomain(block),
+                    () -> actions.pipe(player, block));
+            return SUCCESS;
+        }
+
         Optional<ICInstance> chip = manager.at(block);
         if (chip.isEmpty()) {
             error(context, "You are not looking at a chip. Look at a chip's own sign.");

@@ -91,7 +91,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2415 tests passing**.
+**2442 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -716,6 +716,14 @@ the no-WorldEdit rule and works for a builder with no client mod. The fork's **d
 subscription** was not ported: no chip here emits a commentary, so it would mean threading a
 reporting seam through every one of them, and the report plus live pin state covers most of what it
 was for.
+
+The tools were entirely chip-shaped until the **Pipe** mode, which is the first that reads an
+ordinary block instead. A pipe has no sign and nothing in the catalogue behind it, so `DebugMode`
+says which modes read a block rather than a chip and the stick and the command both ask before
+turning a builder away for not pointing at a sign. `PipeReport` is `ChipReport`'s counterpart, and
+finding which pipe a clicked block belongs to reuses the index `PipeNetworks` already keeps for
+throwing answers away — so the question costs a lookup, and it answers for any pipe that has run
+at least once. Nothing is traced that would not have been traced anyway.
 
 `docs/debugging.md` is the builder's guide.
 

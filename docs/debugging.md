@@ -85,6 +85,7 @@ most common fault and the report is the fastest way to see it.
 | **Reload** | Stops the chip and starts it again, which is exactly what a chunk load does. |
 | **Ticking** | Lists every chip on the server currently ticking on its own, with the one you are pointing at marked. |
 | **Band** | For a wireless transmitter or receiver: what channel it is on and what that channel is carrying. |
+| **Pipe** | Not a chip at all: point it at a pipe and it says where that pipe takes from and everywhere it reaches, in the order it tries them. |
 
 Each is also a command:
 
@@ -96,6 +97,7 @@ Each is also a command:
 /craftbook debug reload
 /craftbook debug ticking
 /craftbook debug band
+/craftbook debug pipe
 ```
 
 ### Area
@@ -123,6 +125,51 @@ about their channel look exactly like a pair that agree. Point this at each end 
 what they say. A band nothing has ever transmitted on is called out separately, because a receiver
 on one of those holds whatever it is already showing rather than going low — which reads as a stuck
 output.
+
+### Pipe
+
+The odd one out: every other mode wants a chip's sign, and this one wants an ordinary block. A pipe
+has no sign and nothing on the catalogue behind it, so there is nothing else to point at.
+
+Point it at **the piston that drives the pipe**, or at **any block of a pipe that has carried
+something at least once**. The second works because the plugin already keeps an index of which
+blocks belong to which pipe — it uses it to throw answers away when a block changes — so asking
+which pipe a piece of glass belongs to costs a lookup rather than a search.
+
+```
+Pipe at 12, 71, -40
+World: world
+Style: glass, started from a piston
+Blocks in the run: 23
+Takes from: 12, 71, -41
+Reaches: 3 way(s) out, nearest first
+  1. 18, 71, -40 from the east, takes anything
+  2. 22, 71, -44 from the north, takes cobblestone, dirt
+  3. 22, 71, -36 from the south, takes anything but not cobblestone
+Answer: remembered
+```
+
+Four things there are worth knowing, and none of them is visible from standing in front of the run:
+
+**The style.** A pipe means different things depending on the block it *starts* from — a pane
+carries items in one grammar and merely keeps them going straight in the other, and a piston starts
+a run in one and ends it in the other. If this line says something you did not expect, that is the
+whole bug.
+
+**Where it takes from.** Two different failures read alike here. *"Takes from: nothing"* means the
+input block faces nowhere. A position in red with *"nothing there holds items"* means it faces a
+real place with no container in it — which is the one you fix by putting a chest down.
+
+**The order.** Ways out are tried nearest first, and a stack goes to the first one that will accept
+it. If the wrong chest is filling up, this list tells you why, and it is the only place that
+information exists.
+
+**Whether the answer was remembered.** Nothing is kept up to date as a pipe is built or broken: a
+block changing throws the answer away and the next pulse works it out again. *"worked out just
+now"* means you are the first to ask since something near it changed.
+
+A run cut short by `pipes.max-length` says so in yellow. That is worth checking before anything
+else when the far end of a long pipe is being ignored.
 
 ### Trigger
 

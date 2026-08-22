@@ -526,6 +526,14 @@ public final class CraftBookPlugin extends JavaPlugin {
         return icManager;
     }
 
+    /** The shared registries, which the debugging tools read the pipe settings from. */
+    private ChipServices servicesTarget() {
+        if (services == null) {
+            throw new IllegalStateException("The services are not available until enabled");
+        }
+        return services;
+    }
+
     /** The region schedulers, which the test bed builds through. */
     private RegionSchedulers schedulersTarget() {
         if (schedulers == null) {
@@ -549,7 +557,11 @@ public final class CraftBookPlugin extends JavaPlugin {
      * holding one would only be another field to null-check.
      */
     private DebugActions debugActions() {
-        return new DebugActions(icManagerTarget(), new AreaOutline(schedulersTarget()));
+        return new DebugActions(
+                icManagerTarget(),
+                new AreaOutline(schedulersTarget()),
+                new PipeDispatcher(servicesTarget().configuration(), pipeNetworks),
+                servicesTarget().configuration());
     }
 
     /**

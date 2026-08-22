@@ -13,6 +13,15 @@ import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
 import com.xeonproductions.craftbookultimate.paper.ic.ChipInspector;
 import com.xeonproductions.craftbookultimate.paper.ic.ICInstance;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
+import com.xeonproductions.craftbookultimate.core.config.Configuration;
+import com.xeonproductions.craftbookultimate.core.config.PipeSettings;
+import com.xeonproductions.craftbookultimate.core.pipe.PipeNetwork;
+import com.xeonproductions.craftbookultimate.core.pipe.PipeNetworks;
+import com.xeonproductions.craftbookultimate.core.pipe.PipeReport;
+import com.xeonproductions.craftbookultimate.core.pipe.PipeStyle;
+import com.xeonproductions.craftbookultimate.paper.pipe.BukkitPipeWorld;
+import com.xeonproductions.craftbookultimate.paper.pipe.PipeDispatcher;
+import java.util.Comparator;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -51,10 +60,18 @@ public final class DebugActions {
 
     private final ICManager manager;
     private final AreaOutline outline;
+    private final PipeDispatcher pipes;
+    private final Configuration configuration;
 
-    public DebugActions(ICManager manager, AreaOutline outline) {
+    public DebugActions(
+            ICManager manager,
+            AreaOutline outline,
+            PipeDispatcher pipes,
+            Configuration configuration) {
         this.manager = manager;
         this.outline = outline;
+        this.pipes = pipes;
+        this.configuration = configuration;
     }
 
     /** Runs a mode against a chip, permission having already been checked. */
@@ -67,6 +84,7 @@ public final class DebugActions {
             case RELOAD -> reload(audience, chip);
             case TICKING -> ticking(audience, chip);
             case BAND -> band(audience, chip);
+            case PIPE -> pipe(audience, Positions.toBlock(chip.world(), chip.signPosition()));
         }
     }
 
@@ -75,6 +93,7 @@ public final class DebugActions {
         return switch (mode) {
             case AREA -> ChipInspector.area(chip).isPresent();
             case BAND -> chip.logic() instanceof BandAwareICLogic;
+            case PIPE -> false;
             default -> true;
         };
     }
@@ -278,5 +297,73 @@ public final class DebugActions {
                         "      nothing has ever transmitted on it, so a receiver here holds "
                                 + "whatever it is already showing.",
                         NamedTextColor.YELLOW)));
+    }
+
+    /**
+     * Says where the pipe at a block takes from and everywhere it reaches.
+     *
+     * <p>Two ways of finding which pipe was meant, because a builder points at whatever is in
+     * front of them. A block that could drive a pipe is traced from directly. Anything else is
+     * looked up in the index the networks already keep for throwing answers away, which finds any
+     * pipe that has run at least once, from any block of it.
+     *
+     * <p>Nothing is traced that was not going to be traced anyway: a remembered answer is reported
+     * as it stands, and a piston nobody has powered is followed once and then remembered, exactly
+     * as powering it would have done.
+     */
+    public void pipe(Audience audience, Block block) {
+        PipeSettings settings = configuration.settings().pipes();
+        if (!settings.enabled()) {
+            audience.sendMessage(Component.text(
+                    "Pipes are switched off in config.yml, so nothing here carries anything.",
+                    NamedTextColor.RED));
+            return;
+        }
+
+        World world = block.getWorld();
+        Vec3i clicked = Positions.toDomain(block);
+        PipeNetworks networks = pipes.networks();
+
+        Optional<Vec3i> input = inputFor(block, world, clicked, networks);
+        if (input.isEmpty()) {
+            audience.sendMessage(Component.text(
+                    "No pipe here. Point at the piston that drives one, or at any block of a "
+                            + "pipe that has carried something at least once.",
+                    NamedTextColor.RED));
+            return;
+        }
+
+        BukkitPipeWorld seen = new BukkitPipeWorld(world);
+        boolean remembered = networks.remembers(world.getUID(), input.get());
+        PipeNetwork network = networks.from(seen, world.getUID(), input.get(), settings);
+
+        boolean holdsItems = network.source().filter(seen::holdsItemsAt).isPresent();
+
+        new PipeReport(world.getName(), clicked, input.get(), network, remembered, holdsItems)
+                .describe()
+                .forEach(audience::sendMessage);
+    }
+
+    /**
+     * Which pipe a clicked block belongs to.
+     *
+     * <p>Itself where it could drive one, and otherwise whichever remembered pipe mentions it. A
+     * block can be indexed against more than one pipe where two runs pass beside each other; the
+     * nearest input is reported, since that is the one a builder is most likely standing at.
+     */
+    private static Optional<Vec3i> inputFor(
+            Block block, World world, Vec3i clicked, PipeNetworks networks) {
+        if (PipeStyle.couldStartAPipe(block.getType().getKey())) {
+            return Optional.of(clicked);
+        }
+        return networks.inputsTouching(world.getUID(), clicked).stream()
+                .min(Comparator.comparingLong(input -> squaredDistance(input, clicked)));
+    }
+
+    private static long squaredDistance(Vec3i from, Vec3i to) {
+        long dx = (long) from.x() - to.x();
+        long dy = (long) from.y() - to.y();
+        long dz = (long) from.z() - to.z();
+        return dx * dx + dy * dy + dz * dz;
     }
 }

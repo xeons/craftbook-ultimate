@@ -5,12 +5,30 @@ are in `CLAUDE.md`; bugs found in the legacy code are in `FINDINGS.md`.
 
 ## Integrated circuits
 
-**117 chips are registered, under 146 model numbers.** The extra fork's catalogue is complete;
-4 model numbers were dropped by decision.
+**130 chips are registered, under 159 model numbers** — 130 of their own, 26 self-triggering
+forms and 3 retired numbers kept as aliases. The extra fork's catalogue is complete; 4 model
+numbers were dropped by decision.
 
 Nothing from this fork's catalogue is left to port. Anything added from here comes from upstream,
 and the rule still holds: look every model number and shorthand up in the legacy `ICManager` before
 registering it, and do not invent them.
+
+### Numbering a chip that came from neither codebase
+
+The rule above is about *not colliding with a chip nobody has ported yet*, so a genuinely new chip
+— one neither fork ever had — has nothing to look up and must not borrow a number that something
+unported might want.
+
+Only eight prefixes are ever claimed across the two source catalogues: `MC`, `MCM`, `MCO`, `MCT`,
+`MCU`, `MCX`, `MCZ` and `VAR`. **A new chip takes a prefix none of them uses**, which makes a
+collision impossible by construction rather than by remembering to check. `MCN` is the one in use
+for this, and `MCN100` and `MCN101` are the first two chips on it.
+
+Note that `MCZ` is the extra fork's self-triggering prefix and always pairs `MCZnnn` with the
+`MCXnnn` it ticks for. Upstream never uses it at all; upstream pairs `MC1nnn` with `MC0nnn`. Do not
+invent either form — three `MCZ26x` numbers were made up for upstream chips that have no
+self-triggering family at all, and had to be taken out again. The `S` suffix ticks any chip
+whether or not a second number exists for it.
 
 ### Dropped by decision
 
@@ -29,10 +47,14 @@ decision covers all of them.
 
 ### Upstream-only ICs
 
-Upstream registers 131 model numbers to this fork's 143, and 55 of those are shared. Of the 76 it
-has that this fork never did, four are dropped by decision and **27 are chips already registered
-here under the extra fork's number**, so the real gap is 45. Adding any of them is an optional
-addition rather than a compatibility obligation, and comes after everything above.
+Upstream registers 131 model numbers to this fork's 143, and 55 of those are shared. Counted
+against **this rewrite** rather than against the fork it ports, upstream has 62 numbers the
+catalogue here does not answer to: four are dropped by decision and **26 are chips already
+registered here under the extra fork's number**, so the real gap is **32**. Adding any of them is
+an optional addition rather than a compatibility obligation, and comes after everything above.
+
+That gap only shrinks by porting, so it is worth recomputing rather than trusting: it is upstream's
+`registerIC` calls, minus every model number, alias and self-triggering form in `ICCatalogue`.
 
 #### Already here under another number
 
@@ -42,8 +64,12 @@ pairings are easy to miss because the two forks named the same chip after differ
 redstone rather than sensing and is upstream's power sensor.
 
 Where the two differ, this fork's is the richer: `MCX203` also picks which kind of container to
-fill, which upstream's cannot. `MCX295` reads only direct power where upstream's reads indirect
-power as well, so that one number is still worth having if the indirect reading is ever wanted.
+fill, which upstream's cannot.
+
+`MC1266` used to be listed here against `MCX295` and no longer is. The two ask different questions
+of the same block — `MCX295` reads what it carries or emits, `MC1266` whether anything is pushing
+power *at* it, and a plain block with a lever on its side answers differently — so `MC1266` is
+registered as a chip of its own.
 
 | Upstream | Here | Upstream | Here |
 | --- | --- | --- | --- |
@@ -60,7 +86,6 @@ power as well, so that one number is still worth having if the indirect reading 
 | `MC1216` set b chest | `MC1206` Set Below, on a stockpile | `MC1275` tune | `MCU705` Tune |
 | `MC1217` pot induce | `MCX146` Potion Area | `MC1279` player trap | `MCX131` Hit Player Above |
 | `MC1227` avd spawner | `MCX200` Entity Spawner | `MC1422` monostable | `MCU440` Monoflop |
-| `MC1266` sense power | `MCX295` Trigger Reader | | |
 
 #### Where the two forks disagree about a number
 
@@ -89,10 +114,26 @@ Note that `MC1421` is upstream's clock, so it cannot be taken at its own number 
 | World control | `MC1232` time set, `MC1237` fake time |
 | Radio | `MC1276` radio station, `MC1277` radio player |
 
+Thirty-two, and they reconcile exactly against the sixty-two upstream numbers this catalogue does
+not answer to: four dropped by decision, twenty-six already here under the extra fork's number,
+these thirty-two.
+
+**Done from upstream so far**, and no longer listed above: the terrain and liquid group — `MC1220`
+and `MC1221` block breakers, `MC1222` liq flood, `MC1223` terraform, `MC1225` pump, `MC1226`
+spigot, `MC1238` irrigate and `MC1248` driller — and the three sensors, `MC1265` inv sns itm,
+`MC1266` sense power and `MC1267` sense move. `MC1214` range coll was skipped as a true duplicate
+of `MCX203`.
+
+The container group is the one that wants a decision before any of it is written. `Stockpile`
+aggregates the containers near a chip into one `Key`-to-count map, which loses which slot holds
+what; the sorter, the stacker and the contents sensor all care about individual slots. That is a
+seam to design once rather than to work around nine times.
+
 ## Variables: what is left of them
 
-The store, the `/var` commands and upstream's three chips — `VAR100`, `VAR170`, `VAR200` — are
-done; see `docs/variables.md`. Two pieces of both forks' `Variables` mechanic are **not**:
+The store, the `/var` commands, upstream's three chips — `VAR100`, `VAR170`, `VAR200` — the
+`[Marquee]` sign and the two new ones, `MCN100` and `MCN101`, are done; see `docs/variables.md`.
+Two pieces of both forks' `Variables` mechanic are **not**:
 
 - **`%name%` substitution in text.** Both forks expand `%score%` and `%alice|score%` inside chat
   and commands — the legacy fork against
@@ -111,10 +152,15 @@ reason: one readable thing a builder and an operator can both act on beats survi
 
 ## Mechanics
 
-The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 49 are
-ported, 5 are dropped or cannot be done, and **16 are left**. (73 files carry the annotation;
+The legacy fork carries 70 of them, each marked with `@Module` under `src/main/java/`. 56 are
+ported, 5 are dropped or cannot be done, and **9 are left**. (73 files carry the annotation;
 `EmptyDecay`, `ExitRemover` and `RemoveEntities` each have a cart class and a boat class, and both
 of each are now done.)
+
+The nine are the two unique to this fork and the seven shared with upstream, both listed below.
+`Variables` is the one counted as left while being mostly done: everything but the `%name%`
+substitution is finished. The five that will not be done are `CBWarps`, `ChunkAnchor`, `CartWarp`,
+`LandBoats` and `SpeedModifiers`.
 
 The bridge, the door, the gate, the lift and the toggled area are done, the copiers are done, and
 so is the greater part of the rails. Those listed as unique to
@@ -162,6 +208,11 @@ filter `MegaPipes` never built is finished, on the `[Pipe]` sign's third and fou
 `MegaPipesFilter`, `MegaPipesSource` and `ChestSource` stubbed out, `registerSource` never called,
 and the only source that worked hardcoded into `ExtractorMultiBlock`. What was worth keeping was its
 shape rather than its code, and the shape is what was kept.
+
+A pipe can be asked what it believes about itself: the debug stick's **Pipe** mode, or
+`/craftbook debug pipe`, reports the style a run was read as, where it takes from, everywhere it
+reaches and in what order. It is the only debugging mode that reads an ordinary block rather than a
+chip's sign, since a pipe has no sign. See `docs/debugging.md`.
 
 ### The copiers: done
 
@@ -304,7 +355,7 @@ itself; that is a thing to agree on rather than a port.
 
 | Piece | Why it is needed |
 | --- | --- |
-| Persistence | The switch passwords, the switch positions and the wireless bands are saved. What a chip keeps on its own sign is saved with the world. What remains unsaved is deliberate: a destination republishes itself when it loads, and a cart's rider says again where they are going. The scripts in `fireworks/`, `midi/` and `playlist/` are read, never written. |
+| Persistence | The switch passwords, the switch positions, the wireless bands and the variables are saved, the last three through `SharedStateFiles`. What a chip keeps on its own sign is saved with the world. What remains unsaved is deliberate: a destination republishes itself when it loads, and a cart's rider says again where they are going. The scripts in `fireworks/`, `midi/` and `playlist/` are read, never written. |
 | Configuration | `config.yml` carries what the chips, the carts, the vehicle habits and the pipes read; `mechanics.yml` carries the mechanics, a section each, named after the mechanic. A further mechanic wants a name in `Mechanics.ALL` and a section of its own. |
 | Storage | The saved areas live in `areas/`, two files each, in the game's own structure format. Nothing else a mechanic uses is written down. |
 | Commands | `/craftbook` reads the catalogue and the switch commands drive `MCX120` and `MCX121`, all through Brigadier. The per-mechanic commands come with their mechanics. |
@@ -313,9 +364,19 @@ itself; that is a thing to agree on rather than a port.
 
 ## Verification
 
-Nothing has ever been run on a server. The unit tests cover the platform-independent half only;
-the listeners, the schedulers, the container lookups and the legacy block mapping have no coverage
-at all. Worth checking early, in roughly this order:
+**What has been watched running.** Chips load from signs already in the world and follow redstone,
+on Paper and on SpongeVanilla both; see the Sponge section below for what was checked there and
+why that one mattered most. Everything else in this document is compiled, unit-tested and unseen.
+
+**What the tests reach.** `core` is covered thoroughly, because it is written to be: chip logic,
+sign parsing, pin geometry, the cart and pipe grammars and the mechanic seams are pure functions
+with no server behind them. `paper` carries MockBukkit and covers `ICManager`, the sign listener
+and the chip title, which is the half that reads and writes blocks. What still has no coverage is
+the schedulers, the container lookups, the legacy block mapping and every listener other than
+those three.
+
+The list below is what to check in game, in roughly this order. Items 1 and 2 are done; the rest
+are not, and the later groups have been added as the work landed rather than checked off:
 
 1. The plugin loads and reports its catalogue.
 2. Writing `[MC1000]` on a wall sign creates a chip that follows redstone.
@@ -358,7 +419,7 @@ at all. Worth checking early, in roughly this order:
 `docs/sponge.md` says what the build is, how it is put together and what it cannot do.
 
 What is there: the module and its build wiring, the scheduler, the direction and position adapters,
-the legacy block reader, the world seam, the entity bindings and a stockpile. Core's 23.9k lines
+the legacy block reader, the world seam, the entity bindings and a stockpile. Core's 38.6k lines
 compile against SpongeAPI 20 and Adventure 4.26.1.
 
 `sponge/game/` reaches into Minecraft directly for the four things SpongeAPI cannot answer — drops,

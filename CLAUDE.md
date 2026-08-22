@@ -87,7 +87,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2243 tests passing**.
+**2247 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -195,10 +195,25 @@ run by it — and a name spelt differently in any of those reads exactly like a 
 turned off.
 
 **Every mechanic gets a section**, including the ones with nothing to configure, so the file answers
-what there is as well as what may be changed. **Switching one off is that section saying
-`enabled: false`**, rather than a list of names somewhere else: a list sits in a different place
-from the settings it silences, so an operator who turned a mechanic off and then wonders why its
-settings do nothing has to know to look in two places.
+what there is as well as what may be changed. **Switching one on is that section saying
+`enabled: true`**, rather than a list of names somewhere else: a list sits in a different place
+from the settings it governs, so an operator whose mechanic does nothing has to know to look in two
+places.
+
+**Every mechanic starts switched off**, which is the opposite of the chips. A chip does nothing
+until a builder writes its sign, so shipping the whole catalogue enabled costs a server nothing. A
+mechanic has no such sign to wait for: the blocks it answers to are ordinary blocks already in the
+world, so switching `Chairs` on makes every stair a seat and switching `HeadDrops` on changes what
+every death leaves behind. Neither is something a builder opted into, so neither happens until an
+operator says so. It is also what the legacy fork did — its `enabled-mechanics` began as a list of
+one — and the same reasoning that keeps the cart habits off.
+
+`MechanicSettings#enabled` is therefore the set that **runs**, not the set that does not, and it is
+empty in `DEFAULTS`. That direction matters beyond taste: a mechanic added in a later version is
+off without anybody remembering to add it anywhere, and a file an operator has trimmed by hand
+cannot turn something on by omission. `CraftBookPlugin#sayWhichMechanicsRun` logs the count and the
+names once at start-up, because "nothing is switched on" and "the plugin failed to load" look
+identical from inside the game.
 
 `MechanicSettings` mirrors it — one small record per mechanic (`GateSettings`, `ElevatorSettings`,
 `AreaSettings` and the rest), assembled through a builder. Two rules belong to no single mechanic
@@ -265,11 +280,9 @@ They live together in `core/cart/CartBehaviour.java` as decisions and in
 answer the same collision, two the same dismount and two the same move. `CartDispatcher` resolves a
 mechanic from a block and a sign, so none of these goes near it.
 
-**All of it is off out of the box.** A server that has never been configured runs carts exactly as
-the game does. That differs from the mechanics, which are on by default, and the reason is that a
-mechanic does nothing until somebody builds one, while a habit changes every cart on the server the
-moment it is switched on. It also matches the legacy fork, whose `enabled-mechanics` began as a
-list of one.
+**All of it is off out of the box**, as the mechanics are and for the same reason. A server that
+has never been configured runs carts exactly as the game does. A habit changes every cart on the
+server the moment it is switched on, and nobody built anything to ask for it.
 
 The settings are `vehicles.carts` in `config.yml`, held in `CartHabits`. Two of them are numbers
 rather than switches, and each turns its own habit off at zero: waiting no time before taking an

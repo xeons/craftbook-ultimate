@@ -28,10 +28,16 @@ import org.jspecify.annotations.NullMarked;
  * two questions rather than one — what may be changed, and what there is at all. A mechanic with
  * nothing of its own carries only whether it runs.
  *
- * <p>Switching one off is that section saying {@code enabled: false}, rather than a list of names
- * somewhere else. A list is written in a different place from the settings it silences, so an
- * operator turning a mechanic off and then wondering why its settings do nothing has to know to
- * look in two places; here the answer is the first line of what they were already reading.
+ * <p>Every one of them starts switched off, and switching one on is its own section saying
+ * {@code enabled: true} rather than a list of names somewhere else. A list is written in a
+ * different place from the settings it governs, so an operator whose mechanic does nothing has to
+ * know to look in two places; here the answer is the first line of what they were already reading.
+ *
+ * <p>Off to begin with because a mechanic answers to ordinary blocks. Switching Chairs on makes
+ * every stair on the server a seat and switching HeadDrops on changes what every death leaves
+ * behind, neither of which anybody built and neither of which an operator should discover by
+ * having it happen. A chip is the other way round — it does nothing until somebody writes its
+ * sign — which is why the chips are on out of the box and these are not.
  *
  * <p>Two rules belong to no single mechanic and stay at the top of the file: whether redstone works
  * a mechanic's sign at all, and whether a powered block goes out when its source is mined away.
@@ -223,10 +229,16 @@ public final class MechanicsDocument {
                 "",
                 "A mechanic is something built in the world rather than written on an IC sign: a",
                 "bridge, a gate, a lift, a block that answers redstone. One section each, named",
-                "the way it is switched off, and every mechanic has one whether or not it has",
+                "the way it is switched on, and every mechanic has one whether or not it has",
                 "anything else to configure.",
                 "",
-                "Setting enabled to false leaves everything already built where it is and stops it",
+                "EVERY MECHANIC STARTS SWITCHED OFF. Set enabled to true in a section to turn that",
+                "one on. A fresh server therefore behaves exactly as the game does until you have",
+                "said otherwise, which matters because a mechanic answers to ordinary blocks:",
+                "turning Chairs on makes every stair a seat, and turning HeadDrops on changes what",
+                "every death leaves behind. Neither is something a builder opted into.",
+                "",
+                "Switching one off again leaves everything already built where it is and stops it",
                 "working. Nothing is ever removed by switching a mechanic off.",
                 "",
                 "How wide a bridge or a door may be, how far it may run and what it may be made of",
@@ -453,10 +465,10 @@ public final class MechanicsDocument {
 
         tree.comment(Mechanics.SNOW, List.of(
                 "",
-                "Snow that piles, slumps and melts. Every part of it below is off out of the box:",
-                "a server that has never been configured runs snow exactly as the game does.",
-                "Unlike the mechanics above, nothing here is built and nothing has a sign, so",
-                "switching any of it on changes every snowy block in the world."));
+                "Snow that piles, slumps and melts. Every part of it below is off as well as the",
+                "mechanic itself, so turning this on is two decisions: enabled says the mechanic",
+                "runs, and each line below says which of its behaviours it does. Nothing here is",
+                "built and nothing has a sign, so all of it changes every snowy block at once."));
 
         tree.comment(SNOW_PILING, List.of(
                 "Whether snow keeps piling past the height the game stops at."));
@@ -513,7 +525,7 @@ public final class MechanicsDocument {
     private MechanicSettings build(ConfigTree tree) {
         MechanicSettings defaults = MechanicSettings.DEFAULTS;
         return MechanicSettings.builder()
-                .disabled(disabled(tree))
+                .enabled(enabled(tree))
                 .redstone(tree.bool(REDSTONE, defaults.redstone()))
                 .depowerOnSourceRemoval(
                         tree.bool(DEPOWER_ON_REMOVAL, defaults.depowerOnSourceRemoval()))
@@ -533,19 +545,24 @@ public final class MechanicsDocument {
     }
 
     /**
-     * The mechanics whose own section says they do not run.
+     * The mechanics whose own section says they run.
      *
      * <p>Only the mechanics that exist are asked about, so a section an operator has invented or
-     * one left behind by a mechanic that has been renamed cannot switch anything off.
+     * one left behind by a mechanic that has been renamed cannot switch anything on.
+     *
+     * <p>A mechanic the file does not mention at all falls back to the default, which is off. That
+     * matters for a file an operator has trimmed by hand and for a mechanic added by a version
+     * newer than the file: neither starts working on its own.
      */
-    private static Set<String> disabled(ConfigTree tree) {
-        Set<String> off = new LinkedHashSet<>();
+    private static Set<String> enabled(ConfigTree tree) {
+        MechanicSettings defaults = MechanicSettings.DEFAULTS;
+        Set<String> on = new LinkedHashSet<>();
         for (String mechanic : Mechanics.ALL) {
-            if (!tree.bool(mechanic + "." + ENABLED, true)) {
-                off.add(mechanic);
+            if (tree.bool(mechanic + "." + ENABLED, defaults.allows(mechanic))) {
+                on.add(mechanic);
             }
         }
-        return off;
+        return on;
     }
 
     private ChairSettings chair(ConfigTree tree, ChairSettings defaults) {

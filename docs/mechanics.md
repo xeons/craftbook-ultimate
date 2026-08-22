@@ -12,13 +12,41 @@ reaches a server that has been running since before it.
 
 Changes take effect on the next `/craftbook reload`. No restart.
 
+## Everything starts switched off
+
+**A brand new server runs no mechanics at all.** Drop the plugin in and no bridge extends, no gate
+drops, no stair seats anybody and no head is left behind. You turn on the ones you want, one at a
+time, and nothing else changes.
+
+That is on purpose, and it is the opposite of how the chips work. A chip does nothing until a
+builder writes its sign, so having the whole catalogue available costs a server nothing. A mechanic
+has no such sign to wait for — the blocks it answers to are ordinary blocks that are already in
+your world. Turning `Chairs` on makes every stair on the server a seat; turning `HeadDrops` on
+changes what every death leaves behind; turning `GlowStone` on changes what a piece of glowstone
+does when redstone reaches it. None of those is something a builder asked for, so none of them
+happens until you say so.
+
+The console tells you where you stand every time the server starts:
+
+```
+[CraftBookUltimate] No mechanics are switched on. Every one of them starts off, since a mechanic
+changes what blocks already in the world do. Set enabled to true in mechanics.yml for the ones you
+want, then run /craftbook reload.
+```
+
+and, once you have turned some on:
+
+```
+[CraftBookUltimate] 4 of 21 mechanics are switched on: Bridge, Door, Elevator, Gate
+```
+
 ## The shape of it
 
 One section per mechanic, named after the mechanic:
 
 ```yaml
 Gate:
-  enabled: true
+  enabled: false
   blocks:
   - minecraft:oak_fence
   - minecraft:iron_bars
@@ -31,19 +59,24 @@ answers what there is:
 
 ```yaml
 Bridge:
-  enabled: true
-```
-
-**Switching a mechanic off is its own section saying so.** There is no list of disabled names
-anywhere else:
-
-```yaml
-Gate:
   enabled: false
 ```
 
-Everything already built stays exactly where it is. A gate switched off is a gate that no longer
-opens, not a gate that has been taken down, and switching it back on picks up where it left off.
+**Switching a mechanic on is its own section saying so.** There is no list of enabled names
+anywhere else — the switch sits at the top of the settings it governs, so a mechanic that is doing
+nothing and a mechanic whose settings are being ignored are the same line to look at:
+
+```yaml
+Gate:
+  enabled: true
+```
+
+Switching one back off leaves everything already built exactly where it is. A gate switched off is
+a gate that no longer opens, not a gate that has been taken down, and switching it on again picks
+up where it left off.
+
+A mechanic the file does not mention at all stays off. That covers a file you have trimmed by hand
+and a mechanic added by a version newer than your file: neither starts working on its own.
 
 The name in the file is **not** the name on the sign. A builder writes `[BannerCopier]` on a sign;
 you write `BannerCopier` in this file. The brackets belong only to the sign. Case does not matter —
@@ -154,12 +187,13 @@ so that is not here and does not need to be.
 
 ### Snow is not like the others
 
-Nothing about snow is built and nothing carries a sign, so switching any part of it on changes every
-snowy block in the world. All six parts therefore start **off**, and a server that has never been
-configured runs snow exactly as the game does. `enabled: true` on the section by itself does
-nothing; the parts underneath are what you turn on.
+Snow is the one mechanic where `enabled: true` by itself still does nothing. Its six parts each
+start off as well, so turning snow on is two decisions rather than one: `enabled` says the mechanic
+runs at all, and the lines underneath say which of its behaviours it does.
 
-The vehicle habits in `config.yml` are off for the same reason.
+The reason is that they are independent of one another — piling, slumping, freezing and melting are
+four different changes to how snow behaves, and a server usually wants some and not others. Every
+other mechanic is one thing you either want or do not.
 
 ## What is not here
 
@@ -195,7 +229,7 @@ The names changed shape along with the file, so the old key is not always the ob
 
 | Was, in `config.yml` | Is, in `mechanics.yml` |
 | --- | --- |
-| `mechanics.disabled: [Gate]` | `Gate.enabled: false` |
+| `mechanics.disabled: [Gate]` | `Gate.enabled: false` — but see below |
 | `mechanics.redstone` | `redstone` |
 | `mechanics.depower-on-source-removal` | `depower-on-source-removal` |
 | `mechanics.gate-blocks` | `Gate.blocks` |
@@ -224,13 +258,21 @@ The names changed shape along with the file, so the old key is not always the ob
 | `mechanics.xp-sneak-state` | `XPStorer.sneaking` |
 | `mechanics.snow.*` | `Snow.*`, unchanged below the section |
 
-One further change worth knowing about: the copiers were switched off by their **sign** name before
-— `[BannerCopier]`, brackets and all — which almost nobody would have guessed. They are
-`BannerCopier`, `BookCopier` and `MapCopier` now, like everything else.
+Two further changes worth knowing about.
+
+**The default flipped.** `mechanics.disabled` was a list of exceptions to everything running; the
+`enabled` lines are the whole of what runs. Reading a `disabled` list across is therefore not a
+translation of that row alone — set `enabled: true` on every mechanic you were **not** disabling,
+or you will find the ones you never mentioned have gone quiet too.
+
+**The copiers were switched off by their sign name before** — `[BannerCopier]`, brackets and all —
+which almost nobody would have guessed. They are `BannerCopier`, `BookCopier` and `MapCopier` now,
+like everything else.
 
 ## When it does not work
 
-**A mechanic does nothing at all.** Check its section says `enabled: true`, then check the two
+**A mechanic does nothing at all.** Check its section says `enabled: true` — that is the answer far
+more often than not, because it is what every section says until you change it. Then check the two
 switches in `config.yml` that stop everything at once: `enabled: false` at the top of it takes the
 whole plugin out of service, and a world named under `disabled-worlds` runs no mechanic and no chip.
 Both reach every mechanic here, not only the ones with signs.

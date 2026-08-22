@@ -133,16 +133,16 @@ class ConfigFileTest {
         }
 
         @Test
-        @DisplayName("keep a mechanic switched off")
-        void keepAMechanicSwitchedOff() throws IOException {
+        @DisplayName("keep a mechanic switched on")
+        void keepAMechanicSwitchedOn() throws IOException {
             load();
             Files.writeString(mechanicsFile(), Files.readString(mechanicsFile())
-                    .replace("Gate:\n  enabled: true", "Gate:\n  enabled: false"));
+                    .replace("Gate:\n  enabled: false", "Gate:\n  enabled: true"));
 
             MechanicSettings mechanics = load().mechanics();
 
-            assertThat(mechanics.allows(Mechanics.GATE)).isFalse();
-            assertThat(mechanics.allows(Mechanics.BRIDGE)).isTrue();
+            assertThat(mechanics.allows(Mechanics.GATE)).isTrue();
+            assertThat(mechanics.allows(Mechanics.BRIDGE)).isFalse();
         }
 
         @Test

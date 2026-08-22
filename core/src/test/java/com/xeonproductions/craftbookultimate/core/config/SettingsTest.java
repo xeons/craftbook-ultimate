@@ -44,13 +44,13 @@ class SettingsTest {
         }
 
         @Test
-        void runsAMechanicUntilSomethingSaysOtherwise() {
-            assertThat(Settings.DEFAULTS.runsMechanicIn(Mechanics.GATE, "world")).isTrue();
+        void runsNoMechanicUntilAnOperatorSaysSo() {
+            assertThat(Settings.DEFAULTS.runsMechanicIn(Mechanics.GATE, "world")).isFalse();
         }
 
         @Test
         void keepsAMechanicOutOfAWorldTheWholePluginIsOutOf() {
-            Settings settings = Settings.builder().disabledWorlds(Set.of("nether")).build();
+            Settings settings = everythingOn().disabledWorlds(Set.of("nether")).build();
 
             assertThat(settings.runsMechanicIn(Mechanics.GATE, "nether")).isFalse();
             assertThat(settings.runsMechanicIn(Mechanics.GATE, "world")).isTrue();
@@ -58,19 +58,25 @@ class SettingsTest {
 
         @Test
         void stopsEveryMechanicWhenTheWholePluginIsSwitchedOff() {
-            Settings settings = Settings.builder().enabled(false).build();
+            Settings settings = everythingOn().enabled(false).build();
 
             assertThat(settings.runsMechanicIn(Mechanics.GATE, "world")).isFalse();
         }
 
         @Test
-        void stopsOnlyTheMechanicThatWasNamed() {
+        void runsOnlyTheMechanicThatWasNamed() {
             Settings settings = Settings.builder()
-                    .mechanics(MechanicSettings.DEFAULTS.withDisabled(Set.of(Mechanics.GATE)))
+                    .mechanics(MechanicSettings.DEFAULTS.withEnabled(Set.of(Mechanics.GATE)))
                     .build();
 
-            assertThat(settings.runsMechanicIn(Mechanics.GATE, "world")).isFalse();
-            assertThat(settings.runsMechanicIn(Mechanics.BRIDGE, "world")).isTrue();
+            assertThat(settings.runsMechanicIn(Mechanics.GATE, "world")).isTrue();
+            assertThat(settings.runsMechanicIn(Mechanics.BRIDGE, "world")).isFalse();
+        }
+
+        /** Settings an operator has turned every mechanic on in, which is not the default. */
+        private Settings.Builder everythingOn() {
+            return Settings.builder()
+                    .mechanics(MechanicSettings.DEFAULTS.withEverythingEnabled());
         }
 
         @Test

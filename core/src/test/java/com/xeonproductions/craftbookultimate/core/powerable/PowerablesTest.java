@@ -18,7 +18,8 @@ import org.junit.jupiter.api.Test;
 @DisplayName("The blocks that answer redstone")
 class PowerablesTest {
 
-    private static final MechanicSettings SETTINGS = MechanicSettings.DEFAULTS;
+    private static final MechanicSettings SETTINGS =
+            MechanicSettings.DEFAULTS.withEverythingEnabled();
 
     private static Key block(String name) {
         return Key.key("minecraft:" + name);
@@ -35,10 +36,16 @@ class PowerablesTest {
         }
 
         @Test
-        @DisplayName("leaves out one an operator has switched off")
+        @DisplayName("holds none at all until an operator has switched one on")
+        void holdsNoneUntilSwitchedOn() {
+            assertThat(Powerables.all(MechanicSettings.DEFAULTS)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("leaves out one an operator has not switched on")
         void leavesOutADisabledOne() {
-            MechanicSettings without =
-                    SETTINGS.withDisabled(Set.of(Powerables.JACK_O_LANTERN));
+            MechanicSettings without = MechanicSettings.DEFAULTS
+                    .withEnabled(Set.of(Powerables.GLOWSTONE, Powerables.NETHERRACK));
 
             assertThat(Powerables.all(without))
                     .noneMatch(powerable -> powerable.name().equals(Powerables.JACK_O_LANTERN));

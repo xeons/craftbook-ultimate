@@ -102,26 +102,29 @@ class SignMechanicsTest {
     class WhatAnOperatorControls {
 
         @Test
-        void everyMechanicIsOnWhenNobodyHasSaidOtherwise() {
+        void everyMechanicIsOffUntilAnOperatorSaysOtherwise() {
             for (SignMechanic mechanic : SignMechanics.all()) {
-                assertThat(SignMechanics.isRunning(mechanic, Settings.DEFAULTS, "world")).isTrue();
+                assertThat(SignMechanics.isRunning(mechanic, Settings.DEFAULTS, "world")).isFalse();
             }
         }
 
         @Test
-        void switchingOneOffLeavesTheRestRunning() {
+        void switchingOneOnLeavesTheRestOff() {
             Settings settings = Settings.builder()
-                    .mechanics(Settings.DEFAULTS.mechanics().withDisabled(Set.of("gate")))
+                    .mechanics(Settings.DEFAULTS.mechanics().withEnabled(Set.of("gate")))
                     .build();
 
-            assertThat(SignMechanics.isRunning(SignMechanics.gate(), settings, "world")).isFalse();
+            assertThat(SignMechanics.isRunning(SignMechanics.gate(), settings, "world")).isTrue();
             assertThat(SignMechanics.isRunning(SignMechanics.elevator(), settings, "world"))
-                    .isTrue();
+                    .isFalse();
         }
 
         @Test
         void aWorldWithNothingRunningInItStopsThemAll() {
-            Settings settings = Settings.builder().disabledWorlds(Set.of("nether")).build();
+            Settings settings = Settings.builder()
+                    .mechanics(Settings.DEFAULTS.mechanics().withEverythingEnabled())
+                    .disabledWorlds(Set.of("nether"))
+                    .build();
 
             for (SignMechanic mechanic : SignMechanics.all()) {
                 assertThat(SignMechanics.isRunning(mechanic, settings, "nether")).isFalse();

@@ -12,6 +12,7 @@ import com.xeonproductions.craftbookultimate.core.ic.ICCatalogue;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.core.ic.gate.VariableChips;
+import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanic;
 import com.xeonproductions.craftbookultimate.core.mechanic.SignMechanics;
 import com.xeonproductions.craftbookultimate.core.mechanic.ToggleArea;
@@ -161,6 +162,7 @@ public final class CraftBookPlugin extends JavaPlugin {
         // Before anything reads a setting, and before any chip is picked up, so a world or a
         // chip the settings exclude is never started only to be stopped again.
         loadSettings();
+        sayWhichMechanicsRun();
 
         CartDispatcher carts = new CartDispatcher(
                 chipServices.configuration(),
@@ -605,6 +607,35 @@ public final class CraftBookPlugin extends JavaPlugin {
     /** Passes a complaint about an entry in the settings file on to the console. */
     private void reportSetting(String complaint) {
         getComponentLogger().warn(Component.text(complaint));
+    }
+
+    /**
+     * Says which mechanics an operator has switched on, once, as the server starts.
+     *
+     * <p>Every one of them starts switched off, so a server that has just had the plugin dropped
+     * into it runs no bridge, no gate and no lift, and the blocks those are built from stay
+     * ordinary blocks. That is deliberate but it is indistinguishable from a plugin that has
+     * failed to load, so it is said outright rather than left for somebody to work out by
+     * building a bridge that does not move.
+     *
+     * <p>The chips are not mentioned. Those run out of the box and a chip does nothing until
+     * somebody writes its sign, so there is nothing an operator has to have decided.
+     */
+    private void sayWhichMechanicsRun() {
+        if (services == null) {
+            return;
+        }
+        List<String> running = services.configuration().settings().mechanics().running();
+        if (running.isEmpty()) {
+            getComponentLogger().info(Component.text(
+                    "No mechanics are switched on. Every one of them starts off, since a mechanic "
+                            + "changes what blocks already in the world do. Set enabled to true in "
+                            + "mechanics.yml for the ones you want, then run /craftbook reload."));
+            return;
+        }
+        getComponentLogger().info(Component.text(
+                running.size() + " of " + Mechanics.ALL.size() + " mechanics are switched on: "
+                        + String.join(", ", running)));
     }
 
     /**

@@ -4,8 +4,10 @@
 package com.xeonproductions.craftbookultimate.core.config;
 
 import com.xeonproductions.craftbookultimate.core.mechanic.Mechanics;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import org.jspecify.annotations.NullMarked;
 
@@ -13,16 +15,22 @@ import org.jspecify.annotations.NullMarked;
  * What an operator has said about the mechanics.
  *
  * <p>One record per mechanic, rather than every setting laid out flat. What holds them together is
- * only which mechanics are switched off and the two rules belonging to no single mechanic; a
- * question about gates is answered by {@link GateSettings} and nothing else has to be read to
- * answer it.
+ * only which mechanics run and the two rules belonging to no single mechanic; a question about
+ * gates is answered by {@link GateSettings} and nothing else has to be read to answer it.
+ *
+ * <p>Nothing runs until an operator says it does. A mechanic is not something a builder opts into
+ * the way a chip is — the blocks it answers to are ordinary blocks, so switching one on changes
+ * what a stair or a piece of glowstone already in the world does. Which of them a server wants is
+ * a decision only its operator can make, and the file makes them make it.
  *
  * <p>The bridges and doors take their building limits from {@link Settings} rather than from here,
  * because they are the same limits the building chips use: how wide a structure may be, how far it
  * may run, and what it may be made of. Nothing peculiar to those two exists, which is why neither
  * has a record of its own.
  *
- * @param disabled the mechanics that never run, by name, compared without regard to case
+ * @param enabled the mechanics that run, by name, compared without regard to case. Nothing is in
+ *     it out of the box: a mechanic changes how a world behaves and an operator says which ones
+ *     they want rather than which of twenty-one they do not
  * @param redstone whether redstone reaching a mechanic's sign works it
  * @param depowerOnSourceRemoval whether a powered block goes out when the redstone feeding it is
  *     mined away, rather than staying as it was
@@ -41,7 +49,7 @@ import org.jspecify.annotations.NullMarked;
  */
 @NullMarked
 public record MechanicSettings(
-        Set<String> disabled,
+        Set<String> enabled,
         boolean redstone,
         boolean depowerOnSourceRemoval,
         ChairSettings chair,
@@ -57,12 +65,12 @@ public record MechanicSettings(
         XpSettings xp,
         SnowSettings snow) {
 
-    /** The mechanics as they have always been built. */
+    /** Every mechanic switched off, which is how a server nobody has configured runs. */
     public static final MechanicSettings DEFAULTS = builder().build();
 
-    /** Copies the list of what is switched off. */
+    /** Copies the list of what runs. */
     public MechanicSettings {
-        disabled = compared(disabled);
+        enabled = compared(enabled);
     }
 
     /** A set of settings to alter from the defaults. */
@@ -73,7 +81,7 @@ public record MechanicSettings(
     /** These settings with everything the same but for what the builder is given. */
     public Builder toBuilder() {
         return new Builder()
-                .disabled(disabled)
+                .enabled(enabled)
                 .redstone(redstone)
                 .depowerOnSourceRemoval(depowerOnSourceRemoval)
                 .chair(chair)
@@ -91,17 +99,43 @@ public record MechanicSettings(
     }
 
     /**
+     * The mechanics that run, spelt and ordered the way the file lists them.
+     *
+     * <p>{@link #enabled} is held compared rather than as written, so this is what to say to
+     * somebody rather than that.
+     */
+    public List<String> running() {
+        List<String> on = new ArrayList<>();
+        for (String mechanic : Mechanics.ALL) {
+            if (allows(mechanic)) {
+                on.add(mechanic);
+            }
+        }
+        return List.copyOf(on);
+    }
+
+    /**
      * Whether a mechanic runs.
      *
      * @param mechanic the mechanic's name, such as {@code Bridge}
      */
     public boolean allows(String mechanic) {
-        return !disabled.contains(Mechanics.compared(mechanic));
+        return enabled.contains(Mechanics.compared(mechanic));
     }
 
-    /** These settings with a different set of mechanics switched off. */
-    public MechanicSettings withDisabled(Set<String> mechanics) {
-        return toBuilder().disabled(mechanics).build();
+    /** These settings with a different set of mechanics running. */
+    public MechanicSettings withEnabled(Set<String> mechanics) {
+        return toBuilder().enabled(mechanics).build();
+    }
+
+    /**
+     * These settings with every mechanic running.
+     *
+     * <p>What an operator gets by saying so in twenty-one places, and what a test exercising a
+     * mechanic wants without having to name the one it is about.
+     */
+    public MechanicSettings withEverythingEnabled() {
+        return withEnabled(Set.copyOf(Mechanics.ALL));
     }
 
     /** These settings with redstone allowed or refused. */
@@ -185,7 +219,7 @@ public record MechanicSettings(
     /** Assembles a set of settings, filling in the defaults for anything not given. */
     public static final class Builder {
 
-        private Set<String> disabled = Set.of();
+        private Set<String> enabled = Set.of();
         private boolean redstone = true;
         private boolean depowerOnSourceRemoval = false;
         private ChairSettings chair = ChairSettings.DEFAULTS;
@@ -203,9 +237,9 @@ public record MechanicSettings(
 
         private Builder() {}
 
-        /** The mechanics that never run. */
-        public Builder disabled(Set<String> mechanics) {
-            this.disabled = mechanics;
+        /** The mechanics that run. Anything not named here stays switched off. */
+        public Builder enabled(Set<String> mechanics) {
+            this.enabled = mechanics;
             return this;
         }
 
@@ -295,7 +329,7 @@ public record MechanicSettings(
 
         public MechanicSettings build() {
             return new MechanicSettings(
-                    disabled,
+                    enabled,
                     redstone,
                     depowerOnSourceRemoval,
                     chair,

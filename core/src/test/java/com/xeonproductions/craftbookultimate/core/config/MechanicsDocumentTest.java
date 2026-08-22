@@ -39,6 +39,18 @@ class MechanicsDocumentTest {
         }
 
         @Test
+        @DisplayName("leaves every mechanic switched off, so a fresh server changes nothing")
+        void leavesEveryMechanicOff() {
+            MechanicSettings settings = read();
+
+            assertThat(settings.running()).isEmpty();
+            for (String mechanic : Mechanics.ALL) {
+                assertThat(settings.allows(mechanic)).as(mechanic).isFalse();
+                assertThat(tree.values).containsEntry(mechanic + ".enabled", false);
+            }
+        }
+
+        @Test
         @DisplayName("gives every mechanic a section, including the ones with nothing to set")
         void givesEveryMechanicASection() {
             read();
@@ -81,24 +93,23 @@ class MechanicsDocumentTest {
     }
 
     @Nested
-    @DisplayName("switching a mechanic off")
-    class Disabling {
+    @DisplayName("switching a mechanic on")
+    class Enabling {
 
         @Test
-        @DisplayName("is the mechanic's own section saying so")
+        @DisplayName("is the mechanic's own section saying so, and reaches no other")
         void isTheMechanicsOwnSectionSayingSo() {
-            tree.values.put("Gate.enabled", false);
+            tree.values.put("Gate.enabled", true);
 
             MechanicSettings settings = read();
 
-            assertThat(settings.allows(Mechanics.GATE)).isFalse();
-            assertThat(settings.allows(Mechanics.BRIDGE)).isTrue();
+            assertThat(settings.allows(Mechanics.GATE)).isTrue();
+            assertThat(settings.allows(Mechanics.BRIDGE)).isFalse();
         }
 
         @Test
-        @DisplayName("leaves that mechanic's other settings readable, so turning it back on works")
+        @DisplayName("leaves a switched-off mechanic's settings readable, so turning it on works")
         void leavesTheOtherSettingsReadable() {
-            tree.values.put("Gate.enabled", false);
             tree.values.put("Gate.radius", 3);
 
             assertThat(read().gate().radius()).isEqualTo(3);
@@ -107,9 +118,19 @@ class MechanicsDocumentTest {
         @Test
         @DisplayName("ignores a section named after nothing at all")
         void ignoresASectionNamedAfterNothing() {
-            tree.values.put("Nonesuch.enabled", false);
+            tree.values.put("Nonesuch.enabled", true);
 
-            assertThat(read().disabled()).isEmpty();
+            assertThat(read().enabled()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("leaves a mechanic the file never mentions switched off")
+        void leavesAMechanicTheFileNeverMentionsOff() {
+            // A file an operator has trimmed by hand, or one written before the mechanic
+            // existed. Neither is a reason to start changing what blocks in the world do.
+            tree.values.put("Gate.enabled", true);
+
+            assertThat(read().allows(Mechanics.CHAIRS)).isFalse();
         }
     }
 
@@ -292,11 +313,20 @@ class MechanicsDocumentTest {
         @DisplayName("are matched however an operator spells them")
         void areMatchedHoweverSpelt() {
             MechanicSettings settings =
-                    MechanicSettings.DEFAULTS.withDisabled(Set.of("GATE", "bridge"));
+                    MechanicSettings.DEFAULTS.withEnabled(Set.of("GATE", "bridge"));
 
-            assertThat(settings.allows(Mechanics.GATE)).isFalse();
-            assertThat(settings.allows(Mechanics.BRIDGE)).isFalse();
-            assertThat(settings.allows(Mechanics.DOOR)).isTrue();
+            assertThat(settings.allows(Mechanics.GATE)).isTrue();
+            assertThat(settings.allows(Mechanics.BRIDGE)).isTrue();
+            assertThat(settings.allows(Mechanics.DOOR)).isFalse();
+        }
+
+        @Test
+        @DisplayName("are said back properly spelt, whatever an operator wrote")
+        void areSaidBackProperlySpelt() {
+            MechanicSettings settings =
+                    MechanicSettings.DEFAULTS.withEnabled(Set.of("GATE", "bridge"));
+
+            assertThat(settings.running()).containsExactly(Mechanics.BRIDGE, Mechanics.GATE);
         }
     }
 }

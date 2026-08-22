@@ -60,6 +60,20 @@ public final class ServerSchedulers {
         return false;
     }
 
+    /**
+     * Runs work away from the thread that ticks the world.
+     *
+     * <p>Sponge keeps a scheduler of its own for this, separate from the server's, so nothing here
+     * competes with a tick. Only the deliberately slow work goes on it — checking a password —
+     * and none of it may touch a block.
+     */
+    public void async(Runnable work) {
+        Sponge.asyncScheduler().submit(org.spongepowered.api.scheduler.Task.builder()
+                .plugin(plugin)
+                .execute(work)
+                .build());
+    }
+
     private record ServerScheduler(PluginContainer plugin) implements Scheduler {
 
         @Override

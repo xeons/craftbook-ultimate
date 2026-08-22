@@ -222,6 +222,34 @@ a full block falling back into it and piling again for ever.
 gathered loose experience orbs from a distance. It is off by default there too, so a server behaves
 the same out of the box; what is missing is an operator's ability to switch it on.
 
+### Sat down and beheaded: done
+
+`Chairs` seats whoever right-clicks a stair with an empty hand. What holds them up is an invisible
+marker armour stand the game rides, which means the sitting itself costs nothing per tick and a
+server that stops leaves nobody stuck. Nothing is remembered in memory about who is sitting where:
+a seat is found by asking the world what is standing in a block, so there is no map to fall out of
+step with the world and a seat a crash left behind is still recognised as one when its chunk
+returns. `[Sit Heal]` on a sign hung on the chair makes it heal, on the seat's own scheduler rather
+than a task walking a list, which is what makes it right on a regionised server.
+
+Two things changed shape from the fork. `/sittoggle` wrote a permission onto the player through
+Sponge's permission service, which Bukkit has no equivalent of and which put a player's own
+preference into an operator's permission tree; it is kept in the player's own data now, where the
+game persists it for us. And the fork's command skipped the occupancy check its click did and told
+nobody it had worked, so both go through one `Sitting` now.
+
+`HeadDrops` drops the head of whatever was killed. The game has a head of its own for seven things
+and every other creature wears somebody's face, pinned by account identifier rather than by name so
+a rename cannot break it. The face itself is never written into the item — the server resolves it
+once and remembers it — which is cheaper than a texture apiece but means an offline server with no
+way out gets a blank head for a cow.
+
+**Not ported with it:** the fork re-dropped a head when its *block* was mined, because the game of
+the day dropped a blank one and lost whose it was. The game has kept the face on a mined head since
+the flattening, so there is nothing left for that to fix.
+
+**Neither has been run in game.**
+
 ### Unique to this fork
 
 | Mechanic | What it does |
@@ -233,12 +261,15 @@ the same out of the box; what is missing is an operator's ability to switch it o
 
 Compare both sources for these. Where they differ, this fork's behaviour is the one to keep.
 
-`Ammeter`, `BetterPhysics`, `BetterPlants`, `Bookshelf`, `BounceBlocks`, `Chairs`, `CommandSigns`,
-`CookingPot`, `GlowStone`, `HeadDrops`, `HiddenSwitch`, `JackOLantern`, `LightStone`,
-`LightSwitch`, `Marquee`, `Netherrack`, `PaintingSwitcher`, `RedstoneJukebox`,
-`SignCopier`, `Snow`, `Teleporter`, `TreeLopper`, `XPStorer`, `DispenserRecipes`,
+`BetterPhysics`, `BetterPlants`, `Bookshelf`, `CommandSigns`, `CookingPot`, `DispenserRecipes`,
+`HiddenSwitch`, `Marquee`, `PaintingSwitcher`, `RedstoneJukebox`, `TreeLopper`,
 `Variables` (store, commands and the three chips are done — the `%name%` substitution in chat and
-commands is what is left of it; see **Variables: what is left of them** above),
+commands is what is left of it; see **Variables: what is left of them** above).
+
+**Done from this list:** `Ammeter`, `BounceBlocks`, `Chairs`, `GlowStone`, `HeadDrops`,
+`JackOLantern`, `LightStone`, `LightSwitch`, `Netherrack`, `SignCopier`, `Snow`, `Teleporter`,
+`XPStorer`.
+
 The `boat` set is **done, less two that cannot be**. `WaterPlaceOnly` and the boat-going
 `EmptyDecay`, `ExitRemover` and `RemoveEntities` are in `BoatHabits`, decided in `BoatBehaviour` and
 bound by `BoatHabitListener`, beside the cart habits under a new `vehicles` section rather than

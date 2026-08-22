@@ -16,7 +16,7 @@ reading first.
 In development, and not yet released.
 
 117 chips are wired and working under 146 model numbers, along with the minecart mechanics, both
-pipe grammars, and the bridge, door, gate, lift and toggled-area sign mechanics. **2179 tests
+pipe grammars, and the bridge, door, gate, lift and toggled-area sign mechanics. **2217 tests
 pass.** What is left is inventoried in [TODO.md](TODO.md).
 
 The **Paper build is the complete one.** The Sponge build shares the same domain model and the same

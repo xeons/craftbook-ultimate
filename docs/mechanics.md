@@ -77,10 +77,12 @@ the source being taken out of the world. `GlowStone`, `JackOLantern` and `Nether
 | `BookCopier` | — |
 | `BounceBlocks` | `blocks`, `automatic`, `sensitivity` |
 | `Bridge` | — |
+| `Chairs` | `blocks`, `require-sign`, `max-sign-distance`, `face-correct-direction`, `exit-at-last-position`, `heal-amount`, `heal-rate` |
 | `Door` | — |
 | `Elevator` | `jumping`, `buttons`, `tolerance` |
 | `Gate` | `blocks`, `radius`, `clicking` |
 | `GlowStone` | `off-block` — what a glowstone looks like while it is dark |
+| `HeadDrops` | `player-heads`, `mob-heads`, `player-kills-only`, `drop-rate`, `looting-rate-modifier`, `show-name-on-click`, `ignored-names` |
 | `JackOLantern` | — |
 | `LightStone` | `item` — what is held up to a block to read its light level |
 | `LightSwitch` | `range`, `max-lights` |
@@ -96,8 +98,8 @@ takes its limits from the chips (below), and a book copier has nothing to decide
 
 ### Naming blocks
 
-Anywhere a block is named — `Gate.blocks`, `Netherrack.fire-blocks`, `BounceBlocks.blocks`,
-`GlowStone.off-block`, `XPStorer.block` — three spellings are accepted:
+Anywhere a block is named — `Gate.blocks`, `Chairs.blocks`, `Netherrack.fire-blocks`,
+`BounceBlocks.blocks`, `GlowStone.off-block`, `XPStorer.block` — three spellings are accepted:
 
 - a modern name, `minecraft:oak_fence` or just `oak_fence`
 - a tag, with a leading `#`, such as `#minecraft:fences`, expanded to whatever the server currently
@@ -107,6 +109,48 @@ Anywhere a block is named — `Gate.blocks`, `Netherrack.fire-blocks`, `BounceBl
 A name the server does not know is complained about in the console and skipped; the rest of the list
 survives. A list where **nothing** could be read falls back to the default rather than leaving the
 mechanic with nothing to work with.
+
+### Chairs
+
+Right-click a stair with an empty hand and you sit on it. Nothing is built, no sign is needed, and
+the stair goes on being an ordinary stair for every other purpose — a chair is only a way of
+looking at a block somebody put there anyway.
+
+`blocks` ships as the tag `#minecraft:stairs` rather than the sixty-odd names in it, so a stair
+added by a later version of the game becomes a chair without the file being touched. A stair laid
+upside down is never a chair whatever the list says, and neither is one with a block on top of it:
+that is a step in a staircase, and there is no room for a head.
+
+`/sit` seats you where you are standing, on any block at all, which is what makes it useful on a
+carpet or a slab the list does not mention. `/stand` gets you up again, as does the dismount key.
+`/sittoggle` turns clicking-to-sit off **for yourself** — it is a preference, kept in your own
+player data, not a permission an operator has to manage.
+
+Writing `[Sit Heal]` on a sign hung on a chair makes it heal whoever sits in it, `heal-amount` at a
+time, `heal-rate` ticks apart. That needs `craftbook.chairs.heal`, which is an operator permission
+by default: a healing chair is a bed nobody can sleep through, and worth deciding about.
+
+### Head drops
+
+Kill something and it may leave its head. Like snow, this changes what every death in the world
+does, so it is worth knowing what it costs before turning the rate up.
+
+The game has a head of its own for exactly seven things — a player, a zombie, a creeper, a
+skeleton, a wither skeleton, a dragon and a piglin — and those drop the real item. Every other
+creature drops a **player head wearing its face**, because that is the only way the game has ever
+had of showing a cow on a block. Those faces are not stored in the item: the server fetches each
+one from Mojang the first time it hands one out and remembers it afterwards.
+
+That last part is the one caveat. A server with no way out to the internet gets a blank head for a
+cow, and there is nothing this can do about it. The seven the game knows about are unaffected.
+
+`ignored-names` is for accounts whose head means something to another plugin. The one that ships
+belongs to a library that uses a head as a marker in the world; handing it out would put a piece of
+somebody else's furniture into a player's inventory.
+
+The fork also re-dropped a head when its **block** was mined, because the game of the day dropped a
+blank one and lost whose it was. The game has kept the face on a mined head since the flattening,
+so that is not here and does not need to be.
 
 ### Snow is not like the others
 

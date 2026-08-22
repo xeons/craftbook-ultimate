@@ -76,8 +76,10 @@ to a hand and to redstone.**
 | The two meters, light and redstone, on one dial | Done |
 | Bounce blocks, teleporters, the experience store | Done |
 | Snow that piles, slumps and melts | Done |
+| Chairs, with the healing sign and the three commands | Done |
+| Head drops, the game's seven and a face for the rest | Done |
 | The boat habits, beside the cart ones under `vehicles` | Done |
-| Mechanics other than those, the copiers and the minecart ones | Not started |
+| Mechanics other than those, the copiers and the minecart ones | 14 left |
 | Sponge build: module, adapters, world seam, entity bindings | Done |
 | Sponge build: the native layer over Minecraft's own code | Done |
 | Sponge build: entry point, config, chips running | Done |
@@ -85,7 +87,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2179 tests passing**.
+**2217 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 

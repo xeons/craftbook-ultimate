@@ -382,10 +382,16 @@ why that one mattered most. Everything else in this document is compiled, unit-t
 
 **What the tests reach.** `core` is covered thoroughly, because it is written to be: chip logic,
 sign parsing, pin geometry, the cart and pipe grammars and the mechanic seams are pure functions
-with no server behind them. `paper` carries MockBukkit and covers `ICManager`, the sign listener
-and the chip title, which is the half that reads and writes blocks. What still has no coverage is
+with no server behind them. `paper` carries MockBukkit and covers `ICManager`, the sign listener,
+the chip title and — since finding 149 — starting the plugin at all. What still has no coverage is
 the schedulers, the container lookups, the legacy block mapping and every listener other than
-those three.
+those.
+
+**`PluginStartupTest` is the one to keep working.** It loads the real plugin into a test server and
+asserts it enabled, which is the only test here that would have caught the plugin failing to start
+— sixty-seven others passed while it could not load. A test server does not run Paper's command
+lifecycle, so the commands are built but not registered, and the listeners are registered but never
+fired; that is the boundary of what it proves.
 
 The list below is what to check in game, in roughly this order. Items 1 and 2 are done; the rest
 are not, and the later groups have been added as the work landed rather than checked off:

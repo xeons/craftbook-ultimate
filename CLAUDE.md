@@ -91,7 +91,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2486 tests passing**.
+**2488 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -744,6 +744,12 @@ server resets the block to its default data, so a wall sign stops facing whereve
 faces north instead. A chip reads its entire pin geometry off that facing, so `ChipWorld#write` puts
 the block data back afterwards. Without it every sign in every test would quietly point the same way
 and the geometry would never be exercised.
+
+**One test starts the plugin.** `PluginStartupTest` loads the real `CraftBookPlugin` into a mock
+server and asserts it enabled. It is there because everything else in `paper` builds a piece with
+mocks around it, which says nothing about whether `onEnable` runs: the plugin could not start for
+eleven commits while every test passed. See finding 149. Two things exist for it — the plugin class
+is not `final`, and `LegacyBlocks` builds its indexes on first use rather than at class-load.
 
 **Prefer `core` still.** Reach for the harness only where the thing under test genuinely needs a
 block — and where a rule can be lifted out into `core` instead, lift it: `SignSupport` exists

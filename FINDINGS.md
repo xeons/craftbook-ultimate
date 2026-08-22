@@ -2417,3 +2417,48 @@ means.
 The lesson is the one `LineForms` was built for: a form is the chip's own reader asked whether it
 would succeed, so a promise and a parser cannot come apart. These duration lines are
 `LineForms.free()` — they promise nothing checkable, and so nothing noticed.
+
+### 149. The plugin could not start, and every test passed
+
+`onEnable` registered the commands before it built two of the things they need:
+
+```java
+this.lopping = new Lopping(this);
+
+registerPermissions();
+...
+registerCommands(chipServices);          // line 193
+...
+this.seats = new Seats(this);            // line 238
+this.sitting = new Sitting(this, ...);   // line 239
+```
+
+`ChairCommands` asks for both through the guarded accessors, so `sittingTarget()` threw
+`IllegalStateException: Sitting is not available until enabled` and the server never got the plugin
+enabled. Not conditional on any setting: it failed on every start, on every server, from the commit
+that added the chair commands onwards.
+
+Two things made it survive. The accessors are written to fail loudly on a field that has not been
+assigned, which is right — but they turn an ordering mistake into a runtime error rather than a
+compile error, and nothing reads `onEnable` top to bottom. And the whole of `paper`'s test suite
+builds its pieces with mocks around them; **not one test had ever started the plugin**. Sixty-seven
+tests passed against a plugin that could not load.
+
+Fixed by building both before the commands, and by `PluginStartupTest`, which loads the real plugin
+into a test server and asserts it enabled. It asserts almost nothing else, because the throwing is
+the point. Checked by putting the ordering back and watching it fail.
+
+Two things had to give way for that test to be possible, and both are improvements on their own:
+
+`CraftBookPlugin` was `final`. A test server builds a plugin by subclassing it, so a final plugin
+class cannot be started in a test at all. Nothing extends it and nothing is meant to.
+
+`LegacyBlocks` built its two indexes of pre-flattening ids in a static initialiser, which walks
+every material the game has twice on first touch of the class — and touching the class at all
+requires the server's legacy converter, which not every environment has. They are built on first
+use now, behind a holder, so a server that never reads an old spelling never builds them. That is
+the common case: nearly every name a server reads is a modern one.
+
+What is still not covered is the rest of `onEnable` on a real server. A test server does not run
+Paper's command lifecycle, so the commands are built here but never registered, and the listeners
+are registered but never fired.

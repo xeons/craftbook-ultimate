@@ -32,11 +32,23 @@ import org.jspecify.annotations.Nullable;
 @NullMarked
 public final class LegacyBlocks {
 
-    /** Legacy block materials by the numeric id they used to have. */
-    private static final Map<Integer, Material> BY_LEGACY_ID = indexLegacyMaterials(true);
+    /**
+     * The two indexes, built the first time an old spelling is actually read.
+     *
+     * <p>Held behind a class of their own so that they are built on first use rather than when
+     * {@link LegacyBlocks} is first touched. Nearly every name a server reads is a modern one and
+     * never needs them, and building them walks every material the game has twice.
+     */
+    private static final class Index {
 
-    /** Legacy item materials by the numeric id they used to have. */
-    private static final Map<Integer, Material> ITEMS_BY_LEGACY_ID = indexLegacyMaterials(false);
+        /** Legacy block materials by the numeric id they used to have. */
+        static final Map<Integer, Material> BLOCKS = indexLegacyMaterials(true);
+
+        /** Legacy item materials by the numeric id they used to have. */
+        static final Map<Integer, Material> ITEMS = indexLegacyMaterials(false);
+
+        private Index() {}
+    }
 
     private LegacyBlocks() {}
 
@@ -99,7 +111,7 @@ public final class LegacyBlocks {
     private static Optional<Material> legacyItem(BlockReference reference) {
         Optional<Integer> id = reference.id();
         if (id.isPresent()) {
-            return Optional.ofNullable(ITEMS_BY_LEGACY_ID.get(id.get()));
+            return Optional.ofNullable(Index.ITEMS.get(id.get()));
         }
 
         Material legacy = Material.getMaterial(reference.name().toUpperCase(Locale.ROOT), true);
@@ -125,7 +137,7 @@ public final class LegacyBlocks {
     private static Optional<Material> legacyMaterial(BlockReference reference) {
         Optional<Integer> id = reference.id();
         if (id.isPresent()) {
-            return Optional.ofNullable(BY_LEGACY_ID.get(id.get()));
+            return Optional.ofNullable(Index.BLOCKS.get(id.get()));
         }
 
         // A name with a damage value is a pre-flattening name, so it is looked up among the

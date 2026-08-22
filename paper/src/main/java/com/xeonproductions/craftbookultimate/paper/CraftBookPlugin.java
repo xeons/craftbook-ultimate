@@ -118,9 +118,13 @@ import org.jspecify.annotations.Nullable;
  * <p>Holds the pieces that outlive any one mechanic: the chip catalogue assembled during
  * bootstrap, the scheduler factory that binds work to the region owning it, and the manager
  * tracking which chips are currently loaded.
+ *
+ * <p>Deliberately not {@code final}, and nothing here is meant to be extended. A test server
+ * builds a plugin by subclassing it, so a final class cannot be started in a test at all — and
+ * whether this class starts is the one thing about it worth testing. See finding 149.
  */
 @NullMarked
-public final class CraftBookPlugin extends JavaPlugin {
+public class CraftBookPlugin extends JavaPlugin {
 
     private final ICRegistry icRegistry;
 
@@ -184,6 +188,8 @@ public final class CraftBookPlugin extends JavaPlugin {
         this.areas = areaVault;
         this.debugSticks = new DebugStick(this);
         this.lopping = new Lopping(this);
+        this.seats = new Seats(this);
+        this.sitting = new Sitting(this, chipServices.configuration(), seats, Clock.systemUTC());
 
         registerPermissions();
         loadPasswords();
@@ -235,10 +241,9 @@ public final class CraftBookPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new HeadDropListener(chipServices.configuration()), this);
 
-        this.seats = new Seats(this);
-        this.sitting = new Sitting(this, chipServices.configuration(), seats, Clock.systemUTC());
         getServer().getPluginManager().registerEvents(
-                new ChairListener(chipServices.configuration(), seats, sitting), this);
+                new ChairListener(chipServices.configuration(), seatsTarget(), sittingTarget()),
+                this);
         getServer().getPluginManager().registerEvents(
                 new PipeListener(
                         new PipeDispatcher(chipServices.configuration(), pipeNetworks),

@@ -260,18 +260,20 @@ public final class ICDocs {
      */
     private static void pins(StringBuilder page, ICDefinition chip) {
         PinLayout layout = chip.defaultLayout();
-        if (!chip.readsEveryInput()) {
-            if (layout.inputCount() > 1) {
-                row(page, "Inputs", "only input 1 is read; the others are wired to nothing");
+
+        if (chip.readsEveryInput()) {
+            for (int input = 0; input < layout.inputCount(); input++) {
+                int shown = input + 1;
+                chip.inputMeaning(input).ifPresent(meaning ->
+                        row(page, "Input " + shown, meaning));
             }
-            return;
+        } else if (layout.inputCount() > 1) {
+            row(page, "Inputs", "only input 1 is read; the others are wired to nothing");
         }
 
-        for (int input = 0; input < layout.inputCount(); input++) {
-            int shown = input + 1;
-            chip.inputMeaning(input).ifPresent(meaning ->
-                    row(page, "Input " + shown, meaning));
-        }
+        // Said whatever the inputs turned out to be. A chip can be set off by one lever and still
+        // answer on several pins that mean different things, and what those carry is exactly what
+        // a builder cannot work out from the layout.
         for (int output = 0; output < layout.outputCount(); output++) {
             int shown = output + 1;
             chip.outputMeaning(output).ifPresent(meaning ->

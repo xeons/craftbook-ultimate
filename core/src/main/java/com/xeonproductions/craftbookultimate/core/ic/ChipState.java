@@ -355,6 +355,40 @@ public interface ChipState {
     }
 
     /**
+     * Drives a run of outputs as one binary number, least significant bit first.
+     *
+     * <p>How a chip reports a number rather than a yes or a no. A level, a count or a variable's
+     * value comes out across several pins: output 0 carries the ones, output 1 the twos, and so
+     * on, which is the order the arithmetic chips in this catalogue already add in.
+     *
+     * <p>Several pins rather than one, because no block in the game will hold a redstone level a
+     * plugin puts on it. All four that carry a {@code power} property are worked out again by the
+     * game itself — wire from its neighbours, a daylight detector and a sculk sensor from their
+     * own ticking block entities, a weighted plate by decay — so a level written to any of them is
+     * gone within a tick. Levers hold what they are set to, so a number is carried by several of
+     * them.
+     *
+     * <p>A number too large for the pins it is given comes out as the largest that fits rather
+     * than wrapping round to a small one. A readout stuck at fifteen says it has run out of room;
+     * one that wrapped to zero would read as a variable nobody had set.
+     *
+     * @param value the number to show, which is held to zero at the bottom
+     * @param bits how many outputs to use, starting at output zero
+     */
+    default void setOutputNumber(int value, int bits) {
+        int usable = Math.min(bits, outputCount());
+        if (usable <= 0) {
+            return;
+        }
+
+        int largest = (1 << usable) - 1;
+        int shown = Math.clamp(value, 0, largest);
+        for (int bit = 0; bit < usable; bit++) {
+            setOutput(bit, ((shown >> bit) & 1) == 1);
+        }
+    }
+
+    /**
      * The chip's main input, which is input zero.
      *
      * <p>Named for readability in the many chips that only care about one input.

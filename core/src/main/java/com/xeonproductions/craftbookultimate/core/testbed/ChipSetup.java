@@ -138,7 +138,7 @@ public record ChipSetup(
             // Readers of the clock.
             "MC1230", "MCX027", "MC1025", "MC1026",
             // Reads a variable, and reads a block's redstone.
-            "VAR170", "MCX295");
+            "VAR170", "MCX295", "MCN100");
 
     private static final Key COAL = Key.key("minecraft", "coal");
     private static final Key STONE = Key.key("minecraft", "stone");
@@ -196,6 +196,8 @@ public record ChipSetup(
         table.put("VAR100", of(SHARED_NAME, "+:1"));
         table.put("VAR170", of(SHARED_NAME, "5"));
         table.put("VAR200", withChest(of(SHARED_NAME, "coal"), COAL, 12));
+        table.put("MCN100", of(SHARED_NAME));
+        table.put("MCN101", of(SHARED_NAME));
 
         // Blocks placed and swapped. The builders pay out of the chest above them.
         table.put("MCX206", of("Y+1:stone"));

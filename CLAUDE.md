@@ -30,7 +30,7 @@ to a hand and to redstone.**
 | Folia region schedulers (`RegionSchedulers`) | Done |
 | World adapters (directions, positions, signs, redstone) | Done |
 | World-backed `ChipState` (`BlockChipState`) | Done |
-| IC catalogue wiring (128 chips) | Done |
+| IC catalogue wiring (130 chips) | Done |
 | IC instance lifecycle (`ICInstance`, `ICManager`) | Done |
 | Listeners: sign creation, break, redstone, chunk load | Done |
 | Self-triggering chips (per-region tick tasks) | Done |
@@ -91,7 +91,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2376 tests passing**.
+**2415 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -436,6 +436,14 @@ written, through `ICLogic#reviewSign`. That hook is new, and it is the IC counte
 store rather than in the blocks beside the sign, so a sign naming one nobody has made would be
 silently dead and its builder would have nothing to tell that from a wiring fault. Almost no chip
 needs it; these three do.
+
+`MCN100` and `MCN101` are **new**, on a prefix neither source codebase uses, and they are each
+other's opposite: one shows a variable across four pins as a binary number, the other writes the
+redstone level arriving at it into a variable. Between them a level and a variable are the same
+thing. They are the first chips to report a **number** rather than a yes or a no, which is what
+`ChipState#setOutputNumber` exists for — no block in the game holds a redstone level a plugin puts
+on it, since all four with a `power` property are worked out again by the game itself, so a number
+is carried by several levers instead.
 
 `[Marquee]` is a fourth reader and the only one that is not a chip: a sign that tells whoever
 clicks it what a variable says. It is on the `SignMechanic` seam and makes the same check through

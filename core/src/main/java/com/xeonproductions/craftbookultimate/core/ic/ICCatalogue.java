@@ -203,6 +203,25 @@ public final class ICCatalogue {
                 .fourthLine(optional("what to count; blank counts everything", entity()))
                 .logic(VariableChips::itemCounter)
                 .build());
+
+        registry.register(ICDefinition.builder("MCN100", "VAR READOUT")
+                .name("Variable Readout")
+                .description("Shows a variable across its pins as a binary number.")
+                .layout(PinLayout.SI5O)
+                .thirdLine(required("the variable to show", variable()))
+                .outputs("ones", "twos", "fours", "eights", "the variable could be read")
+                .logic(VariableChips::readout)
+                .build());
+
+        registry.register(ICDefinition.builder("MCN101", "SIGNAL VAR")
+                .name("Signal Recorder")
+                .description("Writes the redstone level arriving at its input into a variable.")
+                .layout(PinLayout.SISO)
+                .thirdLine(required("the variable to write to", variable()))
+                .inputs("the level to record, from 0 to 15")
+                .outputs("the variable holds that level")
+                .logic(VariableChips::signalRecorder)
+                .build());
     }
 
     private static void registerSensing(ICRegistry registry) {

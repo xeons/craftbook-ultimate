@@ -107,6 +107,45 @@ public final class VariableChips {
         return new ItemCounter();
     }
 
+    /**
+     * Shows a variable's value across its outputs as a binary number.
+     *
+     * <p>Line 3 names the variable. Outputs 0 to 3 carry the value as bits, least significant
+     * first, so a variable holding 11 lights outputs 0, 1 and 3. Output 4 says whether the
+     * variable could be read at all.
+     *
+     * <p>That last pin is not decoration. {@link Variables#number} answers nothing both for a
+     * variable that has gone and for one holding something that is not a number, and a value of
+     * zero looks exactly like either on the first four pins. Without it a builder cannot tell an
+     * empty counter from a broken sign.
+     *
+     * <p>Four pins because the range that matters is a redstone level, 0 to 15. A variable holding
+     * more comes out as fifteen rather than wrapping; one holding less than zero comes out as
+     * zero. A fraction is rounded to the nearest whole number, since a pin cannot be half on.
+     */
+    public static SelfTriggeringICLogic readout() {
+        return new Readout();
+    }
+
+    /**
+     * Writes the redstone level arriving at its input into a variable.
+     *
+     * <p>The readout backwards, and the reason both exist: between them a redstone level and a
+     * variable are the same thing, so a lever miles away, a comparator on a chest or a daylight
+     * detector can set a number the whole server reads.
+     *
+     * <p>Line 3 names the variable. Whatever level input 0 is carrying, 0 to 15, is what the
+     * variable is set to. The output follows whether the variable holds that level, so a chip
+     * whose variable has been deleted since its sign was written reads low rather than silently
+     * doing nothing.
+     *
+     * <p>Nothing is written where the value has not changed, so a chip left ticking against a
+     * steady lever does not rewrite the same number every tick.
+     */
+    public static SelfTriggeringICLogic signalRecorder() {
+        return new SignalRecorder();
+    }
+
     /** What a modifier does to a variable. */
     public enum Function {
 
@@ -216,6 +255,85 @@ public final class VariableChips {
                                 + functionList() + ".");
             }
             return Optional.empty();
+        }
+    }
+
+    /** MCN100, which shows a variable across its pins as a binary number. */
+    private static final class Readout implements SelfTriggeringICLogic {
+
+        /** How many pins carry the number, which is the range of a redstone level. */
+        private static final int VALUE_PINS = 4;
+
+        /** The pin saying the variable was there to read. */
+        private static final int READABLE_PIN = 4;
+
+        @Override
+        public void trigger(ChipState state) {
+            if (state.mainInput()) {
+                show(state);
+            }
+        }
+
+        @Override
+        public void tick(ChipState state) {
+            show(state);
+        }
+
+        private static void show(ChipState state) {
+            Optional<VariableName> name = variableOn(state.sign());
+            OptionalDouble held = name.map(state.variables()::number).orElse(OptionalDouble.empty());
+
+            if (held.isEmpty()) {
+                state.setOutputNumber(0, VALUE_PINS);
+                state.setOutput(READABLE_PIN, false);
+                return;
+            }
+
+            state.setOutputNumber((int) Math.round(held.getAsDouble()), VALUE_PINS);
+            state.setOutput(READABLE_PIN, true);
+        }
+
+        @Override
+        public Optional<String> reviewSign(SignLines lines, ChipServices services, Actor builder) {
+            return reviewVariable(lines, services, builder);
+        }
+    }
+
+    /** MCN101, which writes the level arriving at its input into a variable. */
+    private static final class SignalRecorder implements SelfTriggeringICLogic {
+
+        @Override
+        public void trigger(ChipState state) {
+            record(state);
+        }
+
+        @Override
+        public void tick(ChipState state) {
+            record(state);
+        }
+
+        private static void record(ChipState state) {
+            Optional<VariableName> name = variableOn(state.sign());
+            if (name.isEmpty()) {
+                state.setMainOutput(false);
+                return;
+            }
+
+            Variables variables = state.variables();
+            int arriving = state.inputPower(0);
+
+            OptionalDouble held = variables.number(name.get());
+            if (held.isPresent() && (int) Math.round(held.getAsDouble()) == arriving) {
+                state.setMainOutput(true);
+                return;
+            }
+
+            state.setMainOutput(variables.setNumber(name.get(), arriving));
+        }
+
+        @Override
+        public Optional<String> reviewSign(SignLines lines, ChipServices services, Actor builder) {
+            return reviewVariable(lines, services, builder);
         }
     }
 

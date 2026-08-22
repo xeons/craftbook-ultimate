@@ -134,7 +134,7 @@ watching for somebody to walk past. Those have a second model number for the
 self-triggering form, given as **runs on its own** in their entry, and `[MC1420]S`
 asks the same of any chip that can do it.
 
-There are **128 chips**, answering to **157 model numbers**. 51 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
+There are **130 chips**, answering to **159 model numbers**. 51 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
 
 ## Every chip
 
@@ -205,6 +205,8 @@ There are **128 chips**, answering to **157 model numbers**. 51 of them are rest
 | [`MC6020`](#mc6020--random-5-bit) | `RANDOM 5` | Random 5-Bit | Randomly sets the outputs high. |
 | [`MC6543`](#mc6543--analog-transmitter) | `REDCODER` | Analog Transmitter | Transmits a band per redstone power level. |
 | [`MCM116`](#mcm116--mob-above) | `MOB ABOVE?` | Mob Above | Outputs high while a creature is standing above the sign's support. |
+| [`MCN100`](#mcn100--variable-readout) | `VAR READOUT` | Variable Readout | Shows a variable across its pins as a binary number. |
+| [`MCN101`](#mcn101--signal-recorder) | `SIGNAL VAR` | Signal Recorder | Writes the redstone level arriving at its input into a variable. |
 | [`MCT233`](#mct233--weather-control) | `WEATHER CTRL ADV` | Weather Control *(restricted)* | Sets rain and thunder using three inputs. |
 | [`MCU113`](#mcu113--destination) | `DESTINATION` | Destination *(restricted)* | Receives whoever a transporter sends to its name. |
 | [`MCU440`](#mcu440--monoflop) | `^MONOFLOP` | Monoflop | Waits out a countdown, then turns on. |
@@ -1090,6 +1092,32 @@ Outputs high while a creature is standing above the sign's support.
 - **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCO116]`
 - **Permission** — `craftbook.ic.safe.mcm116`
+
+### MCN100 — Variable Readout
+
+Shows a variable across its pins as a binary number.
+
+- **Write on the sign** — `[MCN100]`, or `=VAR READOUT`
+- **Line 3** — the variable to show *(required)*<br>  Takes `<name>` `<namespace>|<name>`
+- **Line 4** — nothing
+- **Wiring** — `SI5O`, 1 input, 5 outputs
+- **Output 1** — ones
+- **Output 2** — twos
+- **Output 3** — fours
+- **Output 4** — eights
+- **Output 5** — the variable could be read
+- **Permission** — `craftbook.ic.safe.mcn100`
+
+### MCN101 — Signal Recorder
+
+Writes the redstone level arriving at its input into a variable.
+
+- **Write on the sign** — `[MCN101]`, or `=SIGNAL VAR`
+- **Line 3** — the variable to write to *(required)*<br>  Takes `<name>` `<namespace>|<name>`
+- **Line 4** — nothing
+- **Wiring** — `SISO`, 1 input, 1 output
+- **Output 1** — the variable holds that level
+- **Permission** — `craftbook.ic.safe.mcn101`
 
 ### MCT233 — Weather Control
 

@@ -7,13 +7,15 @@ it still there after a restart.
 That is what makes a scoreboard, a shop till, a quest counter or a stock level possible without
 any of the redstone involved being in the same chunk.
 
-Three chips work with them, and one sign that is not a chip at all:
+Five chips work with them, and one sign that is not a chip at all:
 
 | Sign | What it does |
 | --- | --- |
 | `[VAR100]` | Does a sum to a variable — add one, double it, take ten away. |
 | `[VAR170]` | Drives its output high once a variable has reached a number. |
 | `[VAR200]` | Counts what is in the chest above it and adds the total to a variable. |
+| `[MCN100]` | Shows a variable across four pins as a number from 0 to 15. |
+| `[MCN101]` | Writes the redstone level arriving at it into a variable. |
 | `[Marquee]` | Tells whoever right-clicks it what a variable says. |
 
 ---
@@ -197,6 +199,69 @@ Leave line 4 blank and it counts everything in the chest, whatever it is.
 > It adds rather than sets. Counting the same chest twice gives you twice the total. To take a
 > fresh reading, set the variable back to zero first — a `[VAR100]` reading `*:0` on the same pulse
 > does it.
+
+---
+
+## `[MCN100]` and `[MCN101]` — a variable as a redstone level
+
+These two are each other's opposite, and between them a redstone level and a variable become the
+same thing. A lever on the far side of the map, a comparator on a chest, a daylight detector — any
+of them can set a number the whole server reads, and any of them can be driven by one.
+
+```
+Line 2  [MCN101]        Line 2  [MCN100]
+Line 3  lift_floor      Line 3  lift_floor
+```
+
+`[MCN101]` reads the **strength** of the signal reaching its input, not merely whether there is
+one, and writes that number — 0 to 15 — into the variable. `[MCN100]` does the reverse: it drives
+its pins with the variable's value as a binary number.
+
+### Reading the pins
+
+`[MCN100]` has five outputs and they are not interchangeable:
+
+| Pin | Carries |
+| --- | --- |
+| Output 1 | the ones |
+| Output 2 | the twos |
+| Output 3 | the fours |
+| Output 4 | the eights |
+| Output 5 | whether the variable could be read at all |
+
+So a variable holding 11 lights outputs 1, 2 and 4 — eight plus two plus one. Least significant
+first, which is the order the adders and subtractors in this catalogue already work in, so the
+four pins feed straight into an `[MC4000]` without rearranging anything.
+
+**Output 5 is not decoration.** A variable holding zero and a variable that has been deleted look
+identical on the first four pins, and so does one holding a word rather than a number. Without
+that pin there is no way to tell an empty counter from a broken sign. Wire it to a lamp if you
+build nothing else.
+
+### Why four pins and not one
+
+Nothing in the game will hold a redstone level a plugin puts on it. Every block with a `power`
+property has it worked out again by the game — wire from its neighbours, a daylight detector and a
+sculk sensor from their own ticking, a weighted plate by decay — so a level written to any of them
+is gone within a tick. A lever holds what it is set to, so a number is carried by several of them.
+
+A value too big for four pins comes out as **15** rather than wrapping round to a small number, and
+anything below zero comes out as **0**. A readout stuck at fifteen is telling you it has run out of
+room; one that had wrapped to zero would read as a variable nobody had set. Fractions are rounded
+to the nearest whole number, since a pin cannot be half on.
+
+### Both follow the variable on their own
+
+Written plainly, each does its work when its input is pulsed. Written `[MCN100]S` the readout
+follows the variable every tick with no input at all, which is what you want for a display that
+somebody else's chip is updating.
+
+`[MCN101]` writes nothing when the level has not changed, so one left ticking against a steady
+lever does not rewrite the same number every tick.
+
+> Both refuse a sign naming a variable that does not exist, as the other three do. If the variable
+> is deleted afterwards, `[MCN100]` reads zero with output 5 low, and `[MCN101]` drives its output
+> low rather than silently doing nothing.
 
 ---
 

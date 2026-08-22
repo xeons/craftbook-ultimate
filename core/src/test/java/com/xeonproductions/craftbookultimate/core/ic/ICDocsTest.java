@@ -120,6 +120,26 @@ class ICDocsTest {
         }
 
         @Test
+        void saysWhatEachOutputCarriesEvenWhenOnlyOneInputIsRead() {
+            // A chip can be set off by one lever and still answer on several pins meaning
+            // different things, which is exactly what a builder cannot see from the layout.
+            String page = pageFor(chip("MC1000", "ONE")
+                    .layout(PinLayout.SI3O)
+                    .outputs("the ones", "the twos", "the fours")
+                    .build());
+
+            assertThat(page).contains("**Output 1** — the ones");
+            assertThat(page).contains("**Output 3** — the fours");
+        }
+
+        @Test
+        void stillSaysWhichInputsAreWiredToNothing() {
+            String page = pageFor(chip("MC1000", "ONE").layout(PinLayout.THREE_I_SO).build());
+
+            assertThat(page).contains("only input 1 is read");
+        }
+
+        @Test
         void saysWhichLineWritingUuidIsReadOn() {
             String page = pageFor(chip("MC1000", "ONE").playerIdentityLine(2).build());
 

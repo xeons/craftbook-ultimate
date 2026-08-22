@@ -10,6 +10,8 @@ import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.ParameterizedTest;
 
 @DisplayName("In-memory chip state")
 class SimpleChipStateTest {
@@ -204,6 +206,90 @@ class SimpleChipStateTest {
         @Test
         void defaultsToNoMode() {
             assertThat(SimpleChipState.of(1, 1).build().mode()).isEqualTo(ICMode.NONE);
+        }
+    }
+
+    @Nested
+    @DisplayName("driving a number across the outputs")
+    class OutputNumbers {
+
+        /** What a chip's first {@code bits} pins are showing. */
+        private int shownBy(SimpleChipState state, int bits) {
+            int value = 0;
+            for (int bit = 0; bit < bits; bit++) {
+                if (state.output(bit)) {
+                    value |= 1 << bit;
+                }
+            }
+            return value;
+        }
+
+        @ParameterizedTest
+        @DisplayName("carries every value four pins can hold")
+        @ValueSource(ints = {0, 1, 2, 3, 7, 8, 14, 15})
+        void carriesTheValue(int value) {
+            SimpleChipState state = SimpleChipState.of(1, 5).build();
+
+            state.setOutputNumber(value, 4);
+
+            assertThat(shownBy(state, 4)).isEqualTo(value);
+        }
+
+        @Test
+        void putsTheOnesOnTheFirstPin() {
+            SimpleChipState state = SimpleChipState.of(1, 5).build();
+
+            state.setOutputNumber(1, 4);
+
+            assertThat(state.output(0)).isTrue();
+            assertThat(state.output(3)).isFalse();
+        }
+
+        @Test
+        void showsTheLargestThatFitsRatherThanWrappingRound() {
+            // Wrapping 16 round to zero would read as a chip nobody had driven.
+            SimpleChipState state = SimpleChipState.of(1, 5).build();
+
+            state.setOutputNumber(16, 4);
+
+            assertThat(shownBy(state, 4)).isEqualTo(15);
+        }
+
+        @Test
+        void showsNothingForANegativeNumber() {
+            SimpleChipState state = SimpleChipState.of(1, 5).build();
+
+            state.setOutputNumber(-1, 4);
+
+            assertThat(shownBy(state, 4)).isZero();
+        }
+
+        @Test
+        void leavesThePinsItWasNotGivenAlone() {
+            SimpleChipState state = SimpleChipState.of(1, 5).build();
+            state.setOutput(4, true);
+
+            state.setOutputNumber(15, 4);
+
+            assertThat(state.output(4)).isTrue();
+        }
+
+        @Test
+        void usesNoMorePinsThanTheChipHas() {
+            SimpleChipState state = SimpleChipState.of(1, 2).build();
+
+            state.setOutputNumber(15, 4);
+
+            assertThat(shownBy(state, 2)).isEqualTo(3);
+        }
+
+        @Test
+        void doesNothingForAChipWithNoOutputs() {
+            SimpleChipState state = SimpleChipState.of(1, 0).build();
+
+            state.setOutputNumber(15, 4);
+
+            assertThat(state.outputCount()).isZero();
         }
     }
 

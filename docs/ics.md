@@ -16,6 +16,15 @@ Line 3   whatever the chip needs told
 Line 4   whatever else it needs told
 ```
 
+Where an entry below says a line **takes** something, those are the spellings the
+chip really accepts: they come from the chip's own reader rather than from
+anything written about it. A line the chip cannot read is refused as the sign is
+written, and says what it would have taken.
+
+Pins are counted from one, the way they read on the page. A chip that names its
+inputs reads all of them; one that says only input 1 is read leaves the other two
+wired to nothing, so a lever on them does nothing whatever.
+
 Line 2 is the whole declaration. Write the model number in brackets and the rest
 fills itself in: line 1 becomes the chip's shorthand, so you can read at a glance
 what a wall of signs is doing.
@@ -170,7 +179,7 @@ There are **117 chips**, answering to **146 model numbers**. 48 of them are rest
 | [`MC3033`](#mc3033--rs-nand-latch) | `RS-NAND` | RS-Nand Latch | A compact RS-Nand latch. |
 | [`MC3034`](#mc3034--edge-trigger-d-flip-flop) | `EDGE-D` | Edge-Trigger D Flip Flop | A compact edge-triggered D flip flop. |
 | [`MC3036`](#mc3036--level-trigger-d-flip-flop) | `LEVEL-D` | Level-Trigger D Flip Flop | A compact level-triggered D flip flop. |
-| [`MC3040`](#mc3040--multiplexer) | `MULTIPLEXER` | Multiplexer | Outputs input 1 or 2 depending on the state of input 0. |
+| [`MC3040`](#mc3040--multiplexer) | `MULTIPLEXER` | Multiplexer | Passes on one of two inputs, chosen by the third. |
 | [`MC3050`](#mc3050--combination-lock) | `COMBO` | Combination Lock | Outputs high if the correct combination is entered. |
 | [`MC3101`](#mc3101--down-counter) | `DOWN COUNTER` | Down Counter | Decrements on redstone signal, outputs high on reaching zero. |
 | [`MC3102`](#mc3102--counter) | `COUNTER` | Counter | Increments on redstone signal, outputs high on reaching the limit. |
@@ -259,6 +268,7 @@ Repeats a redstone signal.
 - **Line 3** — how long to delay, such as 20T or 2S; blank repeats at once
 - **Line 4** — nothing
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1000`
 
 ### MC1001 — Inverter
@@ -269,6 +279,7 @@ Inverts a redstone signal.
 - **Line 3** — how long to delay, such as 20T or 2S; blank inverts at once
 - **Line 4** — nothing
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1001`
 
 ### MC1017 — Toggle Flip Flop RE
@@ -279,6 +290,7 @@ Toggles output on high.
 - **Line 3** — nothing
 - **Line 4** — where the chip keeps its state; it writes this itself
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1017`
 
 ### MC1018 — Toggle Flip Flop FE
@@ -289,6 +301,7 @@ Toggles output on low.
 - **Line 3** — nothing
 - **Line 4** — where the chip keeps its state; it writes this itself
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1018`
 
 ### MC1020 — Random Bit
@@ -299,6 +312,7 @@ Randomly sets the output high.
 - **Line 3** — max on its own, or min:max
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1020`
 
 ### MC1025 — World Time Modulus
@@ -309,6 +323,7 @@ Outputs high when the world time mod X is at least Y.
 - **Line 3** — the divisor, defaulting to 2
 - **Line 4** — the threshold, defaulting to 0
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1025`
 
 ### MC1026 — Unix Time Modulus
@@ -319,6 +334,7 @@ Outputs high when unix time mod X is at least Y.
 - **Line 3** — the divisor, defaulting to 2
 - **Line 4** — the threshold, defaulting to 0
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1026`
 
 ### MC1110 — Wireless Transmitter
@@ -329,6 +345,7 @@ Transmits a wireless redstone signal.
 - **Line 3** — the channel to transmit on *(required)*
 - **Line 4** — a namespace around the channel; uuid means your own
 - **Wiring** — `AIZO`, 3 inputs, no outputs
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1110`
 - **Names you** — Writing `uuid` on line 4 is replaced by your own player id.
 
@@ -340,6 +357,7 @@ Receives a wireless redstone signal.
 - **Line 3** — the channel to follow *(required)*
 - **Line 4** — a namespace around the channel; uuid means your own
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MC0111]`
 - **Permission** — `craftbook.ic.safe.mc1111`
 - **Names you** — Writing `uuid` on line 4 is replaced by your own player id.
@@ -352,6 +370,7 @@ Strikes an area with lightning, at a chance per block.
 - **Line 3** — the reach, one number or x,y,z, optionally =x:y:z to move the middle
 - **Line 4** — the chance out of a hundred that any one block is struck
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1203`
 - **Restricted** — not granted to everybody by default
 
@@ -363,6 +382,7 @@ Sets a block above the IC block.
 - **Line 3** — the block to place *(required)*<br>  Takes `<block>` `<id>:<data>`
 - **Line 4** — Force to replace whatever is already there
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1205`
 - **Restricted** — not granted to everybody by default
 
@@ -374,6 +394,7 @@ Sets a block below the IC block.
 - **Line 3** — the block to place *(required)*<br>  Takes `<block>` `<id>:<data>`
 - **Line 4** — Force to replace whatever is already there
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1206`
 - **Restricted** — not granted to everybody by default
 
@@ -385,6 +406,7 @@ Sets a block at a specified location, without paying for it.
 - **Line 3** — where to put it and what to put there *(required)*<br>  Takes `<offset>:<block>`
 - **Line 4** — h to hold the block until the input drops
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1207`
 - **Restricted** — not granted to everybody by default
 
@@ -396,6 +418,7 @@ Outputs high while the world time is within the day.
 - **Line 3** — the start of the window, in ticks through the day
 - **Line 4** — the end of the window
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MC0230]`
 - **Permission** — `craftbook.ic.safe.mc1230`
 
@@ -407,6 +430,7 @@ Shoots a single arrow out of the back of the sign.
 - **Line 3** — speed[:spread]
 - **Line 4** — a vertical velocity
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1240`
 - **Restricted** — not granted to everybody by default
 
@@ -418,6 +442,7 @@ Shoots five arrows out of the back of the sign.
 - **Line 3** — speed[:spread]
 - **Line 4** — a vertical velocity
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1241`
 - **Restricted** — not granted to everybody by default
 
@@ -429,6 +454,7 @@ Swaps a block between two kinds and lets the change spread outward.
 - **Line 3** — the two blocks it swaps between *(required)*<br>  Takes `<block>` `<driven>|<idle>`
 - **Line 4** — delay:mode:physics
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1249`
 - **Restricted** — not granted to everybody by default
 
@@ -440,6 +466,7 @@ Sets off a firework.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1250`
 - **Restricted** — not granted to everybody by default
 
@@ -451,6 +478,7 @@ Plays a firework display from a script.
 - **Line 3** — the show, from the plugin's fireworks folder *(required)*
 - **Line 4** — whether dropping the input cuts the show short
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1253`
 - **Restricted** — not granted to everybody by default
 
@@ -462,6 +490,7 @@ Outputs high if water is detected.
 - **Line 3** — a vertical offset from the sign's support, defaulting to one
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1260`
 
 ### MC1261 — Lava Sensor
@@ -472,6 +501,7 @@ Outputs high if lava is detected.
 - **Line 3** — a vertical offset from the sign's support, defaulting to one
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1261`
 
 ### MC1262 — Light Sensor
@@ -482,6 +512,7 @@ Outputs high if the specified light level is detected.
 - **Line 3** — the light level to compare against, defaulting to eight
 - **Line 4** — a vertical offset from the sign's support
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1262`
 
 ### MC1420 — Clock
@@ -492,6 +523,7 @@ Toggles its output every X ticks.
 - **Line 3** — the period in ticks, from 3 to 1000, defaulting to 20
 - **Line 4** — where the chip keeps its count; it writes this itself
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MC0420]`
 - **Permission** — `craftbook.ic.safe.mc1420`
 
@@ -503,6 +535,7 @@ Outputs high while a named player is logged in.
 - **Line 3** — the name to look for, matching anybody whose name contains it
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MC0500]`
 - **Permission** — `craftbook.ic.safe.mc1500`
 
@@ -514,6 +547,7 @@ Says something to one named player, wherever they are.
 - **Line 3** — the account to message *(required)*
 - **Line 4** — what to say *(required)*
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1510`
 - **Restricted** — not granted to everybody by default
 
@@ -525,6 +559,7 @@ Says something to everybody online.
 - **Line 3** — what to say *(required)*
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mc1511`
 - **Restricted** — not granted to everybody by default
 
@@ -546,6 +581,10 @@ Remembers a row of bits and rotates them along.
 - **Line 3** — how many bits, from 2 to 64, defaulting to eight
 - **Line 4** — the bits themselves; the chip writes these
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — rotates the row along, while input 2 is high
+- **Input 2** — writes input 3 into the first bit, while input 1 is high
+- **Input 3** — the bit being written
+- **Output 1** — the first bit of the row
 - **Permission** — `craftbook.ic.safe.mc2022`
 
 ### MC2999 — Marquee
@@ -566,6 +605,10 @@ Outputs high if all inputs are high.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — one of the inputs
+- **Input 2** — one of the inputs
+- **Input 3** — one of the inputs
+- **Output 1** — high while every wired input is high
 - **Permission** — `craftbook.ic.safe.mc3002`
 
 ### MC3003 — Nand Gate
@@ -576,6 +619,10 @@ Outputs high if any input is low.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — one of the inputs
+- **Input 2** — one of the inputs
+- **Input 3** — one of the inputs
+- **Output 1** — low while every wired input is high
 - **Permission** — `craftbook.ic.safe.mc3003`
 
 ### MC3020 — Xor Gate
@@ -586,6 +633,10 @@ Outputs high if the inputs are different.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — one of the inputs
+- **Input 2** — one of the inputs
+- **Input 3** — one of the inputs
+- **Output 1** — high while an odd number of wired inputs are high
 - **Permission** — `craftbook.ic.safe.mc3020`
 
 ### MC3021 — Xnor Gate
@@ -596,6 +647,10 @@ Outputs high if the inputs are the same.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — one of the inputs
+- **Input 2** — one of the inputs
+- **Input 3** — one of the inputs
+- **Output 1** — high while an even number of wired inputs are high
 - **Permission** — `craftbook.ic.safe.mc3021`
 
 ### MC3030 — RS-Nor Latch
@@ -606,6 +661,10 @@ A compact RS-Nor latch.
 - **Line 3** — nothing
 - **Line 4** — where the chip keeps its state; it writes this itself
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — set
+- **Input 2** — reset
+- **Input 3** — reset as well; either one wins over set
+- **Output 1** — Q, the value being held
 - **Permission** — `craftbook.ic.safe.mc3030`
 
 ### MC3031 — Inverse RS-Nand Latch
@@ -616,6 +675,10 @@ A compact inverse RS-Nand latch.
 - **Line 3** — nothing
 - **Line 4** — where the chip keeps its state; it writes this itself
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — set, which wins over reset
+- **Input 2** — reset
+- **Input 3** — not read
+- **Output 1** — Q, the value being held
 - **Permission** — `craftbook.ic.safe.mc3031`
 
 ### MC3032 — JK Flip Flop
@@ -626,6 +689,10 @@ A compact JK flip flop.
 - **Line 3** — nothing
 - **Line 4** — where the chip keeps its state; it writes this itself
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — the clock, which acts as it falls
+- **Input 2** — J, which sets
+- **Input 3** — K, which resets
+- **Output 1** — Q, which toggles when J and K are both high
 - **Permission** — `craftbook.ic.safe.mc3032`
 
 ### MC3033 — RS-Nand Latch
@@ -636,6 +703,10 @@ A compact RS-Nand latch.
 - **Line 3** — nothing
 - **Line 4** — where the chip keeps its state; it writes this itself
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — the data, sampled on the clock
+- **Input 2** — the clock, which acts as it rises
+- **Input 3** — reset, which wins over everything
+- **Output 1** — Q, the value sampled
 - **Permission** — `craftbook.ic.safe.mc3033`
 
 ### MC3034 — Edge-Trigger D Flip Flop
@@ -646,6 +717,10 @@ A compact edge-triggered D flip flop.
 - **Line 3** — nothing
 - **Line 4** — where the chip keeps its state; it writes this itself
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — the clock; the data is followed while this is high
+- **Input 2** — the data
+- **Input 3** — reset, applied after the sample
+- **Output 1** — Q, the value being followed
 - **Permission** — `craftbook.ic.safe.mc3034`
 
 ### MC3036 — Level-Trigger D Flip Flop
@@ -656,16 +731,24 @@ A compact level-triggered D flip flop.
 - **Line 3** — nothing
 - **Line 4** — where the chip keeps its state; it writes this itself
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — the clock; the data is followed while this is high
+- **Input 2** — the data
+- **Input 3** — reset, applied after the sample
+- **Output 1** — Q, the value being followed
 - **Permission** — `craftbook.ic.safe.mc3036`
 
 ### MC3040 — Multiplexer
 
-Outputs input 1 or 2 depending on the state of input 0.
+Passes on one of two inputs, chosen by the third.
 
 - **Write on the sign** — `[MC3040]`, or `=MULTIPLEXER`
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — which input to pass on: high for input 2, low for input 3
+- **Input 2** — passed on while input 1 is high
+- **Input 3** — passed on while input 1 is low
+- **Output 1** — whichever input was chosen
 - **Permission** — `craftbook.ic.safe.mc3040`
 
 ### MC3050 — Combination Lock
@@ -676,6 +759,10 @@ Outputs high if the correct combination is entered.
 - **Line 3** — the combination, three characters where X means that input must be high *(required)*
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — the first of the combination
+- **Input 2** — the second of the combination
+- **Input 3** — the third of the combination
+- **Output 1** — high while the combination on line 3 is entered
 - **Permission** — `craftbook.ic.safe.mc3050`
 
 ### MC3101 — Down Counter
@@ -686,6 +773,10 @@ Decrements on redstone signal, outputs high on reaching zero.
 - **Line 3** — the limit to count to, optionally followed by :INF to keep going
 - **Line 4** — where the chip keeps its total; it writes this itself
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — counts down a step
+- **Input 2** — resets the count to the limit
+- **Input 3** — not read
+- **Output 1** — high on reaching zero
 - **Permission** — `craftbook.ic.safe.mc3101`
 
 ### MC3102 — Counter
@@ -696,6 +787,10 @@ Increments on redstone signal, outputs high on reaching the limit.
 - **Line 3** — the limit to count to, optionally followed by :INF to keep going
 - **Line 4** — where the chip keeps its total; it writes this itself
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — counts up a step
+- **Input 2** — resets the count to zero
+- **Input 3** — not read
+- **Output 1** — high on reaching the limit
 - **Permission** — `craftbook.ic.safe.mc3102`
 
 ### MC3231 — Time Control Advanced
@@ -706,6 +801,9 @@ Moves the world to the next morning or night when clocked.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — the clock, which acts as it rises
+- **Input 2** — morning while high, night while low
+- **Input 3** — not read
 - **Permission** — `craftbook.ic.restricted.mc3231`
 - **Restricted** — not granted to everybody by default
 
@@ -717,6 +815,9 @@ Steps along a run of numbered bands, one at a time.
 - **Line 3** — channel:first:last *(required)*
 - **Line 4** — a namespace around the channel
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — a pulse steps to the next band in the run
+- **Input 2** — puts the run back to its beginning
+- **Input 3** — holds the run where it is, however hard input 1 is pulsed
 - **Permission** — `craftbook.ic.safe.mc3456`
 - **Names you** — Writing `uuid` on line 4 is replaced by your own player id.
 
@@ -728,6 +829,12 @@ A compact full adder.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3I3O`, 3 inputs, 3 outputs
+- **Input 1** — the carry in
+- **Input 2** — one addend
+- **Input 3** — the other addend
+- **Output 1** — the sum
+- **Output 2** — the carry out
+- **Output 3** — the carry out again, so it can feed two places
 - **Permission** — `craftbook.ic.safe.mc4000`
 
 ### MC4010 — Half Adder
@@ -738,6 +845,12 @@ A compact half adder.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3I3O`, 3 inputs, 3 outputs
+- **Input 1** — not read
+- **Input 2** — one addend
+- **Input 3** — the other addend
+- **Output 1** — the sum
+- **Output 2** — the carry out
+- **Output 3** — the carry out again, so it can feed two places
 - **Permission** — `craftbook.ic.safe.mc4010`
 
 ### MC4040 — Demultiplexer 2-Bit
@@ -748,6 +861,14 @@ Raises the output selected by the input.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3I5O`, 3 inputs, 5 outputs
+- **Input 1** — not read
+- **Input 2** — the low bit of the address
+- **Input 3** — the high bit of the address
+- **Output 1** — high while the address is 0
+- **Output 2** — high while the address is 1
+- **Output 3** — high while the address is 2
+- **Output 4** — high while the address is 3
+- **Output 5** — never raised
 - **Permission** — `craftbook.ic.safe.mc4040`
 
 ### MC4100 — Full Subtractor
@@ -758,6 +879,12 @@ A compact full subtractor.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3I3O`, 3 inputs, 3 outputs
+- **Input 1** — the minuend
+- **Input 2** — the subtrahend
+- **Input 3** — the borrow in
+- **Output 1** — the difference
+- **Output 2** — the borrow out
+- **Output 3** — the borrow out again, so it can feed two places
 - **Permission** — `craftbook.ic.safe.mc4100`
 
 ### MC4110 — Half Subtractor
@@ -768,6 +895,12 @@ A compact half subtractor.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3I3O`, 3 inputs, 3 outputs
+- **Input 1** — not read
+- **Input 2** — the minuend
+- **Input 3** — the subtrahend
+- **Output 1** — the difference
+- **Output 2** — the borrow out
+- **Output 3** — the borrow out again, so it can feed two places
 - **Permission** — `craftbook.ic.safe.mc4110`
 
 ### MC4200 — Dispatcher
@@ -778,6 +911,12 @@ Outputs the centre input on the selected outputs.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3I3O`, 3 inputs, 3 outputs
+- **Input 1** — the value to send
+- **Input 2** — sends it to output 2
+- **Input 3** — sends it to output 3
+- **Output 1** — the value, while nothing is selected
+- **Output 2** — the value, while input 2 is high
+- **Output 3** — the value, while input 3 is high
 - **Permission** — `craftbook.ic.safe.mc4200`
 
 ### MC6020 — Random 5-Bit
@@ -798,6 +937,10 @@ Transmits a band per redstone power level.
 - **Line 3** — channel[:first:last][:T] *(required)*
 - **Line 4** — a namespace around the channel
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Input 1** — power in; the strongest of the four is what is transmitted
+- **Input 2** — power in; the strongest of the four is what is transmitted
+- **Input 3** — power in; the strongest of the four is what is transmitted
+- **Input 4** — power in; the strongest of the four is what is transmitted
 - **Permission** — `craftbook.ic.safe.mc6543`
 - **Names you** — Writing `uuid` on line 4 is replaced by your own player id.
 
@@ -809,6 +952,7 @@ Outputs high while a creature is standing above the sign's support.
 - **Line 3** — what counts as a creature; blank means anything alive<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how far to look
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCO116]`
 - **Permission** — `craftbook.ic.safe.mcm116`
 
@@ -820,6 +964,9 @@ Sets rain and thunder using three inputs.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Input 1** — the clock, which acts as it rises
+- **Input 2** — asks for rain
+- **Input 3** — asks for thunder
 - **Permission** — `craftbook.ic.restricted.mct233`
 - **Restricted** — not granted to everybody by default
 
@@ -831,6 +978,7 @@ Receives whoever a transporter sends to its name.
 - **Line 3** — the name this destination answers to *(required)*
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcu113`
 - **Restricted** — not granted to everybody by default
 
@@ -842,6 +990,7 @@ Waits out a countdown, then turns on.
 - **Line 3** — count:rate, optionally followed by :onCount
 - **Line 4** — nothing
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcu440`
 
 ### MCU700 — Melody
@@ -852,6 +1001,7 @@ Plays a MIDI file through an adjacent note block.
 - **Line 3** — the MIDI file to play, or a name ending .p for a playlist *(required)*
 - **Line 4** — flags separated by colons: loop, random
 - **Wiring** — `UISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcu700`
 - **Restricted** — not granted to everybody by default
 
@@ -863,6 +1013,7 @@ Plays a tune written on the sign, through an adjacent note block.
 - **Line 3** — the tune, optionally with ticks between notes in front, as 3:0c2e2g2 *(required)*
 - **Line 4** — more of the same tune, run on from line 3
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcu705`
 - **Restricted** — not granted to everybody by default
 
@@ -874,6 +1025,7 @@ Plays a record through an adjacent jukebox.
 - **Line 3** — the record's name as the game calls it, such as 13 or mellohi *(required)*
 - **Line 4** — nothing
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcu706`
 - **Restricted** — not granted to everybody by default
 
@@ -885,6 +1037,7 @@ Sends a burst of pulses when triggered.
 - **Line 3** — how long each pulse lasts in milliseconds, 100 to 1000
 - **Line 4** — how many pulses, 1 to 10
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcx010`
 
 ### MCX011 — Signal Extender
@@ -895,6 +1048,7 @@ Holds the output high for a while after the input ends.
 - **Line 3** — how long to hold, such as 500, 20T or 2S
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcx011`
 
 ### MCX027 — Between Time
@@ -905,6 +1059,7 @@ Outputs high if the time is between the specified ticks.
 - **Line 3** — the start, in ticks through the day
 - **Line 4** — the end, defaulting to the whole day
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcx027`
 
 ### MCX112 — Transporter
@@ -915,6 +1070,7 @@ Sends whoever is standing on it to a named destination.
 - **Line 3** — the destination to send people to *(required)*
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx112`
 - **Restricted** — not granted to everybody by default
 
@@ -926,6 +1082,7 @@ Outputs high while a player is standing above the sign's support.
 - **Line 3** — which players; blank means anyone<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — radius[:height[:up]]
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ116]`
 - **Permission** — `craftbook.ic.safe.mcx116`
 
@@ -937,6 +1094,7 @@ Outputs high while a player is standing below the sign's support.
 - **Line 3** — which players; blank means anyone<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — radius[:height[:up]]
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ117]`
 - **Permission** — `craftbook.ic.safe.mcx117`
 
@@ -948,6 +1106,7 @@ Outputs high while a player is within range.
 - **Line 3** — which players; blank means anyone<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how far to reach, defaulting to five blocks
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ118]`
 - **Permission** — `craftbook.ic.safe.mcx118`
 
@@ -959,6 +1118,7 @@ Outputs high while a creature is within range.
 - **Line 3** — what counts; blank means anything alive<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how far to reach
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ119]`
 - **Permission** — `craftbook.ic.safe.mcx119`
 
@@ -970,6 +1130,7 @@ Follows a switch that anyone may throw by command.
 - **Line 3** — the switch to follow *(required)*
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ120]`
 - **Permission** — `craftbook.ic.safe.mcx120`
 
@@ -981,6 +1142,7 @@ Follows a switch that takes a password to throw.
 - **Line 3** — the switch to follow *(required)*
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ121]`
 - **Permission** — `craftbook.ic.safe.mcx121`
 
@@ -1004,6 +1166,7 @@ Hurts players standing above it.
 - **Line 3** — which players; blank means anyone<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how hard to hit
 - **Wiring** — `UISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCU131]`
 - **Permission** — `craftbook.ic.restricted.mcx131`
 - **Restricted** — not granted to everybody by default
@@ -1016,6 +1179,7 @@ Hurts creatures standing above it.
 - **Line 3** — what to hit; blank means anything that is not a player<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how hard to hit
 - **Wiring** — `UISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCU132]`
 - **Permission** — `craftbook.ic.restricted.mcx132`
 - **Restricted** — not granted to everybody by default
@@ -1040,6 +1204,7 @@ Outputs high while a matching stack is lying within range.
 - **Line 3** — one thing to check, or where the book is when reading from one *(required)*<br>  Takes `ID:<item>` `STACK:<1-64>` `NAME:<text>` `LORE:<text>` `<x>:<y>:<z>` `!<x>:<y>:<z>`
 - **Line 4** — how far to reach, up to thirty blocks
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ138]`
 - **Permission** — `craftbook.ic.restricted.mcx138`
 - **Restricted** — not granted to everybody by default
@@ -1052,6 +1217,7 @@ Outputs high while a player within range is holding a matching item.
 - **Line 3** — one thing to check, or where the book is when reading from one *(required)*<br>  Takes `ID:<item>` `STACK:<1-64>` `NAME:<text>` `LORE:<text>` `<x>:<y>:<z>` `!<x>:<y>:<z>`
 - **Line 4** — how far to reach, up to thirty blocks
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ139]`
 - **Permission** — `craftbook.ic.restricted.mcx139`
 - **Restricted** — not granted to everybody by default
@@ -1064,6 +1230,7 @@ Outputs high while something is inside a box measured from the sign.
 - **Line 3** — what to look for, with a rider after a + *(required)*<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — width:height:length[/x:y:z]
 - **Wiring** — `UISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCU140]`
 - **Permission** — `craftbook.ic.restricted.mcx140`
 - **Restricted** — not granted to everybody by default
@@ -1076,6 +1243,7 @@ Gives potion effects to whatever is in an area.
 - **Line 3** — effect:seconds:strength, such as SP:5:1; INF never wears off *(required)*
 - **Line 4** — range[:x:y:z][@filter]
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCU146]`
 - **Permission** — `craftbook.ic.restricted.mcx146`
 - **Restricted** — not granted to everybody by default
@@ -1088,6 +1256,7 @@ Spawns creatures above itself.
 - **Line 3** — what to spawn *(required)*<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how many, defaulting to one
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Also answers to** — `MC1200`
 - **Permission** — `craftbook.ic.restricted.mcx200`
 - **Restricted** — not granted to everybody by default
@@ -1100,6 +1269,7 @@ Drops items above itself, out of nothing.
 - **Line 3** — the item to drop *(required)*
 - **Line 4** — how many, up to a stack, defaulting to one
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Also answers to** — `MC1201`
 - **Permission** — `craftbook.ic.restricted.mcx201`
 - **Restricted** — not granted to everybody by default
@@ -1112,6 +1282,7 @@ Drops items taken out of a nearby container.
 - **Line 3** — the item; blank or -1 means any item
 - **Line 4** — amount, with an optional @x:y:z naming a container
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Also answers to** — `MC1202`
 - **Permission** — `craftbook.ic.safe.mcx202`
 
@@ -1123,6 +1294,7 @@ Picks up dropped items and puts them in a nearby container.
 - **Line 3** — the item to pick up; blank means any item
 - **Line 4** — range, with an optional :x:y:z naming a container
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ203]`
 - **Permission** — `craftbook.ic.safe.mcx203`
 
@@ -1134,6 +1306,7 @@ Detects a block above or below.
 - **Line 3** — the block to look for *(required)*
 - **Line 4** — how far down to search
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcx205`
 
 ### MCX206 — Flex Set
@@ -1144,6 +1317,7 @@ Sets a block at a specified location.
 - **Line 3** — where to put it and what to put there *(required)*<br>  Takes `<offset>:<block>`
 - **Line 4** — h to hold the block until the input drops
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcx206`
 
 ### MCX207 — Bridge
@@ -1154,6 +1328,7 @@ Places a set type and amount of blocks.
 - **Line 3** — the block to build from *(required)*<br>  Takes `<block>` `<id>:<data>`
 - **Line 4** — width:length, with an optional :verticalOffset *(required)*
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcx207`
 - **Needs arming** — created inert, and does nothing until its area is clear
 
@@ -1165,6 +1340,7 @@ Places a set type and amount of blocks.
 - **Line 3** — the block to build from *(required)*<br>  Takes `<block>` `<id>:<data>`
 - **Line 4** — width:height, with an optional :verticalOffset *(required)*
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcx208`
 - **Needs arming** — created inert, and does nothing until its area is clear
 
@@ -1176,6 +1352,7 @@ Places blocks, replacing whatever is already there.
 - **Line 3** — the block to build from *(required)*<br>  Takes `<block>` `<id>:<data>`
 - **Line 4** — width:length, with an optional :verticalOffset *(required)*
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx209`
 - **Restricted** — not granted to everybody by default
 
@@ -1187,6 +1364,7 @@ Places blocks, replacing whatever is already there.
 - **Line 3** — the block to build from *(required)*<br>  Takes `<block>` `<id>:<data>`
 - **Line 4** — width:height, with an optional :verticalOffset *(required)*
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx210`
 - **Restricted** — not granted to everybody by default
 
@@ -1198,6 +1376,7 @@ Swaps one block between two kinds as its input changes.
 - **Line 3** — the two blocks it swaps between *(required)*<br>  Takes `<block>` `<driven>|<idle>`
 - **Line 4** — one axis step from the sign's support, such as Y+1 *(required)*
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcx211`
 
 ### MCX213 — Harvester
@@ -1208,6 +1387,7 @@ Gathers a grown crop out of an area into nearby containers.
 - **Line 3** — the block to harvest *(required)*
 - **Line 4** — width:length:height, with an optional /verticalOffset
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcx213`
 - **Needs arming** — created inert, and does nothing until its area is clear
 
@@ -1219,6 +1399,7 @@ Plants dropped seeds across a field of ground.
 - **Line 3** — the crop to plant *(required)*
 - **Line 4** — width:length, with an optional :height
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ215]`
 - **Permission** — `craftbook.ic.safe.mcx215`
 
@@ -1230,6 +1411,7 @@ Plants a dropped seed above the block the sign hangs on.
 - **Line 3** — the item to plant *(required)*
 - **Line 4** — how far above the sign's support, defaulting to one
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ216]`
 - **Permission** — `craftbook.ic.safe.mcx216`
 
@@ -1241,6 +1423,7 @@ Outputs high while it is raining.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcx230`
 
 ### MCX231 — Storm Sensor
@@ -1251,6 +1434,7 @@ Outputs high while a thunderstorm is running.
 - **Line 3** — nothing
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcx231`
 
 ### MCX233 — Simple Weather Control
@@ -1261,6 +1445,7 @@ Turns the weather on for a set duration while the input is held.
 - **Line 3** — how long the weather lasts once started, defaulting to a full day
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx233`
 - **Restricted** — not granted to everybody by default
 
@@ -1272,6 +1457,7 @@ Shows rain to people it is not raining on.
 - **Line 3** — who sees it: blank for everybody here, p:Name or g:group
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx235`
 - **Restricted** — not granted to everybody by default
 
@@ -1283,6 +1469,7 @@ Shows rain to everybody standing within a distance of the sign.
 - **Line 3** — how far, from one to a hundred and twenty-seven, defaulting to ten
 - **Line 4** — something to say as somebody walks into range
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ236]`
 - **Permission** — `craftbook.ic.restricted.mcx236`
 - **Restricted** — not granted to everybody by default
@@ -1295,6 +1482,7 @@ Hides the rain from people it is raining on.
 - **Line 3** — who sees it: blank for everybody here, p:Name or g:group
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx237`
 - **Restricted** — not granted to everybody by default
 
@@ -1306,6 +1494,7 @@ Hides the rain from everybody standing within a distance of the sign.
 - **Line 3** — how far, from one to a hundred and twenty-seven, defaulting to ten
 - **Line 4** — something to say as somebody walks into range
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ238]`
 - **Permission** — `craftbook.ic.restricted.mcx238`
 - **Restricted** — not granted to everybody by default
@@ -1318,6 +1507,7 @@ Throws a single snowball.
 - **Line 3** — speed[:spread]
 - **Line 4** — a vertical velocity
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx242`
 - **Restricted** — not granted to everybody by default
 
@@ -1329,6 +1519,7 @@ Throws five snowballs.
 - **Line 3** — speed[:spread]
 - **Line 4** — a vertical velocity
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx243`
 - **Restricted** — not granted to everybody by default
 
@@ -1340,6 +1531,7 @@ Throws a single egg.
 - **Line 3** — speed[:spread]
 - **Line 4** — a vertical velocity
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx244`
 - **Restricted** — not granted to everybody by default
 
@@ -1351,6 +1543,7 @@ Throws five eggs.
 - **Line 3** — speed[:spread]
 - **Line 4** — a vertical velocity
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx245`
 - **Restricted** — not granted to everybody by default
 
@@ -1362,6 +1555,7 @@ Launches a ghast fireball, aimed by the sign.
 - **Line 3** — speed[:spread]
 - **Line 4** — rotation[:pitch], from -1 straight down to 1 straight up
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx246`
 - **Restricted** — not granted to everybody by default
 
@@ -1373,6 +1567,7 @@ Shows a particle, optionally offset from the sign.
 - **Line 3** — the particle, with a block after a colon where it takes one *(required)*
 - **Line 4** — an axis letter and a distance, such as Y3
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mcx250`
 
 ### MCX251 — Sound Effect
@@ -1383,6 +1578,7 @@ Plays one sound, named in full or by its shorthand.
 - **Line 3** — the sound, as entity.creeper.primed or the shorthand ENCRPR *(required)*
 - **Line 4** — an x:y:z offset from the sign
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx251`
 - **Restricted** — not granted to everybody by default
 
@@ -1394,6 +1590,7 @@ Strikes one place with lightning.
 - **Line 3** — how far above or below the sign's support to strike
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx255`
 - **Restricted** — not granted to everybody by default
 
@@ -1405,6 +1602,7 @@ Strikes everything within range with lightning.
 - **Line 3** — nothing
 - **Line 4** — how far to reach, defaulting to five blocks
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ256]`
 - **Permission** — `craftbook.ic.restricted.mcx256`
 - **Restricted** — not granted to everybody by default
@@ -1417,6 +1615,7 @@ Mirrors the redstone at somewhere else in the world.
 - **Line 3** — a step from the sign *(required)*<br>  Takes `<x>:<y>:<z>` `!<x>:<y>:<z>`
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MCZ295]`
 - **Permission** — `craftbook.ic.safe.mcx295`
 
@@ -1428,6 +1627,7 @@ Says something to everybody standing within range.
 - **Line 3** — what to say *(required)*
 - **Line 4** — the rest of what to say
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx512`
 - **Restricted** — not granted to everybody by default
 
@@ -1439,6 +1639,7 @@ Says something to everybody within range, naming the nearest.
 - **Line 3** — who to tell; %p means the nearest player *(required)*
 - **Line 4** — what to say *(required)*
 - **Wiring** — `AISO`, 4 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx513`
 - **Restricted** — not granted to everybody by default
 
@@ -1450,6 +1651,7 @@ Writes a line to the server's log.
 - **Line 3** — the line to write to the log *(required)*
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx515`
 - **Restricted** — not granted to everybody by default
 
@@ -1461,6 +1663,7 @@ Writes a line to the log naming the nearest player.
 - **Line 3** — the line to write; %p becomes the nearest player *(required)*
 - **Line 4** — the rest of the line
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx516`
 - **Restricted** — not granted to everybody by default
 
@@ -1472,6 +1675,7 @@ Writes a line to the log naming everybody in range and how far off.
 - **Line 3** — the line to write; %p and %a become the nearest player and how far *(required)*
 - **Line 4** — the rest of the line
 - **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.restricted.mcx517`
 - **Restricted** — not granted to everybody by default
 

@@ -72,6 +72,15 @@ public final class ICDocs {
                 Line 4   whatever else it needs told
                 ```
 
+                Where an entry below says a line **takes** something, those are the spellings the
+                chip really accepts: they come from the chip's own reader rather than from
+                anything written about it. A line the chip cannot read is refused as the sign is
+                written, and says what it would have taken.
+
+                Pins are counted from one, the way they read on the page. A chip that names its
+                inputs reads all of them; one that says only input 1 is read leaves the other two
+                wired to nothing, so a lever on them does nothing whatever.
+
                 Line 2 is the whole declaration. Write the model number in brackets and the rest
                 fills itself in: line 1 becomes the chip's shorthand, so you can read at a glance
                 what a wall of signs is doing.
@@ -221,6 +230,7 @@ public final class ICDocs {
             row(page, "Line 3", lineOf(chip, ICDefinition.THIRD_LINE));
             row(page, "Line 4", lineOf(chip, ICDefinition.FOURTH_LINE));
             row(page, "Wiring", wiringOf(chip.defaultLayout()));
+            pins(page, chip);
             chip.selfTriggeringModel().ifPresent(model ->
                     row(page, "Runs on its own as", "`[" + model + "]`"));
             if (!chip.aliases().isEmpty()) {
@@ -237,6 +247,35 @@ public final class ICDocs {
             chip.playerIdentityLine().ifPresent(line -> row(page, "Names you",
                     "Writing `uuid` on line " + (line + 1) + " is replaced by your own player id."));
             page.append('\n');
+        }
+    }
+
+    /**
+     * What each pin of a chip does.
+     *
+     * <p>Only the chips that have something to say say it. Everything else is set off by its first
+     * input and answers on its first output, which the wiring line already implies and which would
+     * be one more identical sentence on eighty pages. What is said instead is the one thing a
+     * builder cannot see from the layout: that the other two inputs are wired to nothing.
+     */
+    private static void pins(StringBuilder page, ICDefinition chip) {
+        PinLayout layout = chip.defaultLayout();
+        if (!chip.readsEveryInput()) {
+            if (layout.inputCount() > 1) {
+                row(page, "Inputs", "only input 1 is read; the others are wired to nothing");
+            }
+            return;
+        }
+
+        for (int input = 0; input < layout.inputCount(); input++) {
+            int shown = input + 1;
+            chip.inputMeaning(input).ifPresent(meaning ->
+                    row(page, "Input " + shown, meaning));
+        }
+        for (int output = 0; output < layout.outputCount(); output++) {
+            int shown = output + 1;
+            chip.outputMeaning(output).ifPresent(meaning ->
+                    row(page, "Output " + shown, meaning));
         }
     }
 

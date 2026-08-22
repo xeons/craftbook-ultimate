@@ -106,41 +106,6 @@ public record ChipSetup(
     }
 
     /**
-     * Whether every one of a chip's inputs is worth wiring.
-     *
-     * <p>Most chips read one input and ignore the rest. An {@code AISO} chip says so outright —
-     * any of its four inputs sets it off, so three of the four levers would be doing nothing but
-     * making the rig harder to read. The chips here are the ones whose inputs mean different
-     * things: an adder's two addends and its carry, a latch's set and reset, a counter's clock and
-     * its reset.
-     *
-     * <p>Every entry was found by reading which inputs the chip's own logic asks for, not by
-     * reasoning about what it ought to need.
-     */
-    public static boolean usesEveryInput(String model) {
-        return MULTI_INPUT.contains(model);
-    }
-
-    /** The chips that read more than their first input. */
-    private static final Set<String> MULTI_INPUT = Set.of(
-            // Gates, which count how many of their wired inputs are high.
-            "MC3002", "MC3003", "MC3020", "MC3021",
-            // Latches and flip-flops: set, reset, clock.
-            "MC3030", "MC3031", "MC3032", "MC3033", "MC3034", "MC3036",
-            // A combination across all three inputs.
-            "MC3050",
-            // Counters: one input counts, another resets.
-            "MC3101", "MC3102",
-            // Arithmetic: two operands and a carry.
-            "MC4000", "MC4010", "MC4100", "MC4110",
-            // Routing: a value and the outputs to send it to.
-            "MC3040", "MC4040", "MC4200",
-            // Weather and time, which read three inputs as separate switches.
-            "MCT233", "MC3231",
-            // Wireless: one reads every input's power level, one steps, resets and holds.
-            "MC6543", "MC3456");
-
-    /**
      * Whether a chip should be built ticking.
      *
      * <p>Opt-in, and deliberately short. Several chips act on the world on every tick with no

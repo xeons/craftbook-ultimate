@@ -54,7 +54,7 @@ class TestbedTest {
                         .filter(placement -> placement.fixture() instanceof Rig.Fixture.InputLever)
                         .count();
 
-                int expected = ChipSetup.usesEveryInput(rig.chip().model())
+                int expected = rig.chip().readsEveryInput()
                         ? rig.chip().defaultLayout().inputCount()
                         : Math.min(1, rig.chip().defaultLayout().inputCount());
 
@@ -71,7 +71,7 @@ class TestbedTest {
                 // The analog transmitter is the exception that proves it: AISO, but it reads
                 // every input's power level rather than being set off by any of them.
                 if (rig.chip().defaultLayout() != PinLayout.AISO
-                        || ChipSetup.usesEveryInput(rig.chip().model())) {
+                        || rig.chip().readsEveryInput()) {
                     continue;
                 }
                 assertThat(rig.placements().stream()

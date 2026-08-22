@@ -6,6 +6,7 @@ package com.xeonproductions.craftbookultimate.core.ic;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
+import com.xeonproductions.craftbookultimate.core.ic.LineContext;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
 import com.xeonproductions.craftbookultimate.core.ic.PinLayout;
 import org.junit.jupiter.api.DisplayName;
@@ -290,5 +291,58 @@ class ICCatalogueTest {
         assertThat(REGISTRY.definitions())
                 .extracting(ICDefinition::permission)
                 .doesNotHaveDuplicates();
+    }
+
+    @Test
+    @DisplayName("names every pin of a chip that names any of them")
+    void namesEveryPinOfAChipThatNamesAny() {
+        for (ICDefinition chip : REGISTRY.definitions()) {
+            if (chip.inputs().isEmpty()) {
+                continue;
+            }
+            // A half-named chip is worse than an unnamed one: the page then says what two of three
+            // levers do and leaves a builder to guess whether the third is unread or unwritten.
+            assertThat(chip.inputs())
+                    .as("%s names its inputs", chip.model())
+                    .hasSize(chip.defaultLayout().inputCount());
+        }
+    }
+
+    @Test
+    @DisplayName("names every output of a chip that names any of them")
+    void namesEveryOutputOfAChipThatNamesAny() {
+        for (ICDefinition chip : REGISTRY.definitions()) {
+            if (chip.outputs().isEmpty()) {
+                continue;
+            }
+            assertThat(chip.outputs())
+                    .as("%s names its outputs", chip.model())
+                    .hasSize(chip.defaultLayout().outputCount());
+        }
+    }
+
+    @Test
+    @DisplayName("says which chips read past their first input, so the test bed wires them")
+    void saysWhichChipsReadPastTheirFirstInput() {
+        // The one list, rather than one here and another beside the test bed. The bed used to keep
+        // its own and had missed the bit shift register, which was built with a single lever and
+        // so could never be written into.
+        assertThat(REGISTRY.definitions().stream()
+                        .filter(ICDefinition::readsEveryInput)
+                        .map(ICDefinition::model))
+                .contains("MC2022", "MC3002", "MC3030", "MC4000", "MC4200");
+    }
+
+    @Test
+    @DisplayName("gives every line that names a spelling a reader that accepts it")
+    void givesEveryCheckedLineAReaderThatAcceptsItsOwnExample() {
+        for (ICDefinition chip : REGISTRY.definitions()) {
+            for (int line : new int[] {ICDefinition.THIRD_LINE, ICDefinition.FOURTH_LINE}) {
+                chip.lineSpec(line).ifPresent(spec -> spec.form().example().ifPresent(example ->
+                        assertThat(spec.fault(example, LineContext.lenient()))
+                                .as("%s line %d rejected %s", chip.model(), line + 1, example)
+                                .isEmpty()));
+            }
+        }
     }
 }

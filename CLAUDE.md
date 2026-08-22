@@ -87,7 +87,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2217 tests passing**.
+**2243 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -299,12 +299,31 @@ Every chip says what its third and fourth sign lines are for, as a `LineSpec` on
 rather than as prose in a document: `docs/ics.md` is generated from it, and `ICSignListener` checks
 a sign against it as the sign is written.
 
-The distinction that carries the weight is **required** against **optional**. A required line is
-one the chip does nothing at all without — a melody with no file named returns before it plays a
-note, and says so to nobody — and a sign leaving one blank is refused with a reason. An optional
-line has a sensible default, the sign is created, and the builder is told what they defaulted to.
-Refusing a chip that would have worked is the failure mode to avoid, so `required` was set only
-where the chip's own code bails when the line will not resolve.
+Two questions, deliberately separate.
+
+**Required against optional.** A required line is one the chip does nothing at all without — a
+melody with no file named returns before it plays a note, and says so to nobody — and a sign
+leaving one blank is refused with a reason. An optional line has a sensible default, the sign is
+created, and the builder is told what they defaulted to. Refusing a chip that would have worked is
+the failure mode to avoid, so `required` was set only where the chip's own code bails when the line
+will not resolve.
+
+**What the line will take**, which is a `LineForm`. A form is not a description of a grammar — it
+**is** the chip's own reader, asked whether it would succeed. `LineForms.itemFilter()` calls
+`ItemCriteria.parse`; `LineForms.entity()` calls `EntitySpec.parse`; the spellings each one prints
+come from the parser's own declared vocabulary. Nothing there can promise something the chip would
+refuse, and a test asks every form to read its own example so a form whose promise and whose reader
+come apart fails the build.
+
+The two combine the obvious way. A required line the chip cannot read refuses the sign and quotes
+what was written and what the line takes; an optional one warns and the chip falls back to its
+default, which is what it would have done silently anyway. `LineForms.free()` is a line that takes
+any text at all, which is most of them and is not the same as a line nobody has described.
+
+That gap mattered. Before forms existed a line that would not parse was completely silent: the
+sensor set its output low and returned, so `item:stone` on an item sensor built a chip that read to
+a builder as a wiring fault. There are 38 of those early returns; the lines that reach them are the
+ones converted.
 
 Refusing is safe because review only happens on `SignChangeEvent`. A sign already in the world is
 read through `ICManager#describe` on chunk load and never comes past the listener, so a rule added
@@ -337,7 +356,25 @@ stops the page going quietly half-written as chips are added.
 Upstream has a `getLineHelp()` of its own and it was **not** ported. It describes upstream's
 grammar, which often differs: its bridge reads `onID{:onData-offID:offData}` where this one takes a
 block and then `width:length`. Documenting grammar the code does not accept is worse than
-documenting none, so every entry was read off this codebase's own gates instead.
+documenting none — which is exactly why a form is the reader rather than a sentence about it.
+
+## What a chip's pins do
+
+A chip's wiring says how many pins it has and where they sit. What each one **means** is
+`inputs(...)` and `outputs(...)` on the definition, and only the chips with something to say say
+it: the other eighty-odd are set off by input 1 and answer on output 1, which the layout already
+implies and which would be the same sentence on eighty pages. What the page says for those instead
+is the one thing a builder cannot see from the layout — that inputs 2 and 3 are wired to nothing.
+
+A chip that names its pins must name **all** of them, padding with `"not read"` where the layout is
+wider than the chip. A half-named chip is worse than an unnamed one: the page then says what two of
+three levers do and leaves a builder guessing whether the third is unread or merely unwritten.
+`ICCatalogueTest` fails the build on one.
+
+`ICDefinition#readsEveryInput` is derived from that rather than kept as a list. The test bed used
+to hold its own list of which chips read past input 1 and had missed the bit shift register, which
+was built with a single lever and so could never be written into. One list, in the place that
+already knows.
 
 ## What a command does, and where it says it
 

@@ -612,6 +612,8 @@ public final class ICCatalogue {
                 .name("And Gate")
                 .description("Outputs high if all inputs are high.")
                 .noLines()
+                .inputs("one of the inputs", "one of the inputs", "one of the inputs")
+                .outputs("high while every wired input is high")
                 .logic(LogicGates::and)
                 .build());
 
@@ -619,6 +621,8 @@ public final class ICCatalogue {
                 .name("Nand Gate")
                 .description("Outputs high if any input is low.")
                 .noLines()
+                .inputs("one of the inputs", "one of the inputs", "one of the inputs")
+                .outputs("low while every wired input is high")
                 .logic(LogicGates::nand)
                 .build());
 
@@ -626,6 +630,8 @@ public final class ICCatalogue {
                 .name("Xor Gate")
                 .description("Outputs high if the inputs are different.")
                 .noLines()
+                .inputs("one of the inputs", "one of the inputs", "one of the inputs")
+                .outputs("high while an odd number of wired inputs are high")
                 .logic(LogicGates::xor)
                 .build());
 
@@ -633,6 +639,8 @@ public final class ICCatalogue {
                 .name("Xnor Gate")
                 .description("Outputs high if the inputs are the same.")
                 .noLines()
+                .inputs("one of the inputs", "one of the inputs", "one of the inputs")
+                .outputs("high while an even number of wired inputs are high")
                 .logic(LogicGates::xnor)
                 .build());
     }
@@ -642,6 +650,8 @@ public final class ICCatalogue {
                 .name("RS-Nor Latch")
                 .description("A compact RS-Nor latch.")
                 .fourthLine(optional("where the chip keeps its state; it writes this itself"))
+                .inputs("set", "reset", "reset as well; either one wins over set")
+                .outputs("Q, the value being held")
                 .logic(Latches::rsNorLatch)
                 .build());
 
@@ -651,6 +661,8 @@ public final class ICCatalogue {
                 .name("RS-Nand Latch")
                 .description("A compact RS-Nand latch.")
                 .fourthLine(optional("where the chip keeps its state; it writes this itself"))
+                .inputs("the data, sampled on the clock", "the clock, which acts as it rises", "reset, which wins over everything")
+                .outputs("Q, the value sampled")
                 .logic(Latches::rsNandLatch)
                 .build());
 
@@ -658,6 +670,8 @@ public final class ICCatalogue {
                 .name("Inverse RS-Nand Latch")
                 .description("A compact inverse RS-Nand latch.")
                 .fourthLine(optional("where the chip keeps its state; it writes this itself"))
+                .inputs("set, which wins over reset", "reset", "not read")
+                .outputs("Q, the value being held")
                 .logic(Latches::rsNandLatch)
                 .build());
 
@@ -665,6 +679,8 @@ public final class ICCatalogue {
                 .name("JK Flip Flop")
                 .description("A compact JK flip flop.")
                 .fourthLine(optional("where the chip keeps its state; it writes this itself"))
+                .inputs("the clock, which acts as it falls", "J, which sets", "K, which resets")
+                .outputs("Q, which toggles when J and K are both high")
                 .logic(Latches::jkFlipFlop)
                 .build());
 
@@ -672,6 +688,8 @@ public final class ICCatalogue {
                 .name("Edge-Trigger D Flip Flop")
                 .description("A compact edge-triggered D flip flop.")
                 .fourthLine(optional("where the chip keeps its state; it writes this itself"))
+                .inputs("the clock; the data is followed while this is high", "the data", "reset, applied after the sample")
+                .outputs("Q, the value being followed")
                 .logic(Latches::edgeTriggeredDFlipFlop)
                 .build());
 
@@ -679,6 +697,10 @@ public final class ICCatalogue {
                 .name("Level-Trigger D Flip Flop")
                 .description("A compact level-triggered D flip flop.")
                 .fourthLine(optional("where the chip keeps its state; it writes this itself"))
+                .inputs("the clock; the data is followed while this is high",
+                        "the data",
+                        "reset, applied after the sample")
+                .outputs("Q, the value being followed")
                 .logic(Latches::levelTriggeredDFlipFlop)
                 .build());
 
@@ -700,6 +722,8 @@ public final class ICCatalogue {
                 .name("Combination Lock")
                 .description("Outputs high if the correct combination is entered.")
                 .thirdLine(required("the combination, three characters where X means that input must be high"))
+                .inputs("the first of the combination", "the second of the combination", "the third of the combination")
+                .outputs("high while the combination on line 3 is entered")
                 .logic(Latches::combinationLock)
                 .build());
 
@@ -708,6 +732,8 @@ public final class ICCatalogue {
                 .description("Increments on redstone signal, outputs high on reaching the limit.")
                 .thirdLine(optional("the limit to count to, optionally followed by :INF to keep going"))
                 .fourthLine(optional("where the chip keeps its total; it writes this itself"))
+                .inputs("counts up a step", "resets the count to zero", "not read")
+                .outputs("high on reaching the limit")
                 .logic(() -> Latches.counterFromSign(true))
                 .build());
 
@@ -716,6 +742,8 @@ public final class ICCatalogue {
                 .description("Decrements on redstone signal, outputs high on reaching zero.")
                 .thirdLine(optional("the limit to count to, optionally followed by :INF to keep going"))
                 .fourthLine(optional("where the chip keeps its total; it writes this itself"))
+                .inputs("counts down a step", "resets the count to the limit", "not read")
+                .outputs("high on reaching zero")
                 .logic(() -> Latches.counterFromSign(false))
                 .build());
     }
@@ -726,6 +754,8 @@ public final class ICCatalogue {
                 .description("A compact full adder.")
                 .layout(PinLayout.THREE_I_3O)
                 .noLines()
+                .inputs("the carry in", "one addend", "the other addend")
+                .outputs("the sum", "the carry out", "the carry out again, so it can feed two places")
                 .logic(Arithmetic::fullAdder)
                 .build());
 
@@ -734,6 +764,8 @@ public final class ICCatalogue {
                 .description("A compact half adder.")
                 .layout(PinLayout.THREE_I_3O)
                 .noLines()
+                .inputs("not read", "one addend", "the other addend")
+                .outputs("the sum", "the carry out", "the carry out again, so it can feed two places")
                 .logic(Arithmetic::halfAdder)
                 .build());
 
@@ -742,6 +774,8 @@ public final class ICCatalogue {
                 .description("A compact full subtractor.")
                 .layout(PinLayout.THREE_I_3O)
                 .noLines()
+                .inputs("the minuend", "the subtrahend", "the borrow in")
+                .outputs("the difference", "the borrow out", "the borrow out again, so it can feed two places")
                 .logic(Arithmetic::fullSubtractor)
                 .build());
 
@@ -750,6 +784,8 @@ public final class ICCatalogue {
                 .description("A compact half subtractor.")
                 .layout(PinLayout.THREE_I_3O)
                 .noLines()
+                .inputs("not read", "the minuend", "the subtrahend")
+                .outputs("the difference", "the borrow out", "the borrow out again, so it can feed two places")
                 .logic(Arithmetic::halfSubtractor)
                 .build());
     }
@@ -760,13 +796,17 @@ public final class ICCatalogue {
                 .description("Outputs the centre input on the selected outputs.")
                 .layout(PinLayout.THREE_I_3O)
                 .noLines()
+                .inputs("the value to send", "sends it to output 2", "sends it to output 3")
+                .outputs("the value, while nothing is selected", "the value, while input 2 is high", "the value, while input 3 is high")
                 .logic(Routing::dispatcher)
                 .build());
 
         registry.register(ICDefinition.builder("MC3040", "MULTIPLEXER")
                 .name("Multiplexer")
-                .description("Outputs input 1 or 2 depending on the state of input 0.")
+                .description("Passes on one of two inputs, chosen by the third.")
                 .noLines()
+                .inputs("which input to pass on: high for input 2, low for input 3", "passed on while input 1 is high", "passed on while input 1 is low")
+                .outputs("whichever input was chosen")
                 .logic(Routing::multiplexer)
                 .build());
 
@@ -775,6 +815,8 @@ public final class ICCatalogue {
                 .description("Raises the output selected by the input.")
                 .layout(PinLayout.THREE_I_5O)
                 .noLines()
+                .inputs("not read", "the low bit of the address", "the high bit of the address")
+                .outputs("high while the address is 0", "high while the address is 1", "high while the address is 2", "high while the address is 3", "never raised")
                 .logic(() -> Routing.demultiplexer(1, 2))
                 .build());
 
@@ -902,6 +944,7 @@ public final class ICCatalogue {
                 .description("Sets rain and thunder using three inputs.")
                 .restricted()
                 .noLines()
+                .inputs("the clock, which acts as it rises", "asks for rain", "asks for thunder")
                 .logic(WeatherChips::weatherControl)
                 .build());
 
@@ -910,6 +953,9 @@ public final class ICCatalogue {
                 .description("Moves the world to the next morning or night when clocked.")
                 .restricted()
                 .noLines()
+                .inputs("the clock, which acts as it rises",
+                        "morning while high, night while low",
+                        "not read")
                 .logic(WeatherChips::timeControlAdvanced)
                 .build());
     }
@@ -1042,6 +1088,10 @@ public final class ICCatalogue {
                 .description("Remembers a row of bits and rotates them along.")
                 .thirdLine(optional("how many bits, from 2 to 64, defaulting to eight"))
                 .fourthLine(optional("the bits themselves; the chip writes these"))
+                .inputs("rotates the row along, while input 2 is high",
+                        "writes input 3 into the first bit, while input 1 is high",
+                        "the bit being written")
+                .outputs("the first bit of the row")
                 .logic(Control::bitShift)
                 .build());
 
@@ -1140,6 +1190,10 @@ public final class ICCatalogue {
                 .playerIdentityLine(Wireless.WIDE_BAND_LINE)
                 .thirdLine(required("channel[:first:last][:T]"))
                 .fourthLine(optional("a namespace around the channel"))
+                .inputs("power in; the strongest of the four is what is transmitted",
+                        "power in; the strongest of the four is what is transmitted",
+                        "power in; the strongest of the four is what is transmitted",
+                        "power in; the strongest of the four is what is transmitted")
                 .logic(Wireless::analogTransmitter)
                 .build());
 
@@ -1149,6 +1203,9 @@ public final class ICCatalogue {
                 .playerIdentityLine(Wireless.WIDE_BAND_LINE)
                 .thirdLine(required("channel:first:last"))
                 .fourthLine(optional("a namespace around the channel"))
+                .inputs("a pulse steps to the next band in the run",
+                        "puts the run back to its beginning",
+                        "holds the run where it is, however hard input 1 is pulsed")
                 .logic(Wireless::marqueeTransmitter)
                 .build());
     }

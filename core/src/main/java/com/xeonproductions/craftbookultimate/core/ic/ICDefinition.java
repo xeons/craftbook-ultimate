@@ -5,6 +5,7 @@ package com.xeonproductions.craftbookultimate.core.ic;
 
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -32,6 +33,8 @@ import org.jspecify.annotations.NullMarked;
  *     the creating player's own unique id
  * @param aliases other model numbers that resolve to this same chip
  * @param selfTriggeringModel a separate model number meaning the self-triggering variant
+ * @param inputs what each input pin does, in order, empty where nobody has said
+ * @param outputs what each output pin carries, in order, empty where nobody has said
  * @param thirdLine what the sign's third line is for, absent when the chip reads none
  * @param fourthLine what the sign's fourth line is for, absent when the chip reads none
  * @param linesDocumented whether somebody has said what this chip's lines mean, which is how a
@@ -50,6 +53,8 @@ public record ICDefinition(
         OptionalInt playerIdentityLine,
         Set<String> aliases,
         Optional<String> selfTriggeringModel,
+        List<String> inputs,
+        List<String> outputs,
         Optional<LineSpec> thirdLine,
         Optional<LineSpec> fourthLine,
         boolean linesDocumented,
@@ -65,6 +70,8 @@ public record ICDefinition(
     private static final String RESTRICTED_PERMISSION_PREFIX = "craftbook.ic.restricted.";
 
     public ICDefinition {
+        inputs = List.copyOf(inputs);
+        outputs = List.copyOf(outputs);
         model = normaliseModel(model);
         shorthand = shorthand.trim().toUpperCase(Locale.ROOT);
         if (shorthand.isEmpty()) {
@@ -147,6 +154,42 @@ public record ICDefinition(
         };
     }
 
+    /**
+     * Whether this chip reads more than its first input.
+     *
+     * <p>Most do not: one input sets the chip off and the other two are wired to nothing. The
+     * ones that do read every input do so in their own way — a gate counts them, a latch takes
+     * them as set, reset and clock — which is why the ones that matter say so pin by pin instead.
+     *
+     * <p>Answered from what the chip says about its pins rather than from a list kept beside it,
+     * so a chip that gains an input and says so gains the right answer here at the same moment.
+     */
+    public boolean readsEveryInput() {
+        return inputs.size() > 1;
+    }
+
+    /**
+     * What one input pin does, if anybody has said.
+     *
+     * @param input the input, counting from zero
+     */
+    public Optional<String> inputMeaning(int input) {
+        return input >= 0 && input < inputs.size()
+                ? Optional.of(inputs.get(input))
+                : Optional.empty();
+    }
+
+    /**
+     * What one output pin carries, if anybody has said.
+     *
+     * @param output the output, counting from zero
+     */
+    public Optional<String> outputMeaning(int output) {
+        return output >= 0 && output < outputs.size()
+                ? Optional.of(outputs.get(output))
+                : Optional.empty();
+    }
+
     /** Whether this chip reads either of its configurable lines. */
     public boolean readsAnyLine() {
         return thirdLine.isPresent() || fourthLine.isPresent();
@@ -203,6 +246,8 @@ public record ICDefinition(
         private OptionalInt playerIdentityLine = OptionalInt.empty();
         private final Set<String> aliases = new LinkedHashSet<>();
         private Optional<String> selfTriggeringModel = Optional.empty();
+        private List<String> inputs = List.of();
+        private List<String> outputs = List.of();
         private Optional<LineSpec> thirdLine = Optional.empty();
         private Optional<LineSpec> fourthLine = Optional.empty();
         private boolean linesDocumented;
@@ -290,6 +335,30 @@ public record ICDefinition(
         }
 
         /**
+         * Says what each input pin does, in order.
+         *
+         * <p>Only worth saying for a chip that reads more than the first: everything else is set
+         * off by input 1 and leaves the other two wired to nothing, which the page says for
+         * itself. Where this is given it must name every input the chip reads, because that is
+         * what tells a builder which of three levers matters.
+         */
+        public Builder inputs(String... meanings) {
+            this.inputs = List.of(meanings);
+            return this;
+        }
+
+        /**
+         * Says what each output pin carries, in order.
+         *
+         * <p>Worth saying for a chip with more than one output, where the difference between them
+         * is the whole point and nothing else records it.
+         */
+        public Builder outputs(String... meanings) {
+            this.outputs = List.of(meanings);
+            return this;
+        }
+
+        /**
          * Says what the sign's third line is for.
          *
          * <p>Use {@link LineSpec#required} where the chip does nothing at all without it, and
@@ -338,6 +407,8 @@ public record ICDefinition(
                     playerIdentityLine,
                     aliases,
                     selfTriggeringModel,
+                    inputs,
+                    outputs,
                     thirdLine,
                     fourthLine,
                     linesDocumented,

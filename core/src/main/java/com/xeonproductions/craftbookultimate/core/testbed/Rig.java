@@ -135,7 +135,7 @@ public record Rig(
         // Only the inputs the chip actually reads get a lever. Most read one and ignore the
         // rest — an AISO chip is set off by any of its four — so wiring all of them would leave
         // three levers that do nothing but make the rig harder to read.
-        int wired = ChipSetup.usesEveryInput(chip.model()) ? layout.inputCount()
+        int wired = chip.readsEveryInput() ? layout.inputCount()
                 : Math.min(1, layout.inputCount());
 
         for (int input = 0; input < wired; input++) {

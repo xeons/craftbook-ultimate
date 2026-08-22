@@ -8,6 +8,9 @@ import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
 import com.xeonproductions.craftbookultimate.core.ic.SelfTriggeringICLogic;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import com.xeonproductions.craftbookultimate.core.platform.TimeSource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -113,7 +116,7 @@ public final class TimeChips {
      * again while a burst is running restarts it.
      */
     public static ICLogic pulse() {
-        return new PulseLogic();
+        return new PulseLogic(false, false);
     }
 
     /**
@@ -143,6 +146,54 @@ public final class TimeChips {
         return new DelayedBuffer(true);
     }
 
+    /**
+     * Waits before turning on, and turns off the moment its input does.
+     *
+     * <p>One edge waits and the other passes straight through, which is what separates these from
+     * {@link #delayedRepeater()}: that one delays both edges by the same amount, so it shifts a
+     * signal without changing its shape. This one changes the shape — a flicker shorter than the
+     * delay never reaches the output at all, which is what makes it a debounce.
+     *
+     * <p>Line 3 is how long to wait. Line 4 may read {@code hold}, which lets a wait already
+     * running finish even if the input drops before it does.
+     */
+    public static ICLogic onDelay() {
+        return new EdgeDelay(true, false);
+    }
+
+    /** {@link #onDelay()} with its answer turned over. */
+    public static ICLogic invertedOnDelay() {
+        return new EdgeDelay(true, true);
+    }
+
+    /**
+     * Turns off with its input, and waits before turning back on.
+     *
+     * <p>Its non-inverted partner is not here: turning on at once and waiting before turning off
+     * is exactly {@link #signalExtender()}, so that chip answers to both numbers rather than the
+     * same behaviour being written twice.
+     *
+     * <p>Unlike the extender, a blank line 3 means no wait at all, which is what a blank delay
+     * means on every other chip in this file. The extender keeps its own default of a second,
+     * because that is what its signs have always done.
+     */
+    public static ICLogic invertedOffDelay() {
+        return new EdgeDelay(false, true);
+    }
+
+    /**
+     * A burst of pulses, fired when the input rises or when it falls, either way up.
+     *
+     * <p>Four chips from one, which is how upstream builds them too: what differs between them is
+     * only which edge sets them off and which way round the output rests.
+     *
+     * @param firesOnLow whether the burst starts as the input drops rather than as it rises
+     * @param inverting whether the output rests high and the pulses go low
+     */
+    public static ICLogic pulse(boolean firesOnLow, boolean inverting) {
+        return new PulseLogic(firesOnLow, inverting);
+    }
+
     /** Reads a whole number from a sign line, falling back when it is missing or unreadable. */
     private static long configValue(ChipState state, int line, long fallback) {
         String text = state.sign().trimmedText(line);
@@ -162,29 +213,88 @@ public final class TimeChips {
      * @return the duration in milliseconds, or the fallback when the line is missing or unreadable
      */
     private static long durationMillis(ChipState state, int line, long fallback) {
-        String text = state.sign().trimmedText(line);
+        return durationOf(fieldOn(state, line, 0), fallback);
+    }
+
+    /**
+     * Reads one colon-separated field of a sign line.
+     *
+     * <p>A line may carry two things — how long a pulse lasts and how long to wait before the
+     * first, say — and they are separated by a colon, which is how upstream writes the same pair.
+     *
+     * @param index which field, counting from zero
+     */
+    private static String fieldOn(ChipState state, int line, int index) {
+        String[] fields = fieldsOf(state.sign().trimmedText(line));
+        return index < fields.length ? fields[index] : "";
+    }
+
+    /**
+     * Splits a line into its fields, keeping a unit that was written after a colon with its number.
+     *
+     * <p>A duration is written {@code 20T}, and that is what every page describing these chips
+     * says. It was only ever read as {@code 20:T}, so the two disagreed and the documented
+     * spelling did nothing — see finding 148. Both work now, which is what lets the colon mean a
+     * second field without any sign that used the old spelling changing meaning: a colon followed
+     * by a unit word belongs to the number in front of it, and a colon followed by anything else
+     * starts a new field.
+     */
+    private static String[] fieldsOf(String text) {
+        String[] parts = text.split(":", -1);
+        List<String> fields = new ArrayList<>();
+
+        for (String part : parts) {
+            String trimmed = part.trim();
+            if (isUnit(trimmed) && !fields.isEmpty()) {
+                fields.set(fields.size() - 1, fields.getLast() + trimmed);
+            } else {
+                fields.add(trimmed);
+            }
+        }
+        return fields.toArray(new String[0]);
+    }
+
+    /** Whether a word is one of the units a duration may carry. */
+    private static boolean isUnit(String written) {
+        return switch (written.toUpperCase(Locale.ROOT)) {
+            case "T", "TICKS", "S", "SECONDS", "MS", "MILLISECONDS" -> true;
+            default -> false;
+        };
+    }
+
+    /**
+     * Reads a duration written as a number with an optional unit.
+     *
+     * <p>A bare number is milliseconds, which is what these chips have always taken. {@code T} or
+     * {@code TICKS} after it makes it ticks, {@code S} or {@code SECONDS} seconds.
+     *
+     * @return the duration in milliseconds, or the fallback when the text is not one
+     */
+    private static long durationOf(String written, long fallback) {
+        String text = written.trim();
         if (text.isEmpty()) {
             return fallback;
         }
 
-        String[] parts = text.split(":");
+        int digits = 0;
+        while (digits < text.length() && Character.isDigit(text.charAt(digits))) {
+            digits++;
+        }
+        if (digits == 0) {
+            return fallback;
+        }
+
         long value;
         try {
-            value = Long.parseLong(parts[0].trim());
+            value = Long.parseLong(text.substring(0, digits));
         } catch (NumberFormatException e) {
             return fallback;
         }
-        if (value < 0) {
-            return fallback;
-        }
-        if (parts.length < 2) {
-            return value;
-        }
 
-        return switch (parts[1].trim().toUpperCase(java.util.Locale.ROOT)) {
+        return switch (text.substring(digits).trim().toUpperCase(Locale.ROOT)) {
+            case "", "MS", "MILLISECONDS" -> value;
             case "T", "TICKS" -> value * MILLIS_PER_TICK;
             case "S", "SECONDS" -> value * 1000L;
-            case "MS", "MILLISECONDS" -> value;
             default -> fallback;
         };
     }
@@ -290,7 +400,13 @@ public final class TimeChips {
         }
     }
 
-    /** Drives its output high and low a fixed number of times when poked. */
+    /**
+     * A burst of pulses, on one edge or the other, either way up.
+     *
+     * <p>Line 3 is {@code length[:startDelay]} and line 4 is {@code count[:pause]}. The two
+     * second fields are additions: a sign that gives neither behaves exactly as it always did,
+     * pulsing at once and running its pulses back to back.
+     */
     private static final class PulseLogic implements ICLogic {
 
         private static final long MINIMUM_PULSE_MILLIS = 100L;
@@ -298,20 +414,33 @@ public final class TimeChips {
         private static final int MINIMUM_PULSES = 1;
         private static final int MAXIMUM_PULSES = 10;
 
+        /** The longest a burst may be made to wait before it starts, or between its pulses. */
+        private static final long MAXIMUM_GAP_MILLIS = 60_000L;
+
+        private final boolean firesOnLow;
+        private final boolean inverting;
+
         private Scheduler.@Nullable Task burst;
+
+        PulseLogic(boolean firesOnLow, boolean inverting) {
+            this.firesOnLow = firesOnLow;
+            this.inverting = inverting;
+        }
 
         @Override
         public void trigger(ChipState state) {
-            if (!state.isAnyInputActive()) {
+            if (state.isAnyInputActive() == firesOnLow) {
                 return;
             }
 
             cancel();
 
             long periodTicks = Math.max(1, millisToTicks(pulseMillis(state)));
-            int pulses = pulseCount(state);
-            Burst body = new Burst(state, pulses);
-            burst = state.scheduler().runRepeating(body, periodTicks, periodTicks);
+            long startTicks = Math.max(1, millisToTicks(startDelayMillis(state)));
+            long pauseTicks = Math.max(0, millisToTicks(pauseMillis(state)));
+
+            Burst body = new Burst(state, pulseCount(state), periodTicks, pauseTicks, inverting);
+            burst = state.scheduler().runRepeating(body, startTicks, 1);
             body.task = burst;
         }
 
@@ -328,41 +457,145 @@ public final class TimeChips {
         }
 
         private static long pulseMillis(ChipState state) {
-            long configured = configValue(state, FIRST_CONFIG_LINE, MINIMUM_PULSE_MILLIS);
-            return Math.max(MINIMUM_PULSE_MILLIS, Math.min(MAXIMUM_PULSE_MILLIS, configured));
+            long configured = durationOf(
+                    fieldOn(state, FIRST_CONFIG_LINE, 0), MINIMUM_PULSE_MILLIS);
+            return Math.clamp(configured, MINIMUM_PULSE_MILLIS, MAXIMUM_PULSE_MILLIS);
+        }
+
+        /** How long to wait before the first pulse, which a sign need not give at all. */
+        private static long startDelayMillis(ChipState state) {
+            return Math.clamp(
+                    durationOf(fieldOn(state, FIRST_CONFIG_LINE, 1), 0), 0, MAXIMUM_GAP_MILLIS);
         }
 
         private static int pulseCount(ChipState state) {
-            long configured = configValue(state, SECOND_CONFIG_LINE, MINIMUM_PULSES);
-            return (int) Math.max(MINIMUM_PULSES, Math.min(MAXIMUM_PULSES, configured));
+            long configured = durationOf(fieldOn(state, SECOND_CONFIG_LINE, 0), MINIMUM_PULSES);
+            return Math.clamp(configured, MINIMUM_PULSES, MAXIMUM_PULSES);
         }
 
-        /** Alternates the output, counting a completed pulse each time it falls. */
+        /** How long the output rests between one pulse and the next. */
+        private static long pauseMillis(ChipState state) {
+            return Math.clamp(
+                    durationOf(fieldOn(state, SECOND_CONFIG_LINE, 1), 0), 0, MAXIMUM_GAP_MILLIS);
+        }
+
+        /**
+         * Runs the burst a tick at a time, holding the output up and then down for as long as each
+         * half is meant to last.
+         *
+         * <p>A tick at a time rather than one task per edge, so the whole burst is one thing to
+         * cancel when the chip goes away.
+         */
         private static final class Burst implements Runnable {
 
             private final ChipState state;
             private final int pulses;
+            private final long highTicks;
+            private final long lowTicks;
+            private final boolean inverting;
 
             private Scheduler.@Nullable Task task;
             private boolean high;
+            private long remaining;
             private int completed;
 
-            Burst(ChipState state, int pulses) {
+            Burst(ChipState state, int pulses, long highTicks, long lowTicks, boolean inverting) {
                 this.state = state;
                 this.pulses = pulses;
+                this.highTicks = highTicks;
+                this.lowTicks = lowTicks;
+                this.inverting = inverting;
             }
 
             @Override
             public void run() {
-                high = !high;
-                state.setMainOutput(high);
-
-                if (!high) {
-                    completed++;
-                    if (completed >= pulses && task != null) {
-                        task.cancel();
-                    }
+                if (remaining > 0) {
+                    remaining--;
+                    return;
                 }
+
+                high = !high;
+                state.setMainOutput(inverting != high);
+
+                if (high) {
+                    remaining = highTicks - 1;
+                    return;
+                }
+
+                completed++;
+                if (completed >= pulses && task != null) {
+                    task.cancel();
+                    return;
+                }
+                remaining = lowTicks;
+            }
+        }
+    }
+
+    /**
+     * Delays one edge and lets the other through at once.
+     *
+     * @param delaysRising whether it is the input going high that waits
+     * @param inverting whether the output is the opposite of the input
+     */
+    private static final class EdgeDelay implements ICLogic {
+
+        /** What line 4 reads to let a wait finish after the input has gone. */
+        private static final String HOLD = "hold";
+
+        private final boolean delaysRising;
+        private final boolean inverting;
+
+        private Scheduler.@Nullable Task pending;
+
+        EdgeDelay(boolean delaysRising, boolean inverting) {
+            this.delaysRising = delaysRising;
+            this.inverting = inverting;
+        }
+
+        @Override
+        public void trigger(ChipState state) {
+            boolean active = state.isAnyInputActive();
+            boolean waiting = active == delaysRising;
+
+            if (!waiting && holds(state) && pending != null) {
+                // Told to let the wait finish, so the edge that would normally cut it short is
+                // ignored and only the pending write is left to speak.
+                return;
+            }
+
+            cancel();
+            if (!waiting) {
+                write(state);
+                return;
+            }
+
+            long delay = millisToTicks(durationMillis(state, FIRST_CONFIG_LINE, 0));
+            if (delay <= 0) {
+                write(state);
+                return;
+            }
+            pending = state.scheduler().runLater(() -> write(state), delay);
+        }
+
+        @Override
+        public void unload(ChipState state) {
+            cancel();
+        }
+
+        /** Reads the input afresh, so a signal that came back leaves no edge behind it. */
+        private void write(ChipState state) {
+            state.setMainOutput(inverting != state.isAnyInputActive());
+        }
+
+        private static boolean holds(ChipState state) {
+            return state.sign().trimmedText(SECOND_CONFIG_LINE).equalsIgnoreCase(HOLD);
+        }
+
+        private void cancel() {
+            if (pending != null) {
+                pending.cancel();
+                pending = null;
             }
         }
     }

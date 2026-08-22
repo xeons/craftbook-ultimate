@@ -2383,3 +2383,37 @@ the server by typo.
 
 Both numbers are now held to what a sign may ask for: a thousand experience an orb, sixty-four orbs
 a pulse.
+
+### 148. The documented way of writing a duration was never the way one was read
+
+Every chip in this rewrite that takes a length of time says the same thing on its sign line, and
+`docs/ics.md` prints it for each of them:
+
+```
+- **Line 3** — how long to delay, such as 20T or 2S; blank repeats at once
+```
+
+`durationMillis` split the line on a colon and read the unit out of the *second* field:
+
+```java
+String[] parts = text.split(":");
+value = Long.parseLong(parts[0].trim());
+...
+return switch (parts[1].trim().toUpperCase(Locale.ROOT)) {
+    case "T", "TICKS" -> value * MILLIS_PER_TICK;
+```
+
+So `20T` failed `Long.parseLong` and fell back to the default, silently. The only spelling that
+ever worked was `20:T`, which nothing documents anywhere. A builder following the page got the
+default delay and no indication that their line had been ignored — and because the default is
+usually a sensible number, the chip looked as though it worked.
+
+This is a finding against the rewrite rather than against either fork: it was introduced here. Both
+spellings are read now, and telling them apart is what lets a colon also mean "and here is a second
+field" — a colon followed by a unit word belongs to the number in front of it, anything else starts
+a new field. That is what made widening the pulser possible without changing what any existing sign
+means.
+
+The lesson is the one `LineForms` was built for: a form is the chip's own reader asked whether it
+would succeed, so a promise and a parser cannot come apart. These duration lines are
+`LineForms.free()` — they promise nothing checkable, and so nothing noticed.

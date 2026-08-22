@@ -1204,16 +1204,74 @@ public final class ICCatalogue {
         registry.register(ICDefinition.builder("MCX010", "PULSE")
                 .name("Pulse")
                 .description("Sends a burst of pulses when triggered.")
-                .thirdLine(optional("how long each pulse lasts in milliseconds, 100 to 1000"))
-                .fourthLine(optional("how many pulses, 1 to 10"))
+                .aliases("MC2500")
+                .thirdLine(optional("how long each pulse lasts, and after a colon how long to wait "
+                        + "before the first"))
+                .fourthLine(optional("how many pulses, 1 to 10, and after a colon how long to rest "
+                        + "between them"))
                 .logic(TimeChips::pulse)
+                .build());
+
+        registry.register(ICDefinition.builder("MC2501", "INV PULSER")
+                .name("Inverted Pulser")
+                .description("Rests high and pulses low, otherwise as the pulse chip does.")
+                .thirdLine(optional("how long each pulse lasts, and after a colon how long to wait "
+                        + "before the first"))
+                .fourthLine(optional("how many pulses, 1 to 10, and after a colon how long to rest "
+                        + "between them"))
+                .logic(() -> TimeChips.pulse(false, true))
+                .build());
+
+        registry.register(ICDefinition.builder("MC2510", "FE PULSER")
+                .name("Falling Edge Pulser")
+                .description("Sends a burst of pulses as its input drops rather than as it rises.")
+                .thirdLine(optional("how long each pulse lasts, and after a colon how long to wait "
+                        + "before the first"))
+                .fourthLine(optional("how many pulses, 1 to 10, and after a colon how long to rest "
+                        + "between them"))
+                .logic(() -> TimeChips.pulse(true, false))
+                .build());
+
+        registry.register(ICDefinition.builder("MC2511", "INV FE PULSER")
+                .name("Inverted Falling Edge Pulser")
+                .description("Pulses low as its input drops.")
+                .thirdLine(optional("how long each pulse lasts, and after a colon how long to wait "
+                        + "before the first"))
+                .fourthLine(optional("how many pulses, 1 to 10, and after a colon how long to rest "
+                        + "between them"))
+                .logic(() -> TimeChips.pulse(true, true))
                 .build());
 
         registry.register(ICDefinition.builder("MCX011", "SIGNAL EXTENDER")
                 .name("Signal Extender")
                 .description("Holds the output high for a while after the input ends.")
+                .aliases("MC2110")
                 .thirdLine(optional("how long to hold, such as 500, 20T or 2S"))
                 .logic(TimeChips::signalExtender)
+                .build());
+
+        registry.register(ICDefinition.builder("MC2100", "DELAYER")
+                .name("Delayer")
+                .description("Waits before turning on, and turns off the moment its input does.")
+                .thirdLine(optional("how long to wait, such as 500, 20T or 2S"))
+                .fourthLine(optional("hold, to let a wait finish after the input has gone"))
+                .logic(TimeChips::onDelay)
+                .build());
+
+        registry.register(ICDefinition.builder("MC2101", "INV DELAYER")
+                .name("Inverted Delayer")
+                .description("Waits before turning off, and turns on the moment its input drops.")
+                .thirdLine(optional("how long to wait, such as 500, 20T or 2S"))
+                .fourthLine(optional("hold, to let a wait finish after the input has gone"))
+                .logic(TimeChips::invertedOnDelay)
+                .build());
+
+        registry.register(ICDefinition.builder("MC2111", "INV FE DELAYER")
+                .name("Inverted Falling Edge Delayer")
+                .description("Turns off with its input, and waits before turning back on.")
+                .thirdLine(optional("how long to wait, such as 500, 20T or 2S"))
+                .fourthLine(optional("hold, to let a wait finish after the input has gone"))
+                .logic(TimeChips::invertedOffDelay)
                 .build());
     }
 

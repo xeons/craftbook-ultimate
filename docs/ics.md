@@ -134,7 +134,7 @@ watching for somebody to walk past. Those have a second model number for the
 self-triggering form, given as **runs on its own** in their entry, and `[MC1420]S`
 asks the same of any chip that can do it.
 
-There are **134 chips**, answering to **163 model numbers**. 52 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
+There are **140 chips**, answering to **171 model numbers**. 52 of them are restricted, meaning they are not granted to everybody by default: those can move blocks, hurt people or reach a long way, so an operator decides who may build one.
 
 ## Every chip
 
@@ -183,6 +183,12 @@ There are **134 chips**, answering to **163 model numbers**. 52 of them are rest
 | [`MC1511`](#mc1511--message-all) | `MESSAGE ALL` | Message All *(restricted)* | Says something to everybody online. |
 | [`MC2020`](#mc2020--random-3-bit) | `RANDOM 3` | Random 3-Bit | Randomly sets the outputs high. |
 | [`MC2022`](#mc2022--bit-shift) | `BITSHIFT` | Bit Shift | Remembers a row of bits and rotates them along. |
+| [`MC2100`](#mc2100--delayer) | `DELAYER` | Delayer | Waits before turning on, and turns off the moment its input does. |
+| [`MC2101`](#mc2101--inverted-delayer) | `INV DELAYER` | Inverted Delayer | Waits before turning off, and turns on the moment its input drops. |
+| [`MC2111`](#mc2111--inverted-falling-edge-delayer) | `INV FE DELAYER` | Inverted Falling Edge Delayer | Turns off with its input, and waits before turning back on. |
+| [`MC2501`](#mc2501--inverted-pulser) | `INV PULSER` | Inverted Pulser | Rests high and pulses low, otherwise as the pulse chip does. |
+| [`MC2510`](#mc2510--falling-edge-pulser) | `FE PULSER` | Falling Edge Pulser | Sends a burst of pulses as its input drops rather than as it rises. |
+| [`MC2511`](#mc2511--inverted-falling-edge-pulser) | `INV FE PULSER` | Inverted Falling Edge Pulser | Pulses low as its input drops. |
 | [`MC2999`](#mc2999--marquee) | `MARQUEE` | Marquee | Moves one raised output along its three outputs, a step per pulse. |
 | [`MC3002`](#mc3002--and-gate) | `AND` | And Gate | Outputs high if all inputs are high. |
 | [`MC3003`](#mc3003--nand-gate) | `NAND` | Nand Gate | Outputs high if any input is low. |
@@ -773,6 +779,72 @@ Remembers a row of bits and rotates them along.
 - **Output 1** — the first bit of the row
 - **Permission** — `craftbook.ic.safe.mc2022`
 
+### MC2100 — Delayer
+
+Waits before turning on, and turns off the moment its input does.
+
+- **Write on the sign** — `[MC2100]`, or `=DELAYER`
+- **Line 3** — how long to wait, such as 500, 20T or 2S
+- **Line 4** — hold, to let a wait finish after the input has gone
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc2100`
+
+### MC2101 — Inverted Delayer
+
+Waits before turning off, and turns on the moment its input drops.
+
+- **Write on the sign** — `[MC2101]`, or `=INV DELAYER`
+- **Line 3** — how long to wait, such as 500, 20T or 2S
+- **Line 4** — hold, to let a wait finish after the input has gone
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc2101`
+
+### MC2111 — Inverted Falling Edge Delayer
+
+Turns off with its input, and waits before turning back on.
+
+- **Write on the sign** — `[MC2111]`, or `=INV FE DELAYER`
+- **Line 3** — how long to wait, such as 500, 20T or 2S
+- **Line 4** — hold, to let a wait finish after the input has gone
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc2111`
+
+### MC2501 — Inverted Pulser
+
+Rests high and pulses low, otherwise as the pulse chip does.
+
+- **Write on the sign** — `[MC2501]`, or `=INV PULSER`
+- **Line 3** — how long each pulse lasts, and after a colon how long to wait before the first
+- **Line 4** — how many pulses, 1 to 10, and after a colon how long to rest between them
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc2501`
+
+### MC2510 — Falling Edge Pulser
+
+Sends a burst of pulses as its input drops rather than as it rises.
+
+- **Write on the sign** — `[MC2510]`, or `=FE PULSER`
+- **Line 3** — how long each pulse lasts, and after a colon how long to wait before the first
+- **Line 4** — how many pulses, 1 to 10, and after a colon how long to rest between them
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc2510`
+
+### MC2511 — Inverted Falling Edge Pulser
+
+Pulses low as its input drops.
+
+- **Write on the sign** — `[MC2511]`, or `=INV FE PULSER`
+- **Line 3** — how long each pulse lasts, and after a colon how long to wait before the first
+- **Line 4** — how many pulses, 1 to 10, and after a colon how long to rest between them
+- **Wiring** — `3ISO`, 3 inputs, 1 output
+- **Inputs** — only input 1 is read; the others are wired to nothing
+- **Permission** — `craftbook.ic.safe.mc2511`
+
 ### MC2999 — Marquee
 
 Moves one raised output along its three outputs, a step per pulse.
@@ -1246,10 +1318,11 @@ Plays a record through an adjacent jukebox.
 Sends a burst of pulses when triggered.
 
 - **Write on the sign** — `[MCX010]`, or `=PULSE`
-- **Line 3** — how long each pulse lasts in milliseconds, 100 to 1000
-- **Line 4** — how many pulses, 1 to 10
+- **Line 3** — how long each pulse lasts, and after a colon how long to wait before the first
+- **Line 4** — how many pulses, 1 to 10, and after a colon how long to rest between them
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Inputs** — only input 1 is read; the others are wired to nothing
+- **Also answers to** — `MC2500`
 - **Permission** — `craftbook.ic.safe.mcx010`
 
 ### MCX011 — Signal Extender
@@ -1261,6 +1334,7 @@ Holds the output high for a while after the input ends.
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Inputs** — only input 1 is read; the others are wired to nothing
+- **Also answers to** — `MC2110`
 - **Permission** — `craftbook.ic.safe.mcx011`
 
 ### MCX027 — Between Time

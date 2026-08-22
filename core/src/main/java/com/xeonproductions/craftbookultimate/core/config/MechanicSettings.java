@@ -26,10 +26,12 @@ import org.jspecify.annotations.NullMarked;
  * @param redstone whether redstone reaching a mechanic's sign works it
  * @param depowerOnSourceRemoval whether a powered block goes out when the redstone feeding it is
  *     mined away, rather than staying as it was
+ * @param chair what may be sat on, and what a healing chair does
  * @param gate what a gate is made of and how far it looks for it
  * @param elevator how the lifts are worked
  * @param area how large and how many the saved areas may be
  * @param powerables what the blocks answering redstone turn into
+ * @param heads what a death leaves behind, and how likely it is to
  * @param lightSwitch how far a light switch reaches and how much it turns
  * @param meters what is held up to a block to read it
  * @param bounce what throws somebody who jumps on it
@@ -42,10 +44,12 @@ public record MechanicSettings(
         Set<String> disabled,
         boolean redstone,
         boolean depowerOnSourceRemoval,
+        ChairSettings chair,
         GateSettings gate,
         ElevatorSettings elevator,
         AreaSettings area,
         PowerableSettings powerables,
+        HeadSettings heads,
         LightSwitchSettings lightSwitch,
         MeterSettings meters,
         BounceSettings bounce,
@@ -72,10 +76,12 @@ public record MechanicSettings(
                 .disabled(disabled)
                 .redstone(redstone)
                 .depowerOnSourceRemoval(depowerOnSourceRemoval)
+                .chair(chair)
                 .gate(gate)
                 .elevator(elevator)
                 .area(area)
                 .powerables(powerables)
+                .heads(heads)
                 .lightSwitch(lightSwitch)
                 .meters(meters)
                 .bounce(bounce)
@@ -106,6 +112,16 @@ public record MechanicSettings(
     /** These settings with powered blocks going out, or not, when their source is mined away. */
     public MechanicSettings withDepowerOnSourceRemoval(boolean depowers) {
         return toBuilder().depowerOnSourceRemoval(depowers).build();
+    }
+
+    /** These settings with different chairs. */
+    public MechanicSettings withChair(ChairSettings chairs) {
+        return toBuilder().chair(chairs).build();
+    }
+
+    /** These settings with different heads dropping. */
+    public MechanicSettings withHeads(HeadSettings dropping) {
+        return toBuilder().heads(dropping).build();
     }
 
     /** These settings with different gates. */
@@ -172,10 +188,12 @@ public record MechanicSettings(
         private Set<String> disabled = Set.of();
         private boolean redstone = true;
         private boolean depowerOnSourceRemoval = false;
+        private ChairSettings chair = ChairSettings.DEFAULTS;
         private GateSettings gate = GateSettings.DEFAULTS;
         private ElevatorSettings elevator = ElevatorSettings.DEFAULTS;
         private AreaSettings area = AreaSettings.DEFAULTS;
         private PowerableSettings powerables = PowerableSettings.DEFAULTS;
+        private HeadSettings heads = HeadSettings.DEFAULTS;
         private LightSwitchSettings lightSwitch = LightSwitchSettings.DEFAULTS;
         private MeterSettings meters = MeterSettings.DEFAULTS;
         private BounceSettings bounce = BounceSettings.DEFAULTS;
@@ -200,6 +218,18 @@ public record MechanicSettings(
         /** Whether a powered block goes out when the redstone feeding it is mined away. */
         public Builder depowerOnSourceRemoval(boolean depowers) {
             this.depowerOnSourceRemoval = depowers;
+            return this;
+        }
+
+        /** What may be sat on, and what a healing chair does. */
+        public Builder chair(ChairSettings chairs) {
+            this.chair = chairs;
+            return this;
+        }
+
+        /** What a death leaves behind, and how likely it is to. */
+        public Builder heads(HeadSettings dropping) {
+            this.heads = dropping;
             return this;
         }
 
@@ -268,10 +298,12 @@ public record MechanicSettings(
                     disabled,
                     redstone,
                     depowerOnSourceRemoval,
+                    chair,
                     gate,
                     elevator,
                     area,
                     powerables,
+                    heads,
                     lightSwitch,
                     meters,
                     bounce,

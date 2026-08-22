@@ -32,7 +32,14 @@ import com.xeonproductions.craftbookultimate.paper.command.ConfigCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
 import com.xeonproductions.craftbookultimate.paper.command.DebugCommands;
 import com.xeonproductions.craftbookultimate.paper.command.MusicCommands;
+import com.xeonproductions.craftbookultimate.core.chair.Chairs;
+import com.xeonproductions.craftbookultimate.core.head.HeadDrops;
+import com.xeonproductions.craftbookultimate.paper.chair.ChairListener;
+import com.xeonproductions.craftbookultimate.paper.chair.Seats;
+import com.xeonproductions.craftbookultimate.paper.chair.Sitting;
+import com.xeonproductions.craftbookultimate.paper.command.ChairCommands;
 import com.xeonproductions.craftbookultimate.paper.command.SignCommands;
+import com.xeonproductions.craftbookultimate.paper.head.HeadDropListener;
 import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
 import com.xeonproductions.craftbookultimate.paper.command.TestbedCommands;
 import com.xeonproductions.craftbookultimate.paper.command.VariableCommands;
@@ -79,6 +86,7 @@ import com.xeonproductions.craftbookultimate.paper.pipe.PipeDispatcher;
 import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
 import com.xeonproductions.craftbookultimate.paper.testbed.TestbedBuilder;
 import java.io.IOException;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -111,6 +119,8 @@ public final class CraftBookPlugin extends JavaPlugin {
     private @Nullable RegionSchedulers schedulers;
     private @Nullable ICManager icManager;
     private @Nullable PasswordFile passwordFile;
+    private @Nullable Seats seats;
+    private @Nullable Sitting sitting;
     private @Nullable FireworkFiles fireworkFiles;
     private final SignClipboard signClipboard = new SignClipboard();
     private @Nullable MidiFiles midiFiles;
@@ -205,6 +215,13 @@ public final class CraftBookPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new SnowListener(chipServices.configuration()), this);
         getServer().getPluginManager().registerEvents(
+                new HeadDropListener(chipServices.configuration()), this);
+
+        this.seats = new Seats(this);
+        this.sitting = new Sitting(this, chipServices.configuration(), seats, Clock.systemUTC());
+        getServer().getPluginManager().registerEvents(
+                new ChairListener(chipServices.configuration(), seats, sitting), this);
+        getServer().getPluginManager().registerEvents(
                 new PipeListener(
                         new PipeDispatcher(chipServices.configuration(), pipeNetworks),
                         chipServices.configuration()),
@@ -265,6 +282,9 @@ public final class CraftBookPlugin extends JavaPlugin {
         declareCopierPermissions(manager);
         declareLightPermissions(manager);
         declareJumpAndTeleportPermissions(manager);
+        declareChairPermissions(manager);
+        declare(manager, HeadDrops.KILL,
+                "Get the head of whatever you kill.", PermissionDefault.TRUE);
         declareVariablePermissions(manager);
         declare(manager, TestbedCommands.BUILD,
                 "Build a test bed carrying a rig for every chip.", PermissionDefault.OP);
@@ -310,6 +330,23 @@ public final class CraftBookPlugin extends JavaPlugin {
                 "Read the light level off a block.", PermissionDefault.TRUE);
         declare(manager, Meters.AMMETER_USE,
                 "Read how much redstone power a block carries.", PermissionDefault.TRUE);
+    }
+
+    /**
+     * What the chairs need.
+     *
+     * <p>Sitting down is ordinary and everybody may. Making a chair that heals is not: it is a
+     * bed that cannot be slept through and a way of resting where resting is meant to be hard.
+     */
+    private static void declareChairPermissions(PluginManager manager) {
+        declare(manager, Chairs.CLICK_USE,
+                "Sit down by clicking a chair.", PermissionDefault.TRUE);
+        declare(manager, Chairs.COMMAND_USE,
+                "Sit down and stand up by command.", PermissionDefault.TRUE);
+        declare(manager, ChairCommands.TOGGLE,
+                "Turn sitting down by clicking off for yourself.", PermissionDefault.TRUE);
+        declare(manager, Chairs.HEAL_BUILD,
+                "Make a chair that heals whoever sits in it.", PermissionDefault.OP);
     }
 
     /** What the copiers need, which is a pair for each sign and two for the sign copier. */
@@ -417,8 +454,26 @@ public final class CraftBookPlugin extends JavaPlugin {
                                 debugActions(),
                                 debugSticksTarget(),
                                 schedulersTarget()),
-                        new SignCommands(signClipboard))
+                        new SignCommands(signClipboard),
+                        new ChairCommands(
+                                chipServices.configuration(), sittingTarget(), seatsTarget()))
                 .registerOn(this);
+    }
+
+    /** The seats, which the stand command clears. */
+    private Seats seatsTarget() {
+        if (seats == null) {
+            throw new IllegalStateException("The seats are not available until enabled");
+        }
+        return seats;
+    }
+
+    /** The sitting, which the sit and toggle commands go through. */
+    private Sitting sittingTarget() {
+        if (sitting == null) {
+            throw new IllegalStateException("Sitting is not available until enabled");
+        }
+        return sitting;
     }
 
     /** The chip manager, which the test bed starts its chips through. */

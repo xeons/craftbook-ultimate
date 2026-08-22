@@ -33,6 +33,7 @@ public final class CraftBookCommands {
     private final CheckCommands check;
     private final DebugCommands debug;
     private final SignCommands signs;
+    private final ChairCommands chairs;
 
     public CraftBookCommands(
             CatalogueCommands catalogue,
@@ -45,7 +46,8 @@ public final class CraftBookCommands {
             TestbedCommands testbed,
             CheckCommands check,
             DebugCommands debug,
-            SignCommands signs) {
+            SignCommands signs,
+            ChairCommands chairs) {
         this.catalogue = catalogue;
         this.switches = switches;
         this.config = config;
@@ -57,6 +59,7 @@ public final class CraftBookCommands {
         this.check = check;
         this.debug = debug;
         this.signs = signs;
+        this.chairs = chairs;
     }
 
     /** Registers everything against a plugin. */
@@ -129,6 +132,21 @@ public final class CraftBookCommands {
                     areas.areaCommand().build(),
                     "Saves, deletes and lists the areas a toggled area sign can name.",
                     List.of("togglearea"));
+
+            commands.register(
+                    chairs.sit().build(),
+                    "Sits you down where you are standing.",
+                    List.of());
+
+            commands.register(
+                    chairs.stand().build(),
+                    "Stands you up out of a chair.",
+                    List.of());
+
+            commands.register(
+                    chairs.toggle().build(),
+                    "Turns sitting down by clicking a chair on and off for yourself.",
+                    List.of());
         });
     }
 }

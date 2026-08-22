@@ -57,7 +57,8 @@ class MechanicsDocumentTest {
                     "Gate.radius", "Elevator.tolerance", "Area.max-blocks",
                     "GlowStone.off-block", "Netherrack.fire-blocks", "LightSwitch.range",
                     "Ammeter.item", "LightStone.item", "BounceBlocks.sensitivity",
-                    "Teleporter.range", "XPStorer.per-bottle", "Snow.piling");
+                    "Teleporter.range", "XPStorer.per-bottle", "Snow.piling",
+                    "Chairs.heal-amount", "HeadDrops.drop-rate");
         }
 
         @Test
@@ -238,6 +239,36 @@ class MechanicsDocumentTest {
             tree.values.put("Teleporter.range", 0.0);
 
             assertThat(read().teleporter().range()).isZero();
+        }
+    }
+
+    @Nested
+    @DisplayName("the chairs")
+    class TheChairs {
+
+        @Test
+        @DisplayName("are written as the tag rather than sixty block names")
+        void areWrittenAsTheTag() {
+            read();
+
+            assertThat(tree.values.get("Chairs.blocks"))
+                    .isEqualTo(ChairSettings.DEFAULT_BLOCK_NAMES);
+        }
+
+        @Test
+        @DisplayName("fall back to every stair where the server has no such tag")
+        void fallBackToEveryStair() {
+            assertThat(read().chair().blocks())
+                    .isEqualTo(ChairSettings.DEFAULTS.blocks())
+                    .contains(key("oak_stairs"), key("polished_blackstone_brick_stairs"));
+        }
+
+        @Test
+        @DisplayName("take a list an operator wrote instead")
+        void takeAListAnOperatorWrote() {
+            tree.values.put("Chairs.blocks", List.of("oak_slab"));
+
+            assertThat(read().chair().blocks()).containsExactly(key("oak_slab"));
         }
     }
 

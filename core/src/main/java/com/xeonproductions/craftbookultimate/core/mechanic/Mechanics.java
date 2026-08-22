@@ -43,6 +43,9 @@ public final class Mechanics {
     /** Runs a walkway out across a gap. */
     public static final String BRIDGE = "Bridge";
 
+    /** Sits somebody down on a stair. */
+    public static final String CHAIRS = "Chairs";
+
     /** Fills a doorway from its lintel or its threshold. */
     public static final String DOOR = "Door";
 
@@ -54,6 +57,9 @@ public final class Mechanics {
 
     /** Glowstone that goes dark rather than away. */
     public static final String GLOW_STONE = "GlowStone";
+
+    /** Drops the head of whatever was killed. */
+    public static final String HEAD_DROPS = "HeadDrops";
 
     /** A carved pumpkin that lights up. */
     public static final String JACK_O_LANTERN = "JackOLantern";
@@ -95,10 +101,12 @@ public final class Mechanics {
             BOOK_COPIER,
             BOUNCE_BLOCKS,
             BRIDGE,
+            CHAIRS,
             DOOR,
             ELEVATOR,
             GATE,
             GLOW_STONE,
+            HEAD_DROPS,
             JACK_O_LANTERN,
             LIGHT_STONE,
             LIGHT_SWITCH,

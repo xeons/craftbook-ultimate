@@ -49,6 +49,22 @@ public final class MechanicsDocument {
     private static final String REDSTONE = "redstone";
     private static final String DEPOWER_ON_REMOVAL = "depower-on-source-removal";
 
+    private static final String CHAIR_BLOCKS = Mechanics.CHAIRS + ".blocks";
+    private static final String CHAIR_REQUIRE_SIGN = Mechanics.CHAIRS + ".require-sign";
+    private static final String CHAIR_SIGN_DISTANCE = Mechanics.CHAIRS + ".max-sign-distance";
+    private static final String CHAIR_FACING = Mechanics.CHAIRS + ".face-correct-direction";
+    private static final String CHAIR_EXIT_AT_ENTRY = Mechanics.CHAIRS + ".exit-at-last-position";
+    private static final String CHAIR_HEAL_AMOUNT = Mechanics.CHAIRS + ".heal-amount";
+    private static final String CHAIR_HEAL_RATE = Mechanics.CHAIRS + ".heal-rate";
+
+    private static final String HEAD_PLAYERS = Mechanics.HEAD_DROPS + ".player-heads";
+    private static final String HEAD_MOBS = Mechanics.HEAD_DROPS + ".mob-heads";
+    private static final String HEAD_PLAYER_KILLS = Mechanics.HEAD_DROPS + ".player-kills-only";
+    private static final String HEAD_DROP_RATE = Mechanics.HEAD_DROPS + ".drop-rate";
+    private static final String HEAD_LOOTING = Mechanics.HEAD_DROPS + ".looting-rate-modifier";
+    private static final String HEAD_SHOW_NAME = Mechanics.HEAD_DROPS + ".show-name-on-click";
+    private static final String HEAD_IGNORED = Mechanics.HEAD_DROPS + ".ignored-names";
+
     private static final String GATE_BLOCKS = Mechanics.GATE + ".blocks";
     private static final String GATE_RADIUS = Mechanics.GATE + ".radius";
     private static final String GATE_CLICKING = Mechanics.GATE + ".clicking";
@@ -123,6 +139,24 @@ public final class MechanicsDocument {
         for (String mechanic : Mechanics.ALL) {
             setIfAbsent(tree, mechanic + "." + ENABLED, defaults.allows(mechanic));
         }
+
+        ChairSettings chairs = defaults.chair();
+        setIfAbsent(tree, CHAIR_BLOCKS, new ArrayList<>(ChairSettings.DEFAULT_BLOCK_NAMES));
+        setIfAbsent(tree, CHAIR_REQUIRE_SIGN, chairs.requireSign());
+        setIfAbsent(tree, CHAIR_SIGN_DISTANCE, chairs.maxSignDistance());
+        setIfAbsent(tree, CHAIR_FACING, chairs.faceCorrectDirection());
+        setIfAbsent(tree, CHAIR_EXIT_AT_ENTRY, chairs.exitAtEntry());
+        setIfAbsent(tree, CHAIR_HEAL_AMOUNT, chairs.healAmount());
+        setIfAbsent(tree, CHAIR_HEAL_RATE, chairs.healRate());
+
+        HeadSettings heads = defaults.heads();
+        setIfAbsent(tree, HEAD_PLAYERS, heads.playerHeads());
+        setIfAbsent(tree, HEAD_MOBS, heads.mobHeads());
+        setIfAbsent(tree, HEAD_PLAYER_KILLS, heads.playerKillsOnly());
+        setIfAbsent(tree, HEAD_DROP_RATE, heads.dropRate());
+        setIfAbsent(tree, HEAD_LOOTING, heads.lootingRateModifier());
+        setIfAbsent(tree, HEAD_SHOW_NAME, heads.showNameOnClick());
+        setIfAbsent(tree, HEAD_IGNORED, new ArrayList<>(heads.ignoredNames()));
 
         GateSettings gate = defaults.gate();
         setIfAbsent(tree, GATE_BLOCKS, written(gate.blocks()));
@@ -260,6 +294,41 @@ public final class MechanicsDocument {
                 "",
                 "Runs a walkway out across a gap and pulls it back again."));
 
+        tree.comment(Mechanics.CHAIRS, List.of(
+                "",
+                "Sits somebody down on a stair. Nothing is built: any block below seats whoever",
+                "right-clicks it with an empty hand and stays an ordinary block for every other",
+                "purpose. What holds them up is an invisible marker the game rides, so stopping",
+                "the plugin leaves nobody stuck."));
+
+        tree.comment(CHAIR_BLOCKS, List.of(
+                "What may be sat on. An entry is a block name, a tag written with a leading #",
+                "such as #minecraft:stairs, or a name from before the flattening. A stair laid",
+                "upside down is never a chair, whatever this says."));
+
+        tree.comment(CHAIR_REQUIRE_SIGN, List.of(
+                "Whether a chair only works with a sign beside it. Off, so any allowed block is a",
+                "chair; on, a builder has to say which ones are."));
+
+        tree.comment(CHAIR_SIGN_DISTANCE, List.of(
+                "How far from the block that was clicked that sign may be. The search follows a",
+                "run of the same block, so a bench of eight stairs can share one sign at its end."));
+
+        tree.comment(CHAIR_FACING, List.of(
+                "Whether sitting down turns somebody to face the way the block does, so a row of",
+                "chairs all faces the same way rather than however each person walked up."));
+
+        tree.comment(CHAIR_EXIT_AT_ENTRY, List.of(
+                "Whether standing up puts somebody back where they sat down from. Off, they are",
+                "left where the chair was, on the nearest footing that will hold them."));
+
+        tree.comment(CHAIR_HEAL_AMOUNT, List.of(
+                "How much a chair with a [Sit Heal] sign heals by each turn, in half hearts.",
+                "Zero stops healing chairs working without stopping ordinary ones."));
+
+        tree.comment(CHAIR_HEAL_RATE, List.of(
+                "How many ticks apart those turns are. 20 is a second."));
+
         tree.comment(Mechanics.DOOR, List.of(
                 "",
                 "Fills a doorway from its lintel or its threshold."));
@@ -306,6 +375,41 @@ public final class MechanicsDocument {
         tree.comment(GLOWSTONE_OFF, List.of(
                 "What a glowstone looks like while it is dark. Powering it turns it back into",
                 "glowstone, and taking the power away turns it into this."));
+
+        tree.comment(Mechanics.HEAD_DROPS, List.of(
+                "",
+                "Drops the head of whatever was killed. Nothing is built and nothing has a sign,",
+                "so switching this on changes what every death in the world leaves behind.",
+                "",
+                "The game has a head of its own for a player, a zombie, a creeper, a skeleton, a",
+                "wither skeleton, a dragon and a piglin. Every other creature drops a player head",
+                "wearing its face, which is the only way the game has of showing one. Those faces",
+                "are fetched from Mojang the first time each is handed out, so a server with no",
+                "way out to the internet gets a blank head instead."));
+
+        tree.comment(HEAD_PLAYERS, List.of(
+                "Whether a player killed drops their own head."));
+
+        tree.comment(HEAD_MOBS, List.of(
+                "Whether a creature killed drops its head."));
+
+        tree.comment(HEAD_PLAYER_KILLS, List.of(
+                "Whether only a death a player caused drops anything. Off, a creature that falls",
+                "into its own cactus leaves a head behind as well."));
+
+        tree.comment(HEAD_DROP_RATE, List.of(
+                "How likely a head is, from 0 to 1. 0.05 is one death in twenty."));
+
+        tree.comment(HEAD_LOOTING, List.of(
+                "What each level of looting adds to that. A chance of 0.05 with a modifier of",
+                "0.05 and a looting III sword comes to 0.20."));
+
+        tree.comment(HEAD_SHOW_NAME, List.of(
+                "Whether right-clicking a head already placed says whose it is."));
+
+        tree.comment(HEAD_IGNORED, List.of(
+                "Accounts whose head is never handed out or named, whatever killed them.",
+                "The one here belongs to a library that uses a head as a marker in the world."));
 
         tree.comment(Mechanics.JACK_O_LANTERN, List.of(
                 "",
@@ -413,6 +517,8 @@ public final class MechanicsDocument {
                 .redstone(tree.bool(REDSTONE, defaults.redstone()))
                 .depowerOnSourceRemoval(
                         tree.bool(DEPOWER_ON_REMOVAL, defaults.depowerOnSourceRemoval()))
+                .chair(chair(tree, defaults.chair()))
+                .heads(heads(tree, defaults.heads()))
                 .gate(gate(tree, defaults.gate()))
                 .elevator(elevator(tree, defaults.elevator()))
                 .area(area(tree, defaults.area()))
@@ -440,6 +546,30 @@ public final class MechanicsDocument {
             }
         }
         return off;
+    }
+
+    private ChairSettings chair(ConfigTree tree, ChairSettings defaults) {
+        Set<Key> blocks = names.blocks(tree.strings(CHAIR_BLOCKS), report);
+        return new ChairSettings(
+                blocks.isEmpty() ? defaults.blocks() : blocks,
+                tree.bool(CHAIR_REQUIRE_SIGN, defaults.requireSign()),
+                tree.integer(CHAIR_SIGN_DISTANCE, defaults.maxSignDistance()),
+                tree.bool(CHAIR_FACING, defaults.faceCorrectDirection()),
+                tree.bool(CHAIR_EXIT_AT_ENTRY, defaults.exitAtEntry()),
+                tree.number(CHAIR_HEAL_AMOUNT, defaults.healAmount()),
+                tree.integer(CHAIR_HEAL_RATE, defaults.healRate()));
+    }
+
+    private static HeadSettings heads(ConfigTree tree, HeadSettings defaults) {
+        List<String> ignored = tree.strings(HEAD_IGNORED);
+        return new HeadSettings(
+                tree.bool(HEAD_PLAYERS, defaults.playerHeads()),
+                tree.bool(HEAD_MOBS, defaults.mobHeads()),
+                tree.bool(HEAD_PLAYER_KILLS, defaults.playerKillsOnly()),
+                tree.number(HEAD_DROP_RATE, defaults.dropRate()),
+                tree.number(HEAD_LOOTING, defaults.lootingRateModifier()),
+                tree.bool(HEAD_SHOW_NAME, defaults.showNameOnClick()),
+                Set.copyOf(ignored));
     }
 
     private GateSettings gate(ConfigTree tree, GateSettings defaults) {

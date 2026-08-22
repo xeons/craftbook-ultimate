@@ -33,8 +33,6 @@ public final class CraftBookCommands {
     private final CheckCommands check;
     private final DebugCommands debug;
 
-    private final LegacyTableCommands legacyTable;
-
     public CraftBookCommands(
             CatalogueCommands catalogue,
             SwitchCommands switches,
@@ -45,8 +43,7 @@ public final class CraftBookCommands {
             VariableCommands variables,
             TestbedCommands testbed,
             CheckCommands check,
-            DebugCommands debug,
-            LegacyTableCommands legacyTable) {
+            DebugCommands debug) {
         this.catalogue = catalogue;
         this.switches = switches;
         this.config = config;
@@ -57,7 +54,6 @@ public final class CraftBookCommands {
         this.testbed = testbed;
         this.check = check;
         this.debug = debug;
-        this.legacyTable = legacyTable;
     }
 
     /** Registers everything against a plugin. */
@@ -72,7 +68,6 @@ public final class CraftBookCommands {
                             .then(testbed.testbedCommand())
                             .then(check.checkCommand())
                             .then(debug.debugCommand())
-                            .then(legacyTable.legacyTableCommand())
                             .build(),
                     "Reads the integrated circuit catalogue.",
                     List.of("cb"));

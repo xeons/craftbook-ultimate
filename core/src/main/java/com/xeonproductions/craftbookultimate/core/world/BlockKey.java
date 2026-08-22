@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Brandon Scott
 
-package com.xeonproductions.craftbookultimate.paper.ic;
+package com.xeonproductions.craftbookultimate.core.world;
 
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import java.util.UUID;
-import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -24,13 +22,9 @@ import org.jspecify.annotations.NullMarked;
 public record BlockKey(UUID world, int x, int y, int z) {
 
     /** The key for a block. */
-    public static BlockKey of(Block block) {
-        return new BlockKey(block.getWorld().getUID(), block.getX(), block.getY(), block.getZ());
-    }
-
     /** The key for a position in a world. */
-    public static BlockKey of(World world, Vec3i position) {
-        return new BlockKey(world.getUID(), position.x(), position.y(), position.z());
+    public static BlockKey of(UUID world, Vec3i position) {
+        return new BlockKey(world, position.x(), position.y(), position.z());
     }
 
     /** The position part of this key, without the world. */

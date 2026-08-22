@@ -46,81 +46,78 @@ plainer than shading and relocating a text library through every seam in the plu
 The consequence to remember: **an Adventure 5-only API used anywhere in `core` breaks the Sponge
 build.** It breaks it at compile time, which is the right time.
 
-## What it cannot do
+The module also compiles against Minecraft itself, through VanillaGradle:
 
-Eight things. Six are limits of SpongeAPI, one is a limit of the platform, and one is a gap in the
-testing story.
+```kotlin
+minecraft {
+    version("26.2")
+    platform(MinecraftPlatform.SERVER)
+}
+```
 
-### Weather illusions do not work
+That is what the next section is about. VanillaGradle is applied in `settings.gradle.kts` rather
+than in the module, with `injectRepositories(false)`, because a project that declares any repository
+of its own ignores the ones settled in `dependencyResolutionManagement` — which would lose Paper's
+and Sponge's and break the other two modules.
 
-`MCX237` and the hidden-rain chip show one player weather the world is not having. Bukkit has
-`Player#setPlayerWeather`. Sponge has no per-player weather, and — unlike Bukkit — no general
-packet-sending API to build one out of: `Viewer` will send a player a block change, a particle, a
-sound or a world type, and nothing else.
+## Reaching into the game
 
-`Illusions` is already a seam in `core`, so the Sponge binding implements it as a chip that does
-nothing rather than as a chip that is missing. A sign carrying one is still created and still
-reads correctly; it just shows nobody anything.
+SpongeVanilla puts a plugin on the **game module layer**, under Mojang's own names, so plugin code
+can call `net.minecraft` directly. Sponge builds its API into the game's classes rather than
+wrapping them, so a Sponge `ServerWorld` *is* a `ServerLevel` and a Sponge `BlockState` *is* a
+Minecraft one — crossing between them is a cast, not a conversion.
 
-### Legacy block spellings need a table generating first
+Four things SpongeAPI cannot answer are answered that way, in `sponge/game/`:
 
-Signs in the worlds this plugin is for name blocks as `35:14` or `WOOL:14`. That mapping is not
-static data anywhere: Bukkit answers it by running the game's own **data fixers** over a 1.12
-block tag. Sponge exposes no data fixer, and the ones its implementation uses internally are
-server internals rather than API.
+| Question | What is called |
+| --- | --- |
+| What would breaking this block give? | `Block.getDrops(state, level, pos, blockEntity)` |
+| Would this block stay where it was put? | `BlockState#canSurvive(level, pos)` |
+| Show one player weather the world is not having | `ClientboundGameEventPacket` to their connection |
+| What is `35:14` called now? | `BlockStateData.getTag`, `ItemIdFix`, `ItemStackTheFlatteningFix` |
 
-So the mapping is carried as data. On a Paper server, `/craftbook legacytable` writes
-`legacy-blocks.properties` into the plugin's folder; that file goes into the Sponge jar's
-resources, and `LegacyBlocks` reads it. It is derived from the game's own answer rather than from
-anybody's recollection of what `35:14` used to be, which is the one thing here that must not be
-guessed — a wrong entry does not fail, it quietly builds the wrong block.
+**None of these is a mixin.** A mixin changes what the game does; every one of these only asks it
+something. Nothing here alters Minecraft's behaviour, and the jar carries no `MixinConfigs`
+attribute, so an operator gets no warning about a plugin modifying their server.
 
-**Without the table, modern block names resolve and legacy spellings do not.** That is deliberate:
-a sign that cannot be read reports as unreadable rather than as something else.
+`GameInternals` is the seam and the safety. Each method may answer nothing, every caller has
+something sensible to do with nothing, and the whole layer stands down permanently the first time
+the game refuses it — settled once at start-up by asking a question with a known answer (`35:14` is
+red wool, and has been since the flattening). A version that moves these names degrades to the
+fallbacks below rather than failing to start.
 
-### Redstone is watched differently
+That is the trade being made deliberately: **the API is stable and the internals are not.** What is
+reached for is small, read-only, and individually optional.
 
-Bukkit has `BlockRedstoneEvent`, which fires when a block's power level changes. Sponge has
-nothing equivalent, and this was the question that decided whether the port was viable at all.
+### The fallbacks, when the game will not answer
 
-It is: `ChangeBlockEvent.Post` carries every block transaction that actually happened, and a chip's
-pin positions are known, so the pins are held in a position-indexed map and each `Post` is a lookup
-rather than a search. Comparing the original and final states of the transaction gives the same
-"was it powered, is it powered now" answer `BlockRedstoneEvent` gave directly.
+- **Drops** become the block's own item form — right except where a plant yields something other
+  than itself.
+- **Placement** becomes "is the place clear" — a crop on the wrong block pops off rather than never
+  being planted, which is what a player doing it by hand sees too.
+- **Weather illusions** show nobody anything, and say so, rather than pretending.
+- **Legacy spellings** stop resolving, and there is deliberately nothing behind them. A table would
+  have to be generated on a Paper server and baked into the jar, which is not a thing any operator
+  would actually do; and a table of remembered values is exactly what must not exist here, because a
+  wrong entry does not fail — it quietly builds the wrong block.
 
-This is the shape the Sponge fork this codebase was ported from already used, which is some
-evidence it holds up under a real redstone load.
+Every one of these degradations is visible rather than silent. That is the property being bought:
+an approximation that reads as an approximation, or a sign that reads as unreadable.
 
-### Toggled areas are stored in a different format
+### Mixins, if they are ever needed
 
-`ToggleArea` puts a piece of the world away and brings it back. On Paper that is the game's own
-structure format through `org.bukkit.structure` — the same files a structure block writes. Sponge
-has no structure API; it has its own **schematic** API instead.
+The plumbing is there and deliberately switched off. Mixin is on the compile classpath, and the jar
+task adds the `MixinConfigs` manifest attribute the moment a `mixins.*.json` appears in resources —
+and not before, because that attribute makes SpongeVanilla warn the operator at every start-up, and
+frightening somebody on behalf of an empty config is worse than not having one.
 
-The mechanic works either way, but the files do not travel: an area saved on Paper will not load
-on Sponge or the reverse, and the Sponge form cannot be opened in a structure block. The `.anchor`
-file beside it is the plugin's own and is the same on both.
+Adding the first mixin means adding the annotation processor alongside it, which writes the refmap
+and drags Guava onto the processor path. That is left undone for the same reason: it has nothing to
+process yet.
 
-### The harvester pays out differently
+## What it still cannot do
 
-`ChipWorld#dropsAt` asks what breaking a block would give. Bukkit answers it; Sponge has no such
-query at all. What the Sponge binding answers instead is the block's own item form, which is right
-for everything the harvester deals in except where a plant yields something other than itself — a
-wheat crop being the case that differs.
-
-The alternative was a table of remembered yields, and that was rejected on the same grounds as the
-legacy block spellings: a wrong number there does not fail, it quietly pays a builder the wrong
-amount. An approximation that is visibly an approximation is better than a table nobody can check.
-
-### The planter looks before it leaps rather less
-
-`ChipWorld#canPlace` asks whether a block would survive where it is going. Bukkit asks the game;
-Sponge has nothing equivalent, so what the binding answers is the part that can be known — whether
-the place is clear.
-
-Only the planter and the area planter ask. The difference shows as a crop planted on the wrong
-block popping off immediately rather than never being planted, which is what a player doing it by
-hand would see too.
+Two things, and neither is about Minecraft.
 
 ### Regions are not a thing
 
@@ -129,8 +126,8 @@ single main thread. SpongeVanilla ticks every world on one server thread, so `Se
 collapses onto the server scheduler and `ownsCurrentThread` is "are we on the server thread".
 
 Nothing breaks. The care taken over action at a distance — `Radio`, `Destinations`, `Announcer`
-publishing values rather than reaching across — costs nothing here and is kept, because it is
-also just a cleaner way to write those chips.
+publishing values rather than reaching across — costs nothing here and is kept, because it is also
+just a cleaner way to write those chips.
 
 ### The world-touching tests do not run there
 
@@ -138,9 +135,33 @@ also just a cleaner way to write those chips.
 listeners be tested against real blocks. There is no Sponge equivalent of MockBukkit.
 
 Core's tests are unaffected — they are the large majority, and they are where the behaviour lives.
-What is not covered on the Sponge side is the binding layer, which is exactly the layer that is
-new. Prefer `core` even harder here than the main guidance already says: a rule that can be lifted
-out into `core` gets tested on both platforms for free.
+What is not covered on the Sponge side is the binding layer, which is exactly the layer that is new.
+Prefer `core` even harder here than the main guidance already says: a rule that can be lifted out
+into `core` gets tested on both platforms for free.
+
+### Toggled areas are stored in a different format
+
+Not a limitation so much as an incompatibility. `ToggleArea` puts a piece of the world away and
+brings it back; on Paper that is `org.bukkit.structure`, the same files a structure block writes.
+Sponge has no structure API and its schematics are a different format.
+
+The mechanic works either way, but the files do not travel: an area saved on Paper will not load on
+Sponge or the reverse, and the Sponge form cannot be opened in a structure block. The `.anchor` file
+beside it is the plugin's own and is the same on both.
+
+### Redstone is watched differently
+
+Also not a limitation — the design differs, and this was the question that decided whether the port
+was viable at all.
+
+Bukkit has `BlockRedstoneEvent`, which fires when a block's power level changes. Sponge has nothing
+equivalent. But `ChangeBlockEvent.Post` carries every block transaction that actually happened, and
+a chip's pin positions are known, so the pins are held in a position-indexed map and each `Post` is
+a lookup rather than a search. Comparing the original and final states gives the same "was it
+powered, is it powered now" answer `BlockRedstoneEvent` gave directly.
+
+This is the shape the Sponge fork this codebase was ported from already used, which is some evidence
+it holds up under a real redstone load.
 
 ## What is not a problem
 

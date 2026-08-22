@@ -247,9 +247,12 @@ at all. Worth checking early, in roughly this order:
 `docs/sponge.md` says what the build is, how it is put together and what it cannot do.
 
 What is there: the module and its build wiring, the scheduler, the direction and position adapters,
-the legacy block reader and the Paper-side `/craftbook legacytable` that generates the table it
-reads, the world seam, the entity bindings and a stockpile. Core's 23.9k lines compile against
-SpongeAPI 20 and Adventure 4.26.1.
+the legacy block reader, the world seam, the entity bindings and a stockpile. Core's 23.9k lines
+compile against SpongeAPI 20 and Adventure 4.26.1.
+
+`sponge/game/` reaches into Minecraft directly for the four things SpongeAPI cannot answer — drops,
+whether a block would survive, one player's own weather, and what `35:14` became. None of them is a
+mixin; the plumbing for one is in the build and switched off until something needs it.
 
 The platform-independent files that were sitting in `paper/` have moved to `core`, so both
 platforms share one catalogue rather than two that drift.

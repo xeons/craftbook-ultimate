@@ -4,6 +4,7 @@
 package com.xeonproductions.craftbookultimate.paper.adapter;
 
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
+import com.xeonproductions.craftbookultimate.core.world.BlockKey;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -36,6 +37,16 @@ public final class Positions {
     }
 
     /** The centre of the block at a position, which is where entities should be placed. */
+    /** How a block is named where one has to be remembered rather than held. */
+    public static BlockKey keyOf(Block block) {
+        return new BlockKey(
+                block.getWorld().getUID(), block.getX(), block.getY(), block.getZ());
+    }
+
+    public static BlockKey keyOf(World world, Vec3i position) {
+        return BlockKey.of(world.getUID(), position);
+    }
+
     public static Location toCentre(World world, Vec3i position) {
         return new Location(world, position.x() + 0.5, position.y() + 0.5, position.z() + 0.5);
     }

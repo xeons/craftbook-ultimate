@@ -9,6 +9,7 @@ import com.xeonproductions.craftbookultimate.core.entity.PotionDose;
 import com.xeonproductions.craftbookultimate.core.illusion.Sky;
 import com.xeonproductions.craftbookultimate.core.math.Vec3d;
 import com.xeonproductions.craftbookultimate.core.stock.Stockpile;
+import com.xeonproductions.craftbookultimate.sponge.game.GameInternals;
 import com.xeonproductions.craftbookultimate.sponge.stock.InventoryStockpile;
 import java.util.ArrayList;
 import java.util.List;
@@ -175,13 +176,16 @@ public record SpongeBystander(Entity entity) implements Bystander {
     /**
      * Showing somebody weather the world is not having.
      *
-     * <p>Never, on this platform. Sponge has no per-player weather and no packet API to build one
-     * out of, so the chips that ask are told no and show nobody anything. Reported rather than
-     * pretended, so a builder gets the same answer as the sign.
+     * <p>Sponge has no per-player weather, so the game is told directly. Where it will not answer,
+     * this reports that nobody was shown anything rather than pretending, so a builder gets the
+     * same answer as the sign.
      */
     @Override
     public boolean showSky(Sky sky) {
-        return false;
+        if (!(entity instanceof ServerPlayer player)) {
+            return false;
+        }
+        return GameInternals.get().showSky(player, sky);
     }
 
     @Override

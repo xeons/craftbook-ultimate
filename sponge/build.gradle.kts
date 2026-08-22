@@ -1,5 +1,14 @@
 plugins {
     java
+    id("org.spongepowered.gradle.vanilla")
+}
+
+// The server jar, under Mojang's own names, so the native layer can call into it. SpongeVanilla
+// puts plugins on the game module layer, so what is compiled against here is what is there at run
+// time; nothing is shaded and nothing is downloaded by the plugin itself.
+minecraft {
+    version("26.2")
+    platform(org.spongepowered.gradle.vanilla.repository.MinecraftPlatform.SERVER)
 }
 
 description = "SpongeVanilla (SpongeAPI 20) platform bindings for CraftBook Ultimate."
@@ -20,6 +29,13 @@ sourceSets {
 dependencies {
     compileOnly(rootProject.libs.sponge.api)
     annotationProcessor(rootProject.libs.sponge.api)
+
+    // Mixin is here so that one can be written the day something needs the game's own behaviour
+    // changed rather than merely asked. Nothing declares a config yet, and until something does the
+    // jar carries no MixinConfigs attribute — see the comment on the jar task. Its annotation
+    // processor, which writes the refmap, is deliberately not on yet: it drags Guava onto the
+    // processor path and has nothing to process until there is a mixin to process.
+    compileOnly(rootProject.libs.mixin)
 
     // Pinned below the version core declares, because the server supplies these and the jar has to
     // agree with what it will find there.
@@ -43,6 +59,19 @@ configurations.all {
     resolutionStrategy.cacheChangingModulesFor(0, "seconds")
 }
 
+// SpongeVanilla reads MixinConfigs off the jar manifest and warns the operator, every start-up,
+// that the plugin modifies the Minecraft server. That warning is worth paying only once something
+// actually mixes in, so the attribute appears when a config does and not before. Writing it for an
+// empty config would frighten an operator on behalf of nothing.
+val mixinConfigs = fileTree("src/main/resources") { include("mixins.*.json") }
+
 tasks.jar {
     archiveBaseName.set("CraftBookUltimate-Sponge")
+    inputs.files(mixinConfigs).withPropertyName("mixinConfigs")
+    doFirst {
+        val declared = mixinConfigs.files.map { it.name }.sorted()
+        if (declared.isNotEmpty()) {
+            manifest.attributes("MixinConfigs" to declared.joinToString(","))
+        }
+    }
 }

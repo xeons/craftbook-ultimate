@@ -19,9 +19,6 @@ permissions:
   craftbook.check:
     description: Ask which loaded chips cannot work as their signs are written.
     default: op
-  craftbook.legacytable:
-    description: Write out how blocks were spelled before the flattening, for the Sponge build.
-    default: op
   craftbook.testbed:
     description: Build a test bed carrying a rig for every chip.
     default: op

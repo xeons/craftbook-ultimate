@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Brandon Scott
 
-package com.xeonproductions.craftbookultimate.paper.ic;
+package com.xeonproductions.craftbookultimate.sponge.ic;
 
-import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
-import com.xeonproductions.craftbookultimate.core.world.BlockKey;
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICLogic;
@@ -14,40 +12,34 @@ import com.xeonproductions.craftbookultimate.core.ic.SelfTriggeringICLogic;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
+import com.xeonproductions.craftbookultimate.core.world.BlockKey;
 import java.util.ArrayList;
 import java.util.List;
-import org.bukkit.World;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.spongepowered.api.world.server.ServerWorld;
 
 /**
- * One chip in the world: a sign, the logic behind it, and the pins it reads and drives.
+ * One chip in the world: its sign, its wiring, and the logic behind it.
  *
- * <p>An instance exists only while its chunk is loaded. It belongs to the region that owns its
- * sign, and every method here must be called from that region's thread.
+ * <p>Nothing here is state a chip keeps between runs — that belongs to the logic. What this holds is
+ * where the chip is and whether it is still there.
  */
 @NullMarked
 public final class ICInstance {
 
     /**
-     * How deep a chain of chips triggering one another may run before it is abandoned.
+     * How deep one chip setting off another may go before it is left alone.
      *
-     * <p>Driving an output notifies its neighbours immediately, so one chip triggering the next
-     * happens inside a single redstone update, on one call stack. A chain normally ends on its
-     * own, because an output is only written when its value actually changes and a settling
-     * circuit soon stops changing. A circuit that oscillates never settles, and without a limit
-     * would run until the stack ran out.
-     *
-     * <p>The limit is therefore set well above any plausible chain of chips wired in series, such
-     * as the adders of a wide ripple-carry sum, and well below the depth at which the stack would
-     * be at risk.
+     * <p>A ring of chips driving each other would otherwise recurse until the thread's stack ran
+     * out, which takes the whole region with it rather than the one build that is at fault.
      */
     private static final int MAX_TRIGGER_DEPTH = 256;
 
-    /** Counts how deep the current thread is in a chain of chips triggering one another. */
-    private static final ThreadLocal<int[]> TRIGGER_DEPTH = ThreadLocal.withInitial(() -> new int[1]);
+    private static final ThreadLocal<int[]> TRIGGER_DEPTH =
+            ThreadLocal.withInitial(() -> new int[1]);
 
-    private final World world;
+    private final ServerWorld world;
     private final Vec3i signPosition;
     private final BlockFace front;
     private final ICDefinition definition;
@@ -63,7 +55,7 @@ public final class ICInstance {
     private boolean unloaded;
 
     ICInstance(
-            World world,
+            ServerWorld world,
             Vec3i signPosition,
             BlockFace front,
             ICDefinition definition,
@@ -81,86 +73,61 @@ public final class ICInstance {
         this.selfTriggering = selfTriggering && logic instanceof SelfTriggeringICLogic;
     }
 
-    /** The chip this is an instance of. */
     public ICDefinition definition() {
         return definition;
     }
 
-    /** The world the chip is in. */
-    public World world() {
+    public ServerWorld world() {
         return world;
     }
 
-    /** The position of the chip's sign. */
     public Vec3i signPosition() {
         return signPosition;
     }
 
-    /** The key identifying the chip's sign. */
     public BlockKey signKey() {
-        return Positions.keyOf(world, signPosition);
+        return BlockKey.of(world.uniqueId(), signPosition);
     }
 
-    /** The flags read off the end of this chip's identifier line. */
     public ICMode mode() {
         return mode;
     }
 
-    /**
-     * This chip's own running logic.
-     *
-     * <p>Handed out so that the debugging tools can ask a chip about itself. Nothing should drive
-     * a chip through this: {@link #trigger} and {@link #tick} exist so that the guards against a
-     * chip triggering itself and against an unending chain are applied.
-     */
     public ICLogic logic() {
         return logic;
     }
 
-    /**
-     * A state for reading the chip without running it.
-     *
-     * <p>Reports no triggered input, since nothing triggered this. Reads blocks, so it belongs to
-     * the region owning the sign like everything else here.
-     */
     public BlockChipState inspectionState() {
         return newState(-1);
     }
 
-    /** The registries this chip reaches the rest of the server through. */
     public ChipServices services() {
         return services;
     }
 
-    /** Whether this chip ticks on its own. */
     public boolean isSelfTriggering() {
         return selfTriggering;
     }
 
-    /** Whether this chip has been unloaded and should no longer run. */
     public boolean isUnloaded() {
         return unloaded;
     }
 
-    /** The layout this chip is wired for. */
     public PinLayout layout() {
         return layout;
     }
 
-    /** The keys of every block this chip reads or drives. */
+    /** Every block this chip reads or drives, which is what it is indexed by. */
     public List<BlockKey> pinKeys() {
         List<BlockKey> keys = new ArrayList<>(layout.pinCount());
         for (int pin = 0; pin < layout.pinCount(); pin++) {
-            keys.add(Positions.keyOf(world, layout.pinPosition(mode.slotFor(pin), signPosition, front)));
+            keys.add(BlockKey.of(
+                    world.uniqueId(), layout.pinPosition(mode.slotFor(pin), signPosition, front)));
         }
         return keys;
     }
 
-    /**
-     * Which input, if any, sits at a position.
-     *
-     * @return the input number, or {@code -1} if the position is not one of this chip's inputs
-     */
+    /** Which input a block is, or -1 where it is not one. */
     public int inputAt(Vec3i position) {
         for (int input = 0; input < layout.inputCount(); input++) {
             if (layout.pinPosition(mode.slotFor(input), signPosition, front).equals(position)) {
@@ -170,11 +137,6 @@ public final class ICInstance {
         return -1;
     }
 
-    /**
-     * Starts the chip.
-     *
-     * @param scheduler used to tick the chip if it is self-triggering
-     */
     void load(Scheduler scheduler) {
         this.scheduler = scheduler;
         logic.load(newState(-1));
@@ -184,7 +146,6 @@ public final class ICInstance {
         }
     }
 
-    /** Stops the chip and releases anything it holds. */
     void unload() {
         unloaded = true;
         if (tickTask != null) {
@@ -194,16 +155,10 @@ public final class ICInstance {
         logic.unload(newState(-1));
     }
 
-    /**
-     * Runs the chip because one of its inputs changed.
-     *
-     * @param triggeredInput the input that changed, or {@code -1} if it is not known
-     */
     public void trigger(int triggeredInput) {
         run(() -> logic.trigger(newState(triggeredInput)));
     }
 
-    /** Runs the chip for one tick. Does nothing unless the chip is self-triggering. */
     public void tick() {
         if (!(logic instanceof SelfTriggeringICLogic ticking)) {
             return;
@@ -212,8 +167,11 @@ public final class ICInstance {
     }
 
     /**
-     * Runs a chip action, guarding against a chip triggering itself and against a chain of chips
-     * driving each other without end.
+     * Runs a chip once, and only once at a time.
+     *
+     * <p>A chip that drives a lever sets off whatever reads that lever, which may lead back here.
+     * Refusing to re-enter is what stops a chip triggering itself, and the depth count is what
+     * stops a ring of them doing it between themselves.
      */
     private void run(Runnable action) {
         if (unloaded || running) {
@@ -249,6 +207,6 @@ public final class ICInstance {
 
     @Override
     public String toString() {
-        return definition.model() + " at " + signPosition + " in " + world.getName();
+        return definition.model() + " at " + signPosition + " in " + world.key().asString();
     }
 }

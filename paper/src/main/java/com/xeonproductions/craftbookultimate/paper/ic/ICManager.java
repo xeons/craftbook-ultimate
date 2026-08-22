@@ -3,6 +3,7 @@
 
 package com.xeonproductions.craftbookultimate.paper.ic;
 
+import com.xeonproductions.craftbookultimate.core.world.BlockKey;
 import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ChipServices;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
@@ -85,7 +86,7 @@ public final class ICManager {
      * @return the chip that was started, or empty if there was nothing to start
      */
     public Optional<ICInstance> load(Block block) {
-        BlockKey key = BlockKey.of(block);
+        BlockKey key = Positions.keyOf(block);
         if (bySign.containsKey(key)) {
             return Optional.empty();
         }
@@ -188,7 +189,7 @@ public final class ICManager {
      * @return the chip that was stopped, or empty if there was none
      */
     public Optional<ICInstance> unload(Block block) {
-        return unload(BlockKey.of(block));
+        return unload(Positions.keyOf(block));
     }
 
     /**
@@ -250,7 +251,7 @@ public final class ICManager {
 
     /** The chip whose sign is at a block, if one is loaded. */
     public Optional<ICInstance> at(Block block) {
-        return Optional.ofNullable(bySign.get(BlockKey.of(block)));
+        return Optional.ofNullable(bySign.get(Positions.keyOf(block)));
     }
 
     /**
@@ -262,7 +263,7 @@ public final class ICManager {
      * @param block the block whose redstone state changed
      */
     public void triggerAt(Block block) {
-        Set<ICInstance> chips = byPin.get(BlockKey.of(block));
+        Set<ICInstance> chips = byPin.get(Positions.keyOf(block));
         if (chips == null || chips.isEmpty()) {
             return;
         }

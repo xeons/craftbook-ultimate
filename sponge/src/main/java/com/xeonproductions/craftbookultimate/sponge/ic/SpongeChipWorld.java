@@ -16,6 +16,7 @@ import com.xeonproductions.craftbookultimate.core.world.Placement;
 import com.xeonproductions.craftbookultimate.sponge.adapter.Directions;
 import com.xeonproductions.craftbookultimate.sponge.adapter.LegacyBlocks;
 import com.xeonproductions.craftbookultimate.sponge.adapter.Positions;
+import com.xeonproductions.craftbookultimate.sponge.game.GameInternals;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -119,10 +120,10 @@ public record SpongeChipWorld(ServerWorld world) implements ChipWorld {
     /**
      * Whether a block could stand at a place.
      *
-     * <p>Sponge has nothing that asks the game the question Bukkit's {@code canPlace} asks, so what
-     * is answered here is the part that can be known: whether the place is clear. A block needing
-     * something underneath it — a crop on farmland is the case that matters, since the planter is
-     * what asks — is placed and then falls if it was wrong, rather than being refused up front.
+     * <p>The game is asked, because it is the only thing that knows a crop needs farmland under it
+     * and the planter is what asks. Where it will not answer, what is left is the part that can be
+     * known from the API alone — whether the place is clear — and a block needing support is put
+     * down and falls off rather than being refused up front.
      */
     @Override
     public boolean canPlace(Vec3i position, Key block, Placement how) {
@@ -132,6 +133,11 @@ public record SpongeChipWorld(ServerWorld world) implements ChipWorld {
 
         if (stateFor(block, how).isEmpty()) {
             return false;
+        }
+
+        Optional<Boolean> known = GameInternals.get().canSurvive(world, position, block);
+        if (known.isPresent()) {
+            return known.get();
         }
 
         BlockState standing = world.block(position.x(), position.y(), position.z());
@@ -171,15 +177,22 @@ public record SpongeChipWorld(ServerWorld world) implements ChipWorld {
     /**
      * What breaking a block would give.
      *
-     * <p>Sponge has no way to ask the game what a block drops, so what is answered is the block's
-     * own item form. That is right for everything the harvester deals in except where a plant
-     * yields something other than itself, and it is the honest answer rather than a table of
-     * remembered yields — a wrong number here silently pays a builder the wrong amount.
+     * <p>The game is asked, so a crop pays out what its loot table says rather than what anybody
+     * assumed. Where it will not answer, the block's own item form stands in, which is right for
+     * everything the harvester deals in except where a plant yields something other than itself —
+     * an approximation that is visibly one, rather than a table of remembered yields that would
+     * silently pay a builder the wrong amount.
      */
     @Override
     public Map<Key, Integer> dropsAt(Vec3i position) {
         if (!isLoaded(position) || !isInBounds(position)) {
             return Map.of();
+        }
+
+        Key block = blockAt(position);
+        Optional<Map<Key, Integer>> known = GameInternals.get().dropsAt(world, position, block);
+        if (known.isPresent()) {
+            return known.get();
         }
 
         BlockType type = world.block(position.x(), position.y(), position.z()).type();

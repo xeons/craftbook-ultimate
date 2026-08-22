@@ -32,6 +32,7 @@ public final class CraftBookCommands {
     private final TestbedCommands testbed;
     private final CheckCommands check;
     private final DebugCommands debug;
+    private final SignCommands signs;
 
     public CraftBookCommands(
             CatalogueCommands catalogue,
@@ -43,7 +44,8 @@ public final class CraftBookCommands {
             VariableCommands variables,
             TestbedCommands testbed,
             CheckCommands check,
-            DebugCommands debug) {
+            DebugCommands debug,
+            SignCommands signs) {
         this.catalogue = catalogue;
         this.switches = switches;
         this.config = config;
@@ -54,6 +56,7 @@ public final class CraftBookCommands {
         this.testbed = testbed;
         this.check = check;
         this.debug = debug;
+        this.signs = signs;
     }
 
     /** Registers everything against a plugin. */
@@ -116,6 +119,11 @@ public final class CraftBookCommands {
                     carts.recipesCommand().build(),
                     "Looks up what a recipe is called on a cart crafter's sign.",
                     List.of());
+
+            commands.register(
+                    signs.command().build(),
+                    "Edits a line of the sign you have copied, before you paste it.",
+                    List.of("signcopier"));
 
             commands.register(
                     areas.areaCommand().build(),

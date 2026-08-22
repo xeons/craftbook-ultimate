@@ -32,6 +32,7 @@ import com.xeonproductions.craftbookultimate.paper.command.ConfigCommands;
 import com.xeonproductions.craftbookultimate.paper.command.CraftBookCommands;
 import com.xeonproductions.craftbookultimate.paper.command.DebugCommands;
 import com.xeonproductions.craftbookultimate.paper.command.MusicCommands;
+import com.xeonproductions.craftbookultimate.paper.command.SignCommands;
 import com.xeonproductions.craftbookultimate.paper.command.SwitchCommands;
 import com.xeonproductions.craftbookultimate.paper.command.TestbedCommands;
 import com.xeonproductions.craftbookultimate.paper.command.VariableCommands;
@@ -43,6 +44,10 @@ import com.xeonproductions.craftbookultimate.paper.ic.BukkitAnnouncer;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitIllusions;
 import com.xeonproductions.craftbookultimate.paper.ic.BukkitRoster;
 import com.xeonproductions.craftbookultimate.paper.ic.ICManager;
+import com.xeonproductions.craftbookultimate.core.copier.Copiers;
+import com.xeonproductions.craftbookultimate.core.copier.SignClipboard;
+import com.xeonproductions.craftbookultimate.paper.copier.CopierListener;
+import com.xeonproductions.craftbookultimate.paper.copier.SignCopierListener;
 import com.xeonproductions.craftbookultimate.paper.listener.BoatHabitListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartHabitListener;
 import com.xeonproductions.craftbookultimate.paper.listener.CartListener;
@@ -96,6 +101,7 @@ public final class CraftBookPlugin extends JavaPlugin {
     private @Nullable ICManager icManager;
     private @Nullable PasswordFile passwordFile;
     private @Nullable FireworkFiles fireworkFiles;
+    private final SignClipboard signClipboard = new SignClipboard();
     private @Nullable MidiFiles midiFiles;
     private @Nullable SharedStateFiles sharedState;
     private @Nullable ConfigFile configFile;
@@ -170,6 +176,10 @@ public final class CraftBookPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new BoatHabitListener(chipServices.configuration(), regionSchedulers), this);
         getServer().getPluginManager().registerEvents(
+                new CopierListener(chipServices.configuration()), this);
+        getServer().getPluginManager().registerEvents(
+                new SignCopierListener(chipServices.configuration(), signClipboard), this);
+        getServer().getPluginManager().registerEvents(
                 new PipeListener(
                         new PipeDispatcher(chipServices.configuration(), pipeNetworks),
                         chipServices.configuration()),
@@ -227,6 +237,7 @@ public final class CraftBookPlugin extends JavaPlugin {
         declareAreaPermissions(manager);
         declare(manager, PipeListener.BUILD,
                 "Write a filter on a pipe's sign.", PermissionDefault.TRUE);
+        declareCopierPermissions(manager);
         declareVariablePermissions(manager);
         declare(manager, TestbedCommands.BUILD,
                 "Build a test bed carrying a rig for every chip.", PermissionDefault.OP);
@@ -251,6 +262,20 @@ public final class CraftBookPlugin extends JavaPlugin {
      * <p>Saving, deleting and listing your own areas is ordinary; doing any of it under
      * somebody else's name, or under the one everybody shares, is not.
      */
+    /** What the copiers need, which is a pair for each sign and two for the sign copier. */
+    private static void declareCopierPermissions(PluginManager manager) {
+        for (String sign : Copiers.SIGN_NAMES) {
+            declare(manager, Copiers.buildPermission(sign),
+                    "Make a " + sign + " sign.", PermissionDefault.OP);
+            declare(manager, Copiers.usePermission(sign),
+                    "Take a copy from a " + sign + " sign.", PermissionDefault.TRUE);
+        }
+        declare(manager, SignCopierListener.USE,
+                "Copy what one sign says onto another.", PermissionDefault.OP);
+        declare(manager, SignCommands.EDIT,
+                "Edit a line of the sign you have copied.", PermissionDefault.OP);
+    }
+
     private static void declareAreaPermissions(PluginManager manager) {
         declare(manager, AreaCommands.SAVE, "Save a region as an area.",
                 PermissionDefault.TRUE);
@@ -335,7 +360,8 @@ public final class CraftBookPlugin extends JavaPlugin {
                                 icManagerTarget(),
                                 debugActions(),
                                 debugSticksTarget(),
-                                schedulersTarget()))
+                                schedulersTarget()),
+                        new SignCommands(signClipboard))
                 .registerOn(this);
     }
 

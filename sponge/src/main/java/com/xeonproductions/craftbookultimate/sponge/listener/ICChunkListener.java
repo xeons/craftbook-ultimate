@@ -5,6 +5,8 @@ package com.xeonproductions.craftbookultimate.sponge.listener;
 
 import com.xeonproductions.craftbookultimate.sponge.adapter.Positions;
 import com.xeonproductions.craftbookultimate.sponge.ic.ICManager;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.jspecify.annotations.NullMarked;
 import org.spongepowered.api.Sponge;
@@ -12,7 +14,6 @@ import org.spongepowered.api.block.entity.BlockEntity;
 import org.spongepowered.api.block.entity.Sign;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.world.chunk.ChunkEvent;
-import org.spongepowered.api.world.chunk.WorldChunk;
 import org.spongepowered.api.world.server.ServerWorld;
 import org.spongepowered.math.vector.Vector3i;
 
@@ -22,6 +23,13 @@ import org.spongepowered.math.vector.Vector3i;
  * <p>A chip is only ever loaded from a sign already in the world, which is why nothing here reviews
  * what is written: a rule added after a sign was built must not invalidate it. What a loaded chip
  * cannot do is said on the sign instead, by the title being written red.
+ *
+ * <p>Both halves listen to the events that hand over a whole chunk rather than the ones that hand
+ * over its blocks. A sign is a block entity, and the blocks-only events fire while the chunk is
+ * still being assembled — asking one of those for its block entities gets an empty chunk that
+ * throws rather than an empty answer. {@link ChunkEvent.Load} is the one that fires on the server
+ * thread once the chunk is finished and ready to tick, which is also the only point at which
+ * starting a chip is safe.
  */
 @NullMarked
 public final class ICChunkListener {
@@ -33,21 +41,23 @@ public final class ICChunkListener {
     }
 
     @Listener
-    public void onChunkLoad(ChunkEvent.Blocks.Load event) {
+    public void onChunkLoad(ChunkEvent.Load event) {
         Optional<ServerWorld> world = worldOf(event);
         if (world.isEmpty()) {
             return;
         }
 
-        // The event hands over the chunk's blocks alone, and a sign is a block entity, so the
-        // loaded chunk is asked for from the world instead.
-        Vector3i position = event.chunkPosition();
-        WorldChunk chunk = world.get().chunk(position.x(), position.y(), position.z());
-
-        for (BlockEntity entity : chunk.blockEntities()) {
+        // Copied before anything is loaded, because starting a chip writes to the world and the
+        // chunk's own collection is no place to be standing when that happens.
+        List<BlockEntity> signs = new ArrayList<>();
+        for (BlockEntity entity : event.chunk().blockEntities()) {
             if (entity instanceof Sign) {
-                manager.load(world.get(), Positions.toDomain(entity.serverLocation()));
+                signs.add(entity);
             }
+        }
+
+        for (BlockEntity sign : signs) {
+            manager.load(world.get(), Positions.toDomain(sign.serverLocation()));
         }
     }
 

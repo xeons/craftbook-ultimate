@@ -8,6 +8,32 @@ This page is what a developer or an operator needs to know about that build: whi
 for, how it is put together, and — the part worth reading before anything else — what it cannot do
 that the Paper build can.
 
+## What runs
+
+The chips. Writing a model reference on a wall sign makes a working chip, redstone drives it, and
+the chips in a chunk come and go with the chunk. It reads the same `config.yml` as the Paper build,
+through Configurate rather than Bukkit's YAML but against the same shared document, so an operator
+moving a server between the two keeps their settings.
+
+Not yet bound here: the commands, the cart mechanics, the pipes, the sign mechanics, the toggled
+areas, the test bed and the debugging tools. And **none of this has been run on a server** — it
+compiles against SpongeAPI 20 and the reasoning below is as far as a compiler can take it.
+
+## Where the jar goes
+
+`mods/plugins/` — SpongeVanilla creates it at start-up and it is what the launch config calls the
+additional plugins directory. `mods/` works just as well: both are scanned, identically, and which
+one an operator uses is a matter of tidiness.
+
+It genuinely does not matter for this plugin, which is worth saying because it could have. Reaching
+into the game needs the jar on the **game module layer**, and what decides that is
+`Candidate#gameResource()` — true as soon as a jar carries `META-INF/sponge_plugins.json`, with no
+regard for where it was found. A plugin that quietly lost its old block spellings depending on which
+folder it was dropped in would be a miserable thing to work out.
+
+The settings file is written to `config/craftbookultimate/config.yml`, which is Sponge's own layout
+rather than the plugin choosing one.
+
 ## Which version
 
 Minecraft 26.2 is served by **SpongeAPI 20.0.0**. SpongeVanilla publishes it as
@@ -55,10 +81,19 @@ minecraft {
 }
 ```
 
-That is what the next section is about. VanillaGradle is applied in `settings.gradle.kts` rather
-than in the module, with `injectRepositories(false)`, because a project that declares any repository
-of its own ignores the ones settled in `dependencyResolutionManagement` — which would lose Paper's
-and Sponge's and break the other two modules.
+That is what the next section is about.
+
+The module also applies **SpongeGradle**, which generates `META-INF/sponge_plugins.json` from the
+`sponge { }` block — the plugin's id, its entrypoint and the API version it asks for, taken from
+what was actually built against rather than typed out twice. On SpongeAPI 7 an annotation processor
+did that job from `@Plugin`; it does not any more. The API's only processor now is the one that
+checks an `@Listener` method is one the server could actually call. SpongeGradle also contributes a
+`runServer` task, which is how this gets tried on a real server.
+
+One consequence worth knowing, because it is not obvious and it bites twice: **SpongeGradle declares
+repositories on the project**, and a Gradle project declaring any repository of its own ignores the
+ones settled in `dependencyResolutionManagement`. So `sponge/build.gradle.kts` carries the whole
+repository list rather than half of it. The other two modules still take theirs from the settings.
 
 ## Reaching into the game
 

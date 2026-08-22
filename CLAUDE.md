@@ -74,7 +74,8 @@ to a hand and to redstone.**
 | Mechanics other than those and the minecart ones | Not started |
 | Sponge build: module, adapters, world seam, entity bindings | Done |
 | Sponge build: the native layer over Minecraft's own code | Done |
-| Sponge build: the rest of the bindings | Not started |
+| Sponge build: entry point, config, chips running | Done |
+| Sponge build: commands, mechanics, carts, pipes, areas | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
 **2010 tests passing**.

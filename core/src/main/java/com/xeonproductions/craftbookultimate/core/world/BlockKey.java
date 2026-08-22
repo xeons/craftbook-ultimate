@@ -21,7 +21,6 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public record BlockKey(UUID world, int x, int y, int z) {
 
-    /** The key for a block. */
     /** The key for a position in a world. */
     public static BlockKey of(UUID world, Vec3i position) {
         return new BlockKey(world, position.x(), position.y(), position.z());

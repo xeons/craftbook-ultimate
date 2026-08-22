@@ -19,10 +19,10 @@ In development, and not yet released.
 pipe grammars, and the bridge, door, gate, lift and toggled-area sign mechanics. **2010 tests
 pass.** What is left is inventoried in [TODO.md](TODO.md).
 
-The **Paper build is the complete one.** The Sponge build shares the same domain model and has its
-world seam, chip state, chip lifecycle and redstone listener written, but it has no plugin entry
-point yet, so it does not run. [docs/sponge.md](docs/sponge.md) says what is there, what is not, and
-what it will never do.
+The **Paper build is the complete one.** The Sponge build shares the same domain model and the same
+`config.yml`, and the chips run on it — but the commands, the cart mechanics, the pipes, the sign
+mechanics and the debugging tools are not bound there yet, and none of it has been run on a server.
+[docs/sponge.md](docs/sponge.md) says what is there, what is not, and what it will never do.
 
 ## Where this comes from
 

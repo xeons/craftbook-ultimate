@@ -36,7 +36,6 @@ public final class Positions {
         return new Location(world, position.x(), position.y(), position.z());
     }
 
-    /** The centre of the block at a position, which is where entities should be placed. */
     /** How a block is named where one has to be remembered rather than held. */
     public static BlockKey keyOf(Block block) {
         return new BlockKey(
@@ -47,6 +46,7 @@ public final class Positions {
         return BlockKey.of(world.getUID(), position);
     }
 
+    /** The centre of the block at a position, which is where entities should be placed. */
     public static Location toCentre(World world, Vec3i position) {
         return new Location(world, position.x() + 0.5, position.y() + 0.5, position.z() + 0.5);
     }

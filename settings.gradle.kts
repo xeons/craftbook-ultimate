@@ -1,5 +1,3 @@
-import org.spongepowered.gradle.vanilla.repository.MinecraftRepositoryExtension
-
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -9,11 +7,8 @@ pluginManagement {
     }
     plugins {
         id("org.spongepowered.gradle.vanilla") version "0.3.2"
+        id("org.spongepowered.gradle.plugin") version "2.3.0"
     }
-}
-
-plugins {
-    id("org.spongepowered.gradle.vanilla")
 }
 
 rootProject.name = "craftbook-ultimate"
@@ -23,13 +18,6 @@ include("core", "paper", "sponge")
 project(":core").name = "craftbook-ultimate-core"
 project(":paper").name = "craftbook-ultimate-paper"
 project(":sponge").name = "craftbook-ultimate-sponge"
-
-// VanillaGradle would otherwise add its repositories to the one project that asks for Minecraft,
-// and a project declaring any repository of its own ignores the ones settled here — which loses
-// Paper's and Sponge's. Registering Minecraft's alongside the rest keeps one list.
-extensions.configure(MinecraftRepositoryExtension::class) {
-    injectRepositories(false)
-}
 
 dependencyResolutionManagement {
     repositories {

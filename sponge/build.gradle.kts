@@ -1,6 +1,7 @@
 plugins {
     java
     id("org.spongepowered.gradle.vanilla")
+    id("org.spongepowered.gradle.plugin")
 }
 
 // The server jar, under Mojang's own names, so the native layer can call into it. SpongeVanilla
@@ -24,6 +25,15 @@ sourceSets {
         java.srcDir(core.file("src/main/java"))
         resources.srcDir(core.file("src/main/resources"))
     }
+}
+
+// SpongeGradle declares repositories on this project, and a project declaring any of its own
+// ignores the ones settled in settings.gradle.kts. So this module carries the whole list rather
+// than half of it; the other two still take theirs from the settings.
+repositories {
+    mavenCentral()
+    maven("https://repo.spongepowered.org/repository/maven-public/")
+    maven("https://libraries.minecraft.net/")
 }
 
 dependencies {
@@ -50,6 +60,32 @@ dependencies {
     testImplementation(rootProject.libs.assertj)
     testImplementation(rootProject.libs.sponge.api)
     testRuntimeOnly(rootProject.libs.junit.platform.launcher)
+}
+
+// The plugin's own metadata, which is how SpongeVanilla finds the entrypoint at all. Declared here
+// rather than written out by hand so that the version and the API it asks for are the ones actually
+// built against; SpongeGradle generates META-INF/sponge_plugins.json from it. This is what the
+// annotation processor did on SpongeAPI 7 — the API's only processor now is the one checking that
+// an @Listener method is one the server could call.
+sponge {
+    apiVersion(rootProject.libs.versions.sponge.get())
+    license("GPL-3.0-or-later")
+    loader {
+        name("java_plain")
+        version("1.0")
+    }
+    plugin("craftbookultimate") {
+        displayName("CraftBook Ultimate")
+        entrypoint("com.xeonproductions.craftbookultimate.sponge.CraftBookSponge")
+        description("Redstone integrated circuits built by writing a model number on a sign.")
+        contributor("Brandon Scott") {}
+        // Said outright rather than left implied, so a server refuses to load this against an API
+        // it was not built for instead of failing somewhere further in.
+        dependency("spongeapi") {
+            version(rootProject.libs.versions.sponge.get())
+            optional(false)
+        }
+    }
 }
 
 // SpongeAPI 20 is a snapshot line, so a build that resolved yesterday is not evidence that today's

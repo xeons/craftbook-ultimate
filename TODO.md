@@ -257,18 +257,16 @@ mixin; the plumbing for one is in the build and switched off until something nee
 The platform-independent files that were sitting in `paper/` have moved to `core`, so both
 platforms share one catalogue rather than two that drift.
 
-What is not: the rest of the bindings. In the order they need doing, since each rests on the ones
-above it:
+**The chips run.** The plugin has an entry point, reads the same `config.yml` the Paper build does,
+starts the chips in every loaded chunk and keeps up with them as chunks come and go. What it does
+not have yet, in the order it needs doing:
 
 | Layer | What it is |
 | --- | --- |
-| Plugin entry point, config | `@Plugin` class, `RegisterCommandEvent`, config through Configurate |
-| `ChipState` | `BlockChipState`, with pins read through block state keys |
-| `ICManager`, `ICInstance` | Chip lifecycle |
-| Listeners | Sign change, chunk load, break, and redstone through `ChangeBlockEvent.Post` |
-| Rest of the entity seam | `Roster`, `Announcer`, `Illusions` |
-| Stockpiles | `NearbyStockpiles`, and the spread stockpile the carts use |
+| Commands | Sponge's `Command.Parameterized`, not Brigadier — SpongeAPI 20 exposes no Brigadier |
 | Mechanics, carts, pipes | Three dispatchers and their world bindings |
-| Commands | Sponge's `Command.Parameterized`, not Brigadier |
 | Areas | Sponge schematics rather than `org.bukkit.structure` |
 | Test bed, debugging | `TestbedBuilder`, the debug stick through `RegisterDataEvent` |
+
+Nothing here has been run on a server yet. The redstone listener in particular rests on
+`ChangeBlockEvent.Post` carrying what a chip needs to see, and no compiler can settle that.

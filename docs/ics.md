@@ -360,7 +360,7 @@ Strikes an area with lightning, at a chance per block.
 Sets a block above the IC block.
 
 - **Write on the sign** — `[MC1205]`, or `=SET ABOVE`
-- **Line 3** — the block to place *(required)*
+- **Line 3** — the block to place *(required)*<br>  Takes `<block>` `<id>:<data>`
 - **Line 4** — Force to replace whatever is already there
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Permission** — `craftbook.ic.restricted.mc1205`
@@ -371,7 +371,7 @@ Sets a block above the IC block.
 Sets a block below the IC block.
 
 - **Write on the sign** — `[MC1206]`, or `=SET BELOW`
-- **Line 3** — the block to place *(required)*
+- **Line 3** — the block to place *(required)*<br>  Takes `<block>` `<id>:<data>`
 - **Line 4** — Force to replace whatever is already there
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Permission** — `craftbook.ic.restricted.mc1206`
@@ -382,7 +382,7 @@ Sets a block below the IC block.
 Sets a block at a specified location, without paying for it.
 
 - **Write on the sign** — `[MC1207]`, or `=FLEX SET ADMIN`
-- **Line 3** — offset:block, such as Y+1:stone *(required)*
+- **Line 3** — where to put it and what to put there *(required)*<br>  Takes `<offset>:<block>`
 - **Line 4** — h to hold the block until the input drops
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Permission** — `craftbook.ic.restricted.mc1207`
@@ -426,7 +426,7 @@ Shoots five arrows out of the back of the sign.
 Swaps a block between two kinds and lets the change spread outward.
 
 - **Write on the sign** — `[MC1249]`, or `=BLOCK REPLACER`
-- **Line 3** — the pair, as driven|idle *(required)*
+- **Line 3** — the two blocks it swaps between *(required)*<br>  Takes `<block>` `<driven>|<idle>`
 - **Line 4** — delay:mode:physics
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Permission** — `craftbook.ic.restricted.mc1249`
@@ -806,7 +806,7 @@ Transmits a band per redstone power level.
 Outputs high while a creature is standing above the sign's support.
 
 - **Write on the sign** — `[MCM116]`, or `=MOB ABOVE?`
-- **Line 3** — what counts as a creature; blank means anything alive
+- **Line 3** — what counts as a creature; blank means anything alive<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how far to look
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Runs on its own as** — `[MCO116]`
@@ -923,7 +923,7 @@ Sends whoever is standing on it to a named destination.
 Outputs high while a player is standing above the sign's support.
 
 - **Write on the sign** — `[MCX116]`, or `=PLAYER ABOVE?`
-- **Line 3** — which players, as p:Name, g:group or m:mode; blank means anyone
+- **Line 3** — which players; blank means anyone<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — radius[:height[:up]]
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Runs on its own as** — `[MCZ116]`
@@ -934,7 +934,7 @@ Outputs high while a player is standing above the sign's support.
 Outputs high while a player is standing below the sign's support.
 
 - **Write on the sign** — `[MCX117]`, or `=PLAYER BELOW?`
-- **Line 3** — which players; blank means anyone
+- **Line 3** — which players; blank means anyone<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — radius[:height[:up]]
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Runs on its own as** — `[MCZ117]`
@@ -945,7 +945,7 @@ Outputs high while a player is standing below the sign's support.
 Outputs high while a player is within range.
 
 - **Write on the sign** — `[MCX118]`, or `=PLAYER NEAR?`
-- **Line 3** — which players; blank means anyone
+- **Line 3** — which players; blank means anyone<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how far to reach, defaulting to five blocks
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Runs on its own as** — `[MCZ118]`
@@ -956,7 +956,7 @@ Outputs high while a player is within range.
 Outputs high while a creature is within range.
 
 - **Write on the sign** — `[MCX119]`, or `=MOB NEAR?`
-- **Line 3** — what counts; blank means anything alive
+- **Line 3** — what counts; blank means anything alive<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how far to reach
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Runs on its own as** — `[MCZ119]`
@@ -989,7 +989,7 @@ Follows a switch that takes a password to throw.
 Removes creatures within range.
 
 - **Write on the sign** — `[MCX130]`, or `=MOB ZAPPER`
-- **Line 3** — what to remove; blank means hostile mobs
+- **Line 3** — what to remove; blank means hostile mobs<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how far to reach, defaulting to five blocks
 - **Wiring** — `SISO`, 1 input, 1 output
 - **Runs on its own as** — `[MCZ130]`
@@ -1001,7 +1001,7 @@ Removes creatures within range.
 Hurts players standing above it.
 
 - **Write on the sign** — `[MCX131]`, or `=HIT PLAYER ABV`
-- **Line 3** — which players, as p:Notch, g:admin or m:ott; blank means anyone
+- **Line 3** — which players; blank means anyone<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how hard to hit
 - **Wiring** — `UISO`, 4 inputs, 1 output
 - **Runs on its own as** — `[MCU131]`
@@ -1013,7 +1013,7 @@ Hurts players standing above it.
 Hurts creatures standing above it.
 
 - **Write on the sign** — `[MCX132]`, or `=HIT MOB ABOVE`
-- **Line 3** — what to hit; blank means anything that is not a player
+- **Line 3** — what to hit; blank means anything that is not a player<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how hard to hit
 - **Wiring** — `UISO`, 4 inputs, 1 output
 - **Runs on its own as** — `[MCU132]`
@@ -1037,7 +1037,7 @@ Removes everything but players from within range.
 Outputs high while a matching stack is lying within range.
 
 - **Write on the sign** — `[MCX138]`, or `=ITEM NEAR?`
-- **Line 3** — one thing to check, as ID:stone, STACK:64, NAME:Key or LORE:quest *(required)*
+- **Line 3** — one thing to check, or where the book is when reading from one *(required)*<br>  Takes `ID:<item>` `STACK:<1-64>` `NAME:<text>` `LORE:<text>` `<x>:<y>:<z>` `!<x>:<y>:<z>`
 - **Line 4** — how far to reach, up to thirty blocks
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Runs on its own as** — `[MCZ138]`
@@ -1049,7 +1049,7 @@ Outputs high while a matching stack is lying within range.
 Outputs high while a player within range is holding a matching item.
 
 - **Write on the sign** — `[MCX139]`, or `=HELD ITEM NEAR?`
-- **Line 3** — one thing to check, as ID:stone, STACK:64, NAME:Key or LORE:quest *(required)*
+- **Line 3** — one thing to check, or where the book is when reading from one *(required)*<br>  Takes `ID:<item>` `STACK:<1-64>` `NAME:<text>` `LORE:<text>` `<x>:<y>:<z>` `!<x>:<y>:<z>`
 - **Line 4** — how far to reach, up to thirty blocks
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Runs on its own as** — `[MCZ139]`
@@ -1061,7 +1061,7 @@ Outputs high while a player within range is holding a matching item.
 Outputs high while something is inside a box measured from the sign.
 
 - **Write on the sign** — `[MCX140]`, or `=IN AREA`
-- **Line 3** — what to look for, with a rider after a + such as pig+player *(required)*
+- **Line 3** — what to look for, with a rider after a + *(required)*<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — width:height:length[/x:y:z]
 - **Wiring** — `UISO`, 4 inputs, 1 output
 - **Runs on its own as** — `[MCU140]`
@@ -1085,7 +1085,7 @@ Gives potion effects to whatever is in an area.
 Spawns creatures above itself.
 
 - **Write on the sign** — `[MCX200]`, or `=ENTITY SPAWNER`
-- **Line 3** — what to spawn *(required)*
+- **Line 3** — what to spawn *(required)*<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Line 4** — how many, defaulting to one
 - **Wiring** — `AISO`, 4 inputs, 1 output
 - **Also answers to** — `MC1200`
@@ -1141,7 +1141,7 @@ Detects a block above or below.
 Sets a block at a specified location.
 
 - **Write on the sign** — `[MCX206]`, or `=FLEX SET`
-- **Line 3** — offset:block, such as Y+1:stone *(required)*
+- **Line 3** — where to put it and what to put there *(required)*<br>  Takes `<offset>:<block>`
 - **Line 4** — h to hold the block until the input drops
 - **Wiring** — `AISO`, 4 inputs, 1 output
 - **Permission** — `craftbook.ic.safe.mcx206`
@@ -1151,7 +1151,7 @@ Sets a block at a specified location.
 Places a set type and amount of blocks.
 
 - **Write on the sign** — `[MCX207]`, or `=BRIDGE`
-- **Line 3** — the block to build from *(required)*
+- **Line 3** — the block to build from *(required)*<br>  Takes `<block>` `<id>:<data>`
 - **Line 4** — width:length, with an optional :verticalOffset *(required)*
 - **Wiring** — `AISO`, 4 inputs, 1 output
 - **Permission** — `craftbook.ic.safe.mcx207`
@@ -1162,7 +1162,7 @@ Places a set type and amount of blocks.
 Places a set type and amount of blocks.
 
 - **Write on the sign** — `[MCX208]`, or `=DOOR`
-- **Line 3** — the block to build from *(required)*
+- **Line 3** — the block to build from *(required)*<br>  Takes `<block>` `<id>:<data>`
 - **Line 4** — width:height, with an optional :verticalOffset *(required)*
 - **Wiring** — `AISO`, 4 inputs, 1 output
 - **Permission** — `craftbook.ic.safe.mcx208`
@@ -1173,7 +1173,7 @@ Places a set type and amount of blocks.
 Places blocks, replacing whatever is already there.
 
 - **Write on the sign** — `[MCX209]`, or `=BRIDGE+`
-- **Line 3** — the block to build from *(required)*
+- **Line 3** — the block to build from *(required)*<br>  Takes `<block>` `<id>:<data>`
 - **Line 4** — width:length, with an optional :verticalOffset *(required)*
 - **Wiring** — `AISO`, 4 inputs, 1 output
 - **Permission** — `craftbook.ic.restricted.mcx209`
@@ -1184,7 +1184,7 @@ Places blocks, replacing whatever is already there.
 Places blocks, replacing whatever is already there.
 
 - **Write on the sign** — `[MCX210]`, or `=DOOR+`
-- **Line 3** — the block to build from *(required)*
+- **Line 3** — the block to build from *(required)*<br>  Takes `<block>` `<id>:<data>`
 - **Line 4** — width:height, with an optional :verticalOffset *(required)*
 - **Wiring** — `AISO`, 4 inputs, 1 output
 - **Permission** — `craftbook.ic.restricted.mcx210`
@@ -1195,7 +1195,7 @@ Places blocks, replacing whatever is already there.
 Swaps one block between two kinds as its input changes.
 
 - **Write on the sign** — `[MCX211]`, or `=TOGGLE BLOCK`
-- **Line 3** — the pair, as driven|idle *(required)*
+- **Line 3** — the two blocks it swaps between *(required)*<br>  Takes `<block>` `<driven>|<idle>`
 - **Line 4** — one axis step from the sign's support, such as Y+1 *(required)*
 - **Wiring** — `AISO`, 4 inputs, 1 output
 - **Permission** — `craftbook.ic.safe.mcx211`
@@ -1414,7 +1414,7 @@ Strikes everything within range with lightning.
 Mirrors the redstone at somewhere else in the world.
 
 - **Write on the sign** — `[MCX295]`, or `=TRIGGER READER`
-- **Line 3** — x:y:z as a step from the sign, optionally prefixed with ! *(required)*
+- **Line 3** — a step from the sign *(required)*<br>  Takes `<x>:<y>:<z>` `!<x>:<y>:<z>`
 - **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Runs on its own as** — `[MCZ295]`
@@ -1480,7 +1480,7 @@ Writes a line to the log naming everybody in range and how far off.
 Does a sum to a variable, such as adding one to it.
 
 - **Write on the sign** — `[VAR100]`, or `=VAR MODIFIER`
-- **Line 3** — the variable to change *(required)*
+- **Line 3** — the variable to change *(required)*<br>  Takes `<name>` `<namespace>|<name>`
 - **Line 4** — the sum to do, as function:amount such as +:1 *(required)*
 - **Wiring** — `SISO`, 1 input, 1 output
 - **Permission** — `craftbook.ic.safe.var100`
@@ -1490,7 +1490,7 @@ Does a sum to a variable, such as adding one to it.
 Outputs high while a variable has reached a number.
 
 - **Write on the sign** — `[VAR170]`, or `=IS AT LEAST`
-- **Line 3** — the variable to watch *(required)*
+- **Line 3** — the variable to watch *(required)*<br>  Takes `<name>` `<namespace>|<name>`
 - **Line 4** — the number it must reach *(required)*
 - **Wiring** — `SISO`, 1 input, 1 output
 - **Permission** — `craftbook.ic.safe.var170`
@@ -1500,8 +1500,8 @@ Outputs high while a variable has reached a number.
 Counts what is in the container above it into a variable.
 
 - **Write on the sign** — `[VAR200]`, or `=ITEM COUNTER`
-- **Line 3** — the variable to add the count to *(required)*
-- **Line 4** — what to count; blank counts everything
+- **Line 3** — the variable to add the count to *(required)*<br>  Takes `<name>` `<namespace>|<name>`
+- **Line 4** — what to count; blank counts everything<br>  Takes `<creature>` `mob` `mobs` `animal` `animals` `p` `p:<name>` `g:<group>` `m:<part of a name>` `item` `item:<item>` `minecart` `minecart:<0-4>` `sheep@<0-15>` `pig@<0-1>` `creeper@<0-1>` `<vehicle>+<rider>` `<creature>{<data>}`
 - **Wiring** — `SISO`, 1 input, 1 output
 - **Permission** — `craftbook.ic.safe.var200`
 

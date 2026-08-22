@@ -56,6 +56,26 @@ public sealed interface EntitySpec {
             written -> BlockReference.parse(written).flatMap(BlockReference::asKey);
 
     /**
+     * Every way of writing a description, as it reads on a page and in a refusal.
+     *
+     * <p>Declared beside the parser rather than anywhere describing it, so a shape the parser
+     * gained and this list did not is the only way the two can disagree.
+     *
+     * <p>Note what is <em>not</em> here and is easy to reach for: {@code STACK}, {@code NAME} and
+     * {@code LORE}. Those describe an item in somebody's hand or on the ground and belong to
+     * {@link ItemCriteria}; this describes a thing standing in the world.
+     */
+    List<String> ACCEPTED = List.of(
+            "<creature>",
+            "mob", "mobs", "animal", "animals",
+            "p", "p:<name>", "g:<group>", "m:<part of a name>",
+            "item", "item:<item>",
+            "minecart", "minecart:<0-4>",
+            "sheep@<0-15>", "pig@<0-1>", "creeper@<0-1>",
+            "<vehicle>+<rider>",
+            "<creature>{<data>}");
+
+    /**
      * Reads a whole entity description, riders and all.
      *
      * @param written the text as it appears on the sign

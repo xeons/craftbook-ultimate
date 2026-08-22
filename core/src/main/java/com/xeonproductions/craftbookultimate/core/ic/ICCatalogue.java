@@ -3,6 +3,14 @@
 
 package com.xeonproductions.craftbookultimate.core.ic;
 
+import static com.xeonproductions.craftbookultimate.core.ic.LineForms.block;
+import static com.xeonproductions.craftbookultimate.core.ic.LineForms.blockPair;
+import static com.xeonproductions.craftbookultimate.core.ic.LineForms.either;
+import static com.xeonproductions.craftbookultimate.core.ic.LineForms.entity;
+import static com.xeonproductions.craftbookultimate.core.ic.LineForms.itemFilter;
+import static com.xeonproductions.craftbookultimate.core.ic.LineForms.offset;
+import static com.xeonproductions.craftbookultimate.core.ic.LineForms.offsetAndBlock;
+import static com.xeonproductions.craftbookultimate.core.ic.LineForms.variable;
 import static com.xeonproductions.craftbookultimate.core.ic.LineSpec.optional;
 import static com.xeonproductions.craftbookultimate.core.ic.LineSpec.required;
 
@@ -98,7 +106,7 @@ public final class ICCatalogue {
                 .name("Variable Modifier")
                 .description("Does a sum to a variable, such as adding one to it.")
                 .layout(PinLayout.SISO)
-                .thirdLine(required("the variable to change"))
+                .thirdLine(required("the variable to change", variable()))
                 .fourthLine(required("the sum to do, as function:amount such as +:1"))
                 .logic(VariableChips::modifier)
                 .build());
@@ -107,7 +115,7 @@ public final class ICCatalogue {
                 .name("Is At Least")
                 .description("Outputs high while a variable has reached a number.")
                 .layout(PinLayout.SISO)
-                .thirdLine(required("the variable to watch"))
+                .thirdLine(required("the variable to watch", variable()))
                 .fourthLine(required("the number it must reach"))
                 .logic(VariableChips::isAtLeast)
                 .build());
@@ -116,8 +124,8 @@ public final class ICCatalogue {
                 .name("Item Counter")
                 .description("Counts what is in the container above it into a variable.")
                 .layout(PinLayout.SISO)
-                .thirdLine(required("the variable to add the count to"))
-                .fourthLine(optional("what to count; blank counts everything"))
+                .thirdLine(required("the variable to add the count to", variable()))
+                .fourthLine(optional("what to count; blank counts everything", entity()))
                 .logic(VariableChips::itemCounter)
                 .build());
     }
@@ -127,7 +135,7 @@ public final class ICCatalogue {
                 .name("Mob Above")
                 .description("Outputs high while a creature is standing above the sign's support.")
                 .selfTriggeringModel("MCO116")
-                .thirdLine(optional("what counts as a creature; blank means anything alive"))
+                .thirdLine(optional("what counts as a creature; blank means anything alive", entity()))
                 .fourthLine(optional("how far to look"))
                 .logic(Sensing::mobAbove)
                 .build());
@@ -136,7 +144,7 @@ public final class ICCatalogue {
                 .name("Player Above")
                 .description("Outputs high while a player is standing above the sign's support.")
                 .selfTriggeringModel("MCZ116")
-                .thirdLine(optional("which players, as p:Name, g:group or m:mode; blank means anyone"))
+                .thirdLine(optional("which players; blank means anyone", entity()))
                 .fourthLine(optional("radius[:height[:up]]"))
                 .logic(Sensing::playerAbove)
                 .build());
@@ -145,7 +153,7 @@ public final class ICCatalogue {
                 .name("Player Below")
                 .description("Outputs high while a player is standing below the sign's support.")
                 .selfTriggeringModel("MCZ117")
-                .thirdLine(optional("which players; blank means anyone"))
+                .thirdLine(optional("which players; blank means anyone", entity()))
                 .fourthLine(optional("radius[:height[:up]]"))
                 .logic(Sensing::playerBelow)
                 .build());
@@ -154,7 +162,7 @@ public final class ICCatalogue {
                 .name("Player Near")
                 .description("Outputs high while a player is within range.")
                 .selfTriggeringModel("MCZ118")
-                .thirdLine(optional("which players; blank means anyone"))
+                .thirdLine(optional("which players; blank means anyone", entity()))
                 .fourthLine(optional("how far to reach, defaulting to five blocks"))
                 .logic(Sensing::playerNear)
                 .build());
@@ -163,7 +171,7 @@ public final class ICCatalogue {
                 .name("Mob Near")
                 .description("Outputs high while a creature is within range.")
                 .selfTriggeringModel("MCZ119")
-                .thirdLine(optional("what counts; blank means anything alive"))
+                .thirdLine(optional("what counts; blank means anything alive", entity()))
                 .fourthLine(optional("how far to reach"))
                 .logic(Sensing::mobNear)
                 .build());
@@ -173,7 +181,8 @@ public final class ICCatalogue {
                 .description("Outputs high while a matching stack is lying within range.")
                 .restricted()
                 .selfTriggeringModel("MCZ138")
-                .thirdLine(required("one thing to check, as ID:stone, STACK:64, NAME:Key or LORE:quest"))
+                .thirdLine(required("one thing to check, or where the book is when reading from one",
+                        either(itemFilter(), offset())))
                 .fourthLine(optional("how far to reach, up to thirty blocks"))
                 .logic(Sensing::itemNear)
                 .build());
@@ -183,7 +192,8 @@ public final class ICCatalogue {
                 .description("Outputs high while a player within range is holding a matching item.")
                 .restricted()
                 .selfTriggeringModel("MCZ139")
-                .thirdLine(required("one thing to check, as ID:stone, STACK:64, NAME:Key or LORE:quest"))
+                .thirdLine(required("one thing to check, or where the book is when reading from one",
+                        either(itemFilter(), offset())))
                 .fourthLine(optional("how far to reach, up to thirty blocks"))
                 .logic(Sensing::heldItemNear)
                 .build());
@@ -194,7 +204,7 @@ public final class ICCatalogue {
                 .layout(PinLayout.UISO)
                 .restricted()
                 .selfTriggeringModel("MCU140")
-                .thirdLine(required("what to look for, with a rider after a + such as pig+player"))
+                .thirdLine(required("what to look for, with a rider after a +", entity()))
                 .fourthLine(optional("width:height:length[/x:y:z]"))
                 .logic(Sensing::inArea)
                 .build());
@@ -359,7 +369,7 @@ public final class ICCatalogue {
                 .layout(PinLayout.AISO)
                 .restricted()
                 .aliases("MC1200")
-                .thirdLine(required("what to spawn"))
+                .thirdLine(required("what to spawn", entity()))
                 .fourthLine(optional("how many, defaulting to one"))
                 .logic(Spawners::entitySpawner)
                 .build());
@@ -501,7 +511,7 @@ public final class ICCatalogue {
                 .layout(PinLayout.SISO)
                 .restricted()
                 .selfTriggeringModel("MCZ130")
-                .thirdLine(optional("what to remove; blank means hostile mobs"))
+                .thirdLine(optional("what to remove; blank means hostile mobs", entity()))
                 .fourthLine(optional("how far to reach, defaulting to five blocks"))
                 .logic(Combat::mobZapper)
                 .build());
@@ -522,7 +532,7 @@ public final class ICCatalogue {
                 .layout(PinLayout.UISO)
                 .restricted()
                 .selfTriggeringModel("MCU131")
-                .thirdLine(optional("which players, as p:Notch, g:admin or m:ott; blank means anyone"))
+                .thirdLine(optional("which players; blank means anyone", entity()))
                 .fourthLine(optional("how hard to hit"))
                 .logic(Combat::hitPlayerAbove)
                 .build());
@@ -533,7 +543,7 @@ public final class ICCatalogue {
                 .layout(PinLayout.UISO)
                 .restricted()
                 .selfTriggeringModel("MCU132")
-                .thirdLine(optional("what to hit; blank means anything that is not a player"))
+                .thirdLine(optional("what to hit; blank means anything that is not a player", entity()))
                 .fourthLine(optional("how hard to hit"))
                 .logic(Combat::hitMobAbove)
                 .build());
@@ -806,7 +816,7 @@ public final class ICCatalogue {
                 .description("Places a set type and amount of blocks.")
                 .layout(PinLayout.AISO)
                 .requiresAuthorisation()
-                .thirdLine(required("the block to build from"))
+                .thirdLine(required("the block to build from", block()))
                 .fourthLine(required("width:length, with an optional :verticalOffset"))
                 .logic(() -> BlockPlacers.bridge(false))
                 .build());
@@ -816,7 +826,7 @@ public final class ICCatalogue {
                 .description("Places blocks, replacing whatever is already there.")
                 .layout(PinLayout.AISO)
                 .restricted()
-                .thirdLine(required("the block to build from"))
+                .thirdLine(required("the block to build from", block()))
                 .fourthLine(required("width:length, with an optional :verticalOffset"))
                 .logic(() -> BlockPlacers.bridge(true))
                 .build());
@@ -826,7 +836,7 @@ public final class ICCatalogue {
                 .description("Places a set type and amount of blocks.")
                 .layout(PinLayout.AISO)
                 .requiresAuthorisation()
-                .thirdLine(required("the block to build from"))
+                .thirdLine(required("the block to build from", block()))
                 .fourthLine(required("width:height, with an optional :verticalOffset"))
                 .logic(() -> BlockPlacers.door(false))
                 .build());
@@ -836,7 +846,7 @@ public final class ICCatalogue {
                 .description("Places blocks, replacing whatever is already there.")
                 .layout(PinLayout.AISO)
                 .restricted()
-                .thirdLine(required("the block to build from"))
+                .thirdLine(required("the block to build from", block()))
                 .fourthLine(required("width:height, with an optional :verticalOffset"))
                 .logic(() -> BlockPlacers.door(true))
                 .build());
@@ -845,7 +855,7 @@ public final class ICCatalogue {
                 .name("Flex Set")
                 .description("Sets a block at a specified location.")
                 .layout(PinLayout.AISO)
-                .thirdLine(required("offset:block, such as Y+1:stone"))
+                .thirdLine(required("where to put it and what to put there", offsetAndBlock()))
                 .fourthLine(optional("h to hold the block until the input drops"))
                 .logic(BlockPlacers::flexSet)
                 .build());
@@ -854,7 +864,7 @@ public final class ICCatalogue {
                 .name("Flex Set Admin")
                 .description("Sets a block at a specified location, without paying for it.")
                 .restricted()
-                .thirdLine(required("offset:block, such as Y+1:stone"))
+                .thirdLine(required("where to put it and what to put there", offsetAndBlock()))
                 .fourthLine(optional("h to hold the block until the input drops"))
                 .logic(BlockPlacers::flexSetAdmin)
                 .build());
@@ -863,7 +873,7 @@ public final class ICCatalogue {
                 .name("Set Block Above")
                 .description("Sets a block above the IC block.")
                 .restricted()
-                .thirdLine(required("the block to place"))
+                .thirdLine(required("the block to place", block()))
                 .fourthLine(optional("Force to replace whatever is already there"))
                 .logic(BlockPlacers::setBlockAbove)
                 .build());
@@ -872,7 +882,7 @@ public final class ICCatalogue {
                 .name("Set Block Below")
                 .description("Sets a block below the IC block.")
                 .restricted()
-                .thirdLine(required("the block to place"))
+                .thirdLine(required("the block to place", block()))
                 .fourthLine(optional("Force to replace whatever is already there"))
                 .logic(BlockPlacers::setBlockBelow)
                 .build());
@@ -1047,7 +1057,7 @@ public final class ICCatalogue {
                 .name("Trigger Reader")
                 .description("Mirrors the redstone at somewhere else in the world.")
                 .selfTriggeringModel("MCZ295")
-                .thirdLine(required("x:y:z as a step from the sign, optionally prefixed with !"))
+                .thirdLine(required("a step from the sign", offset()))
                 .logic(Control::triggerReader)
                 .build());
     }
@@ -1057,7 +1067,7 @@ public final class ICCatalogue {
                 .name("Toggle Block")
                 .description("Swaps one block between two kinds as its input changes.")
                 .layout(PinLayout.AISO)
-                .thirdLine(required("the pair, as driven|idle"))
+                .thirdLine(required("the two blocks it swaps between", blockPair('|')))
                 .fourthLine(required("one axis step from the sign's support, such as Y+1"))
                 .logic(BlockSwappers::toggleBlock)
                 .build());
@@ -1066,7 +1076,7 @@ public final class ICCatalogue {
                 .name("Block Replacer")
                 .description("Swaps a block between two kinds and lets the change spread outward.")
                 .restricted()
-                .thirdLine(required("the pair, as driven|idle"))
+                .thirdLine(required("the two blocks it swaps between", blockPair('|')))
                 .fourthLine(optional("delay:mode:physics"))
                 .logic(BlockSwappers::blockReplacer)
                 .build());

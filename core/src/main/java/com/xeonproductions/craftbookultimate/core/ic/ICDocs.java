@@ -259,8 +259,29 @@ public final class ICDocs {
      */
     private static String lineOf(ICDefinition chip, int index) {
         return chip.lineSpec(index)
-                .map(spec -> spec.meaning() + (spec.required() ? " *(required)*" : ""))
+                .map(spec -> spec.meaning()
+                        + (spec.required() ? " *(required)*" : "")
+                        + takes(spec))
                 .orElse("nothing");
+    }
+
+    /**
+     * The spellings a line accepts, printed after what it is for.
+     *
+     * <p>Taken from the chip's own reader rather than from the sentence describing it, so a
+     * spelling printed here is one the chip really accepts. A line that takes any text at all has
+     * nothing to print, which is not the same as nothing being known about it — the sentence is
+     * there either way.
+     */
+    private static String takes(LineSpec spec) {
+        if (!spec.form().checksAnything()) {
+            return "";
+        }
+        StringBuilder shapes = new StringBuilder();
+        for (String shape : spec.accepted()) {
+            shapes.append(shapes.isEmpty() ? "" : " ").append('`').append(shape).append('`');
+        }
+        return "<br>  Takes " + shapes;
     }
 
     /** How a layout reads to somebody who has to wire it up. */

@@ -7,7 +7,9 @@ import com.xeonproductions.craftbookultimate.core.config.Settings;
 import com.xeonproductions.craftbookultimate.core.ic.ICDefinition;
 import com.xeonproductions.craftbookultimate.core.ic.ICLine;
 import com.xeonproductions.craftbookultimate.core.ic.ICRegistry;
+import com.xeonproductions.craftbookultimate.core.ic.LineContext;
 import com.xeonproductions.craftbookultimate.core.ic.LineReview;
+import com.xeonproductions.craftbookultimate.paper.ic.LegacyBlocks;
 import com.xeonproductions.craftbookultimate.core.math.BlockFace;
 import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.sign.SignLines;
@@ -69,10 +71,19 @@ public final class ICSignListener implements Listener {
 
     private final ICManager manager;
     private final RegionSchedulers schedulers;
+    private final LineContext names;
 
     public ICSignListener(ICManager manager, RegionSchedulers schedulers) {
+        this(manager, schedulers, LineContext.of(LegacyBlocks::resolve));
+    }
+
+    /**
+     * @param names what a block or item name written on a line means
+     */
+    public ICSignListener(ICManager manager, RegionSchedulers schedulers, LineContext names) {
         this.manager = manager;
         this.schedulers = schedulers;
+        this.names = names;
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
@@ -223,13 +234,18 @@ public final class ICSignListener implements Listener {
     }
 
     /**
-     * Checks the sign against what the chip says its lines are for.
+     * Checks the sign against what the chip says its lines are for and will take.
      *
-     * <p>A blank line the chip cannot work without refuses the sign, because the alternative is a
-     * chip that looks built and does nothing — a melody with no file named returns before it plays
-     * a note, and says so to nobody. A blank line the chip has a default for is allowed and
-     * mentioned, so a builder who meant to fill it in finds out while they are still standing
-     * there.
+     * <p>Two ways a line can be wrong and they are told apart here. A line left <em>blank</em> that
+     * the chip cannot work without refuses the sign, because the alternative is a chip that looks
+     * built and does nothing — a melody with no file named returns before it plays a note, and says
+     * so to nobody. A line carrying something the chip cannot <em>read</em> refuses it for the same
+     * reason and is worse without this: a sensor whose filter will not parse sets its output low
+     * and returns, which reads to a builder as a wiring fault rather than a spelling one.
+     *
+     * <p>A line the chip has a default for is never refused either way. Blank, the builder is told
+     * what they defaulted to; unreadable, they are told the chip could not read it and will use its
+     * default — which is what happens whether or not anybody says so.
      *
      * <p>Only signs being written now are ever seen here. A sign already in the world is read
      * through the chip manager on chunk load and never comes past this, so nothing existing can be
@@ -237,22 +253,22 @@ public final class ICSignListener implements Listener {
      *
      * @return true if the sign was refused
      */
-    private static boolean refusedForMissingLines(
+    private boolean refusedForMissingLines(
             SignChangeEvent event, ICDefinition definition, SignLines written, Player player) {
 
-        LineReview review = LineReview.of(definition, written);
+        LineReview review = LineReview.of(definition, written, names);
 
         if (review.broken()) {
             player.sendMessage(Component.text(
-                    "The " + definition.name() + " chip needs more than that.", NamedTextColor.RED));
-            review.missing().forEach(blank ->
-                    player.sendMessage(Component.text("  " + blank.said(), NamedTextColor.RED)));
+                    "The " + definition.name() + " chip cannot use that.", NamedTextColor.RED));
+            review.refusals().forEach(said ->
+                    player.sendMessage(Component.text("  " + said, NamedTextColor.RED)));
             event.setCancelled(true);
             return true;
         }
 
-        review.defaulted().forEach(blank ->
-                player.sendMessage(Component.text("  " + blank.said(), NamedTextColor.YELLOW)));
+        review.warnings().forEach(said ->
+                player.sendMessage(Component.text("  " + said, NamedTextColor.YELLOW)));
         return false;
     }
 

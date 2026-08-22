@@ -10,6 +10,12 @@ import com.xeonproductions.craftbookultimate.paper.platform.RegionSchedulers;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.event.block.BlockBreakEvent;
+import java.util.ArrayList;
+import java.util.List;
+import net.kyori.adventure.text.Component;
+import org.bukkit.block.sign.Side;
+import org.bukkit.event.block.SignChangeEvent;
+import com.xeonproductions.craftbookultimate.core.ic.LineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +23,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
-@DisplayName("Breaking a chip")
+@DisplayName("Writing and breaking a chip")
 class ICSignListenerTest {
 
     private ChipWorld game;
@@ -27,7 +33,11 @@ class ICSignListenerTest {
     void setUp() {
         game = new ChipWorld();
         game.server().getPluginManager().registerEvents(
-                new ICSignListener(game.manager(), new RegionSchedulers(game.plugin())),
+                // A lenient name resolver, because the real one asks the server what is a block
+                // as it starts up and the mock server has no answer for that. What is under test
+                // here is the review rather than the block table.
+                new ICSignListener(game.manager(), new RegionSchedulers(game.plugin()),
+                        LineContext.lenient()),
                 game.plugin());
         player = game.server().addPlayer();
     }
@@ -158,6 +168,50 @@ class ICSignListenerTest {
             breakBlock(game.wallAt(1, 64, 1));
 
             assertThat(toldSince()).doesNotContain("Destroyed");
+        }
+    }
+
+    @Nested
+    @DisplayName("writing a sign whose line the chip cannot read")
+    class UnreadableLines {
+
+        /** Writes a sign the way a builder does, and answers whether it was refused. */
+        private boolean refused(String model, String third, String fourth) {
+            // The item sensor is restricted, and the permission check comes first. What is under
+            // test here is the line review, so the player is given the chip they are building.
+            player.addAttachment(game.plugin(), "craftbook.ic.restricted.mcx138", true);
+            Block sign = game.signAt(9, 70, 9, BlockFace.SOUTH, "", model, third, fourth);
+            // A list the listener can write back into, since accepting a sign rewrites its
+            // identifier line into the spelling the rest of the plugin reads.
+            SignChangeEvent event = new SignChangeEvent(
+                    sign, player, new ArrayList<>(List.of(
+                            Component.text(""), Component.text(model),
+                            Component.text(third), Component.text(fourth))),
+                    Side.FRONT);
+            game.server().getPluginManager().callEvent(event);
+            return event.isCancelled();
+        }
+
+        @Test
+        @DisplayName("is refused, rather than left to look like a wiring fault")
+        void isRefused() {
+            assertThat(refused("[MCX138]", "item:stone", "")).isTrue();
+        }
+
+        @Test
+        @DisplayName("says what was written and what the line would have taken")
+        void saysWhatWouldHaveWorked() {
+            refused("[MCX138]", "item:stone", "");
+
+            assertThat(toldSince())
+                    .contains("item:stone")
+                    .contains("ID:<item>");
+        }
+
+        @Test
+        @DisplayName("is accepted once the line is written the way the chip reads it")
+        void isAcceptedOnceItIsRight() {
+            assertThat(refused("[MCX138]", "ID:stone", "")).isFalse();
         }
     }
 }

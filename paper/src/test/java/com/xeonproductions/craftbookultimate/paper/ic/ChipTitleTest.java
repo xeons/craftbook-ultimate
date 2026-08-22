@@ -69,13 +69,24 @@ class ChipTitleTest {
 
     @Test
     void leavesEveryChipInTheCatalogueUnmarkedWhenItsLinesAreFilledIn() {
-        SignLines filled = SignLines.of("TITLE", "[MODEL]", "something", "something");
-
         for (ICDefinition chip : REGISTRY.definitions()) {
+            // Something each chip would actually accept rather than the same word on every sign:
+            // a line now has a form as well as a meaning, and "something" is not a block name.
+            SignLines filled = SignLines.of(
+                    "TITLE", "[MODEL]", writable(chip, ICDefinition.THIRD_LINE),
+                    writable(chip, ICDefinition.FOURTH_LINE));
+
             assertThat(ChipTitle.wouldChange(filled, chip))
                     .as("%s with both lines written", chip.model())
                     .isFalse();
         }
+    }
+
+    /** Something a chip would accept on one of its lines. */
+    private static String writable(ICDefinition chip, int index) {
+        return chip.lineSpec(index)
+                .flatMap(spec -> spec.form().example())
+                .orElse("something");
     }
 
     @Test

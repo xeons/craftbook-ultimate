@@ -3,6 +3,7 @@
 
 package com.xeonproductions.craftbookultimate.core.entity;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -40,6 +41,35 @@ public record ItemCriteria(
     /** The largest stack the game moves in one go. */
     private static final int MAX_STACK = 64;
 
+    /** Checks that the item is a particular thing. */
+    public static final String ITEM_CHECK = "ID";
+
+    /** Checks how many the stack holds. */
+    public static final String STACK_CHECK = "STACK";
+
+    /** Checks the name the item has been given. */
+    public static final String NAME_CHECK = "NAME";
+
+    /** Checks what is written on the item. */
+    public static final String LORE_CHECK = "LORE";
+
+    /**
+     * Every way of writing a check, as it reads on a page and in a refusal.
+     *
+     * <p>Declared here rather than anywhere that describes this grammar, so a check added to the
+     * switch below and left out of this list is the only way the two can disagree — and a test
+     * catches that.
+     */
+    public static final List<String> ACCEPTED = List.of(
+            ITEM_CHECK + ":<item>",
+            STACK_CHECK + ":<1-" + MAX_STACK + ">",
+            NAME_CHECK + ":<text>",
+            LORE_CHECK + ":<text>");
+
+    /** The sorts of check there are, in the order they are listed. */
+    public static final List<String> CHECKS =
+            List.of(ITEM_CHECK, STACK_CHECK, NAME_CHECK, LORE_CHECK);
+
     /** Nothing asked for, which matches any item. */
     public static final ItemCriteria ANY =
             new ItemCriteria(Optional.empty(), OptionalInt.empty(), Optional.empty(), Optional.empty());
@@ -73,13 +103,13 @@ public record ItemCriteria(
         }
 
         return switch (sort) {
-            case "ID" -> items.apply(value)
+            case ITEM_CHECK -> items.apply(value)
                     .map(found -> new ItemCriteria(Optional.of(found), stackSize, displayName, lore));
-            case "STACK" -> countOf(value)
+            case STACK_CHECK -> countOf(value)
                     .map(count -> new ItemCriteria(item, OptionalInt.of(count), displayName, lore));
-            case "NAME" ->
+            case NAME_CHECK ->
                     Optional.of(new ItemCriteria(item, stackSize, Optional.of(value), lore));
-            case "LORE" ->
+            case LORE_CHECK ->
                     Optional.of(new ItemCriteria(item, stackSize, displayName, Optional.of(value)));
             default -> Optional.empty();
         };

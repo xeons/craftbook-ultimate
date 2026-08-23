@@ -155,7 +155,7 @@ public record ChipReport(
             if (!said.isEmpty()) {
                 said.append("; ");
             }
-            said.append("pins moved about");
+            said.append("pins moved about, ").append(permutation);
         });
         return said.toString();
     }

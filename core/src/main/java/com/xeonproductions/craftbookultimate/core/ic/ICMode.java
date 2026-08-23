@@ -16,13 +16,14 @@ import org.jspecify.annotations.NullMarked;
  *
  * <pre>
  *   [MC1000]!         invert the outputs
- *   [MC1000]badcfe    swap the pins pairwise
- *   [MC1000]!badcfe   both at once
+ *   [MC1000]ba        swap the first two inputs
+ *   [MC1000]!ba       both at once
  * </pre>
  *
  * <p>Parsing is total: anything that is not recognised yields {@link Behaviour#NONE} with no
  * permutation, because a typo in a mode string should leave a working chip rather than a broken
- * one.
+ * one. Whether a permutation the letters do describe is one a given chip can honour is a second
+ * question, asked by {@link #fittedTo} once that chip's own wiring is known.
  *
  * @param behaviour the selected behaviour, or {@link Behaviour#NONE}
  * @param permutation the pin permutation, or empty when the pins keep their normal order
@@ -97,7 +98,12 @@ public record ICMode(Behaviour behaviour, Optional<PinPermutation> permutation) 
      *
      * <p>Written on the sign as a run of the letters {@code a} to {@code f}, where the position
      * of a letter is the pin being described and the letter itself is the physical position that
-     * pin should use. So {@code badc} sends pin 0 to physical slot 1, pin 1 to slot 0, and so on.
+     * pin should use. So {@code bacd} sends pin 0 to physical slot 1, pin 1 to slot 0, and leaves
+     * the two after them where they are.
+     *
+     * <p>The letters stand for the pins in the order the layout numbers them, which is the inputs
+     * first and the outputs after. Whether a particular run of them is one a particular chip can
+     * honour is {@link #fits}.
      */
     public record PinPermutation(int[] slots) {
 
@@ -108,6 +114,37 @@ public record ICMode(Behaviour behaviour, Optional<PinPermutation> permutation) 
         /** The number of pins this permutation describes. */
         public int size() {
             return slots.length;
+        }
+
+        /**
+         * Whether a chip wired this way can honour the permutation.
+         *
+         * <p>Three things have to hold.
+         *
+         * <p>It cannot describe more pins than the chip has, since the extra letters would name
+         * blocks that are not part of the chip at all.
+         *
+         * <p>Its letters have to be exactly the pins it describes rather than any few of them,
+         * because a short permutation leaves the pins past its end where they are: {@code ac}
+         * sends pin 1 to slot 2 while pin 2 is already sitting there, which would put two of the
+         * chip's pins on one block.
+         *
+         * <p>And every pin has to stay on its own side — an input on an input, an output on an
+         * output. A chip whose pins are shuffled is still meant to be the same chip wired from
+         * somewhere else, not one that reads the block it drives.
+         *
+         * @param layout the wiring the chip is actually built with
+         */
+        public boolean fits(PinLayout layout) {
+            if (slots.length > layout.pinCount()) {
+                return false;
+            }
+            for (int pin = 0; pin < slots.length; pin++) {
+                if (slots[pin] >= slots.length || layout.isInput(pin) != layout.isInput(slots[pin])) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /**
@@ -212,6 +249,25 @@ public record ICMode(Behaviour behaviour, Optional<PinPermutation> permutation) 
      */
     public int slotFor(int pin) {
         return permutation.map(p -> p.slotFor(pin)).orElse(pin);
+    }
+
+    /**
+     * This mode with any permutation the chip's own wiring cannot honour dropped.
+     *
+     * <p>A permutation is read without knowing which chip it is written on, because a mode string
+     * is read before the chip is looked up. Whether the letters name pins that chip has, and
+     * whether they leave each one on its own side, cannot be answered until the two meet.
+     *
+     * <p>Dropping it is what keeps the promise {@link #parse} makes, that a mode string nobody can
+     * honour leaves a working chip rather than a broken one.
+     *
+     * @param layout the wiring the chip is actually built with
+     */
+    public ICMode fittedTo(PinLayout layout) {
+        if (permutation.isEmpty() || permutation.get().fits(layout)) {
+            return this;
+        }
+        return new ICMode(behaviour, Optional.empty());
     }
 
     /** True when this mode does nothing at all. */

@@ -161,4 +161,41 @@ class ICManagerTest {
             assertThat(game.services().switchboard().isKnown("door")).isFalse();
         }
     }
+
+    @Nested
+    @DisplayName("A sign moving the pins about")
+    class MovingThePins {
+
+        @Test
+        void loadsAChipNamingAPinItDoesNotHave() {
+            // MC1000 is wired AISO, which has five pins, and f is the sixth. Working out where
+            // that pin sat threw as the chunk holding the sign arrived. See finding 153.
+            Block sign = game.signAt(0, 64, 1, BlockFace.SOUTH, "", "[MC1000]f", "", "");
+
+            assertThat(game.manager().load(sign)).isPresent();
+        }
+
+        @Test
+        void leavesThePinsWhereTheyWereWhenItCannotHonourTheLetters() {
+            Block moved = game.signAt(0, 64, 1, BlockFace.SOUTH, "", "[MC1000]f", "", "");
+            Block plain = game.signAt(20, 64, 1, BlockFace.SOUTH, "", "[MC1000]", "", "");
+
+            ICInstance movedChip = game.manager().load(moved).orElseThrow();
+            ICInstance plainChip = game.manager().load(plain).orElseThrow();
+
+            assertThat(movedChip.inputAt(new Vec3i(0, 64, 2)))
+                    .isEqualTo(plainChip.inputAt(new Vec3i(20, 64, 2)));
+        }
+
+        @Test
+        void honoursLettersTheChipCanActuallyUse() {
+            // ba swaps the first two of MC1000's four inputs, so the pin in front of the sign is
+            // input 1 rather than input 0.
+            Block sign = game.signAt(0, 64, 1, BlockFace.SOUTH, "", "[MC1000]ba", "", "");
+
+            ICInstance chip = game.manager().load(sign).orElseThrow();
+
+            assertThat(chip.inputAt(new Vec3i(0, 64, 2))).isEqualTo(1);
+        }
+    }
 }

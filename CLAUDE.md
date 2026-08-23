@@ -404,6 +404,20 @@ to hold its own list of which chips read past input 1 and had missed the bit shi
 was built with a single lever and so could never be written into. One list, in the place that
 already knows.
 
+**Where a pin sits** may be moved on the sign, by the run of letters `a` to `f` after the model
+reference. They name the chip's pins in the order its layout numbers them, inputs first and outputs
+after, so what `d` means depends on how wide the chip is: an output on `3I3O`, still an input on
+`AISO`. `ICMode` reads such a run without knowing which chip it is written on, and `ICMode#fittedTo`
+asks the second question once the layout is known — dropping the run, so the pins stay where they
+were, unless it names only pins the chip has, moves no two onto one block, and **keeps every input
+on an input and every output on an output**. A chip with its pins moved about is the same chip wired
+from somewhere else, not one that reads the block it drives.
+
+That last rule is the fork's intent enforced rather than approximated: it guarded the same thing
+with a pair of regexes that only asked whether *some* letter near the front was in `a`-`c` and
+*some* letter near the back in `d`-`f`, which refused a wholesale swap and let a partial one
+through. See finding 153, which also records why a bare six-letter run never did anything there.
+
 ## What a command does, and where it says it
 
 A command is two things: a grammar, and what it does. The grammar differs by platform and nothing

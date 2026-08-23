@@ -122,9 +122,27 @@ one above the one the sign hangs on unless line 3 names somewhere else as `x:y:z
 
 ### Moving the pins about
 
-Six letters after the brackets rename the chip's pins, so a build can be wired from
-a different side: `[MC1000]badcfe` swaps them in pairs. The letters run `a` to `f`
-and stand for the pins in their usual order.
+Letters after the brackets rename a chip's pins, so a build can be wired from a
+different side. They run `a` to `f` and stand for the chip's pins in the order its
+wiring numbers them, **inputs first and outputs after**: on a `3I3O` chip `a` `b`
+`c` are the three inputs and `d` `e` `f` the three outputs, while on an `AISO` chip,
+which has four inputs, `a` to `d` are inputs and `e` is the output.
+
+Where a letter sits is the pin being moved and the letter itself is where it goes.
+So `[MC4000]bacedf` swaps the first two inputs and the first two outputs, and
+`[MC1000]ba` swaps the first two inputs and says nothing about the rest.
+
+Three rules, and a run of letters breaking any of them is ignored, leaving the pins
+exactly where they were:
+
+- **A pin stays on its own side.** An input may take another input's place and an
+  output another output's, but neither crosses. A chip with its pins moved about is
+  the same chip wired from somewhere else, not one that reads the block it drives.
+- **Only pins the chip has.** `f` is the sixth pin, so it means nothing on a chip
+  wired `SISO`, which has two.
+- **No two pins on one block.** The pins past the end of a short run stay where they
+  are, so `ac` would send the second pin to the third one's place while the third is
+  still there. Write out every pin up to the last one you move.
 
 ### The wiring itself
 

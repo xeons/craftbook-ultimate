@@ -67,7 +67,7 @@ public final class ICInstance {
         this.front = front;
         this.definition = definition;
         this.layout = definition.defaultLayout();
-        this.mode = mode;
+        this.mode = mode.fittedTo(this.layout);
         this.services = services;
         this.logic = definition.newLogic();
         this.selfTriggering = selfTriggering && logic instanceof SelfTriggeringICLogic;

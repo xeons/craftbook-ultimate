@@ -139,6 +139,94 @@ class ICModeTest {
     }
 
     @Nested
+    @DisplayName("fitting a permutation to a chip")
+    class Fitting {
+
+        @Test
+        void keepsAPermutationTheChipCanHonour() {
+            // 3I3O has six pins: three inputs then three outputs. This swaps the first two of
+            // each, which leaves every pin on its own side.
+            ICMode mode = ICMode.parse("bacedf");
+
+            assertThat(mode.fittedTo(PinLayout.THREE_I_3O)).isEqualTo(mode);
+        }
+
+        @Test
+        void dropsAPermutationNamingAPinTheChipDoesNotHave() {
+            // SISO has two pins; f is the sixth. Before this the chip threw as its chunk loaded.
+            ICMode mode = ICMode.parse("f");
+
+            assertThat(mode.fittedTo(PinLayout.SISO).permutation()).isEmpty();
+        }
+
+        @Test
+        void dropsAPermutationLongerThanTheChip() {
+            assertThat(ICMode.parse("bacedf").fittedTo(PinLayout.AISO).permutation()).isEmpty();
+        }
+
+        @Test
+        void dropsAPermutationThatWouldPutTwoPinsOnOneBlock() {
+            // ac moves pin 0 to slot 0 and pin 1 to slot 2, and pin 2 stays at slot 2 because the
+            // permutation says nothing about it. Two pins, one block.
+            assertThat(ICMode.parse("ac").fittedTo(PinLayout.THREE_I_SO).permutation()).isEmpty();
+        }
+
+        @Test
+        void keepsAShortPermutationThatRearrangesOnlyItsOwnPins() {
+            ICMode fitted = ICMode.parse("ba").fittedTo(PinLayout.THREE_I_SO);
+
+            assertThat(fitted.slotFor(0)).isEqualTo(1);
+            assertThat(fitted.slotFor(1)).isEqualTo(0);
+            assertThat(fitted.slotFor(2)).isEqualTo(2);
+        }
+
+        @Test
+        void keepsTheBehaviourWhenItDropsThePermutation() {
+            ICMode fitted = ICMode.parse("!f").fittedTo(PinLayout.SISO);
+
+            assertThat(fitted.behaviour()).isEqualTo(ICMode.Behaviour.INVERT);
+            assertThat(fitted.permutation()).isEmpty();
+        }
+
+        @Test
+        void leavesAModeWithNoPermutationAlone() {
+            assertThat(ICMode.parse("!").fittedTo(PinLayout.SISO))
+                    .isEqualTo(ICMode.parse("!"));
+        }
+
+        @Test
+        void dropsAPermutationSendingAnInputToAnOutput() {
+            // SISO is one input then one output, so ba asks the chip to read the block it drives
+            // and drive the block it reads. An input stays an input. See finding 153.
+            assertThat(ICMode.parse("ba").fittedTo(PinLayout.SISO).permutation()).isEmpty();
+        }
+
+        @Test
+        void dropsAPermutationCrossingInTheMiddleOfALongerRun() {
+            // badcfe reads as a pairwise swap and is the example the fork's own source gives, but
+            // c and d are the last input and the first output, so it swaps one for the other.
+            assertThat(ICMode.parse("badcfe").fittedTo(PinLayout.THREE_I_3O).permutation()).isEmpty();
+        }
+
+        @Test
+        void movesTheOutputsAmongThemselves() {
+            ICMode fitted = ICMode.parse("abcedf").fittedTo(PinLayout.THREE_I_3O);
+
+            assertThat(fitted.slotFor(3)).isEqualTo(4);
+            assertThat(fitted.slotFor(4)).isEqualTo(3);
+            assertThat(fitted.slotFor(0)).isZero();
+        }
+
+        @Test
+        void countsSidesByTheChipsOwnWiringRatherThanTheLetters() {
+            // AISO is four inputs and one output, so d is an input there and e is the output --
+            // not the three-and-three split the letters suggest.
+            assertThat(ICMode.parse("badc").fittedTo(PinLayout.AISO).permutation()).isPresent();
+            assertThat(ICMode.parse("badc").fittedTo(PinLayout.THREE_I_SO).permutation()).isEmpty();
+        }
+    }
+
+    @Nested
     @DisplayName("no mode")
     class NoMode {
 

@@ -2582,3 +2582,53 @@ constant's description — so the framework table was describing a mode no chip 
 is gone. And the first draft of the new table put `-` on `MCX130`; it is `MCX133`, the sweeper.
 Worth recording, because it is the same mistake as finding 151: writing down what a chip does from
 somewhere other than the chip.
+
+### 153. The pin permutation guard was half a guard, and the rewrite dropped it entirely
+
+A mode string may end in a run of the letters `a` to `f` that renames a chip's pins, so a build can
+be wired from a different side. The fork's `Mode#getPinConfiguration` read one only when four
+things held:
+
+```java
+if (mode.length() > 6
+        && mode.substring(1, 3).matches(".*[a-c].*")
+        && mode.substring(4, 6).matches(".*[d-f].*")
+        && mode.substring(1).length() == mode.substring(1).chars().distinct().count())
+```
+
+The intent behind the middle two is plain: `a`, `b` and `c` are the inputs and `d`, `e` and `f` are
+the outputs, and a pin was meant to stay on its own side. The check does not enforce it. It asks
+only that *at least one* of the two characters at positions 1 and 2 is in `a`-`c`, and that *at
+least one* of the two at positions 4 and 5 is in `d`-`f`; positions 3 and 6 are never looked at.
+So `!defabc` — inputs and outputs swapped wholesale — was refused, while `!adbecf` was accepted and
+crosses them freely. The letter-to-slot map is flat, `a` to `f` meaning pins 0 to 5 with the inputs
+first, so nothing below the guard stopped it either.
+
+Three more things came out of reading it.
+
+A permutation was only read when something came before it, because the string had to be longer than
+six characters and the permutation was `mode.substring(1)`. A sign reading `[MC1000]badcfe` — the
+example the fork's own class documentation gives — is exactly six, so it fell through to the
+identity and did nothing at all. It needed a leading character, such as the `!` in `[MC1000]!badcfe`.
+
+The array returned is always six long however many pins the chip has. `Pins3I5O` has eight, which is
+why that one pinset ignores the permutation and switches on the raw pin number instead. Every other
+pinset answers `null` for a slot its layout does not have.
+
+A mode longer than seven characters carrying anything outside `a`-`f` threw, because the map is
+asked for the character and the result unboxed: `defaultPinConfiguration.get('X')` is `null`.
+
+The rewrite kept the flat letter-to-slot map and dropped the guard, which left two faults of its
+own. `[MC1000]f` names a sixth pin on a chip wired `AISO`, which has five, and threw
+`IndexOutOfBoundsException` inside `ICManager#load` — as the chunk holding the sign arrived, not
+when anybody touched it. And a permutation shorter than the chip aliases, since the pins past its
+end keep their own slots: `ac` sends pin 1 to slot 2 while pin 2 is already there, putting two pins
+on one block. Both break what `ICMode#parse` promises, that a mode string nobody can honour leaves
+a working chip rather than a broken one.
+
+`ICMode#fittedTo` is the fix, asked once as the chip is built, where the wiring is finally known. A
+permutation is honoured only when it names pins the chip has, describes them without leaving two on
+one block, and keeps every input on an input and every output on an output. Anything else is
+dropped and the pins stay where they were, which is what a mode string that cannot be read has
+always done. The intent the fork wrote down is therefore enforced rather than approximated, and a
+bare `[MC1000]bacedf` with no leading character now works, which is what its builder meant.

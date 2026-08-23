@@ -21,11 +21,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Keeps track of every chip currently loaded in the world.
@@ -103,7 +105,7 @@ public final class ICManager {
             for (BlockKey pin : instance.pinKeys()) {
                 byPin.computeIfAbsent(pin, ignored -> ConcurrentHashMap.newKeySet()).add(instance);
             }
-            instance.load(schedulers.at(block.getLocation()), this::afterOutputChanged);
+            instance.load(schedulers.at(block.getLocation()), this::writeOutput);
             markTitle(block, key, lines, instance.definition());
         });
         return created;
@@ -266,13 +268,43 @@ public final class ICManager {
      * <p>The lever and the six blocks around it, because a pin may be the lever itself where two
      * chips share one, or the block beside it that the lever powers. Each is a lookup in an index
      * already kept, and a chip driving itself is refused by {@link #triggerAt}.
+     *
+     * <p>The write itself is done here rather than by the caller, so that the events the server
+     * raises during it and the ones raised after are one thing, and no chip runs twice for it.
+     *
+     * @param lever the block being written
+     * @param write does the writing
      */
-    private void afterOutputChanged(Block lever) {
-        triggerAt(lever);
-        for (org.bukkit.block.BlockFace face : POWERED_BY_A_LEVER) {
-            triggerAt(lever.getRelative(face));
+    void writeOutput(Block lever, Runnable write) {
+        boolean outermost = DURING_ONE_WRITE.get() == null;
+        if (outermost) {
+            DURING_ONE_WRITE.set(new HashSet<>());
+        }
+        try {
+            write.run();
+            triggerAt(lever);
+            for (org.bukkit.block.BlockFace face : POWERED_BY_A_LEVER) {
+                triggerAt(lever.getRelative(face));
+            }
+        } finally {
+            if (outermost) {
+                DURING_ONE_WRITE.remove();
+            }
         }
     }
+
+    /**
+     * Which chips have already run for the lever currently being written.
+     *
+     * <p>Writing a lever applies physics, so a run of redstone dust beside it recalculates and the
+     * server raises an event of its own — which arrives before this class gets to say anything.
+     * A chip reading that dust would then run twice for one change, and a chip that toggles on
+     * being run, such as {@code MC1017}, toggles twice and so does nothing at all.
+     *
+     * <p>Held for the length of one write and thrown away after it, so nothing accumulates and a
+     * chip triggered by a later change runs again as it should.
+     */
+    private static final ThreadLocal<@Nullable Set<BlockKey>> DURING_ONE_WRITE = new ThreadLocal<>();
 
     /** The blocks a lever can carry its signal into. */
     private static final org.bukkit.block.BlockFace[] POWERED_BY_A_LEVER = {
@@ -302,6 +334,11 @@ public final class ICManager {
             }
             int input = chip.inputAt(position);
             if (input < 0) {
+                continue;
+            }
+
+            Set<BlockKey> alreadyRun = DURING_ONE_WRITE.get();
+            if (alreadyRun != null && !alreadyRun.add(chip.signKey())) {
                 continue;
             }
 

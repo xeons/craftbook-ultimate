@@ -91,7 +91,7 @@ to a hand and to redstone.**
 | Sponge build: mechanics, carts, pipes, areas, test bed | Not started |
 
 Verified working: Gradle 9.7, JDK 25, `paper-api:26.2.build.112-stable`, Adventure 5.2.0,
-**2492 tests passing**.
+**2496 tests passing**.
 
 Remaining work is inventoried in `TODO.md`.
 
@@ -476,8 +476,14 @@ rig wired from a remembered layout reads as a broken chip when it is the bed tha
 **A chip tells the manager when it writes a lever.** The server raises `BlockRedstoneEvent` for a
 lever a player clicks and for one an explosion hits, and for nothing a plugin writes — so a chip's
 output would be heard by the world and by no chip at all, and two chips could only be joined
-through redstone dust. `BlockChipState#setOutput` therefore reports the block it changed, and
-`ICManager` runs any chip reading it or one of the six around it. See finding 150.
+through redstone dust. `BlockChipState#setOutput` therefore hands its write to `ICManager#writeOutput`, which
+does the writing and then runs any chip reading that block or one of the six around it.
+
+Writing and telling are one operation because they have to be: the write applies physics, so
+redstone beside the lever recalculates and the server raises an event for that partway through. A
+chip reading it would run twice for one change, and a chip that toggles on being run would toggle
+twice and so do nothing. The set of chips already run is held for the length of the write. See
+finding 150.
 
 **Levers on both sides**, because that is what the plugin reads and writes. `BlockChipState`
 decides an input is wired by asking whether the pin block is a power source, and drives an output

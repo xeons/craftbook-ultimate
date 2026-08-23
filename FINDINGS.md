@@ -2499,3 +2499,13 @@ by `triggerAt`, and a ring of chips driving each other is already bounded by the
 
 Nothing in `core` changed: which chips exist and what they do was never wrong. What was missing was
 the platform telling itself about a block it had just written.
+
+**The fix needed a second half.** Writing a lever applies physics, so a run of redstone dust beside
+it recalculates and the server raises an event for *that* — before the plugin gets to say anything.
+A chip reading the dust would then run twice for one change, and a chip that toggles on being run,
+such as `MC1017`, toggles twice and so does nothing at all. The write and the telling are therefore
+one operation, `ICManager#writeOutput`, holding the set of chips already run for the length of it.
+
+A test server runs no redstone, so that half cannot be reproduced by waiting for the event: the
+test raises it the way the listener would, from inside the write. Worth saying plainly, because the
+first version of the chaining test passed whether or not the fix was there.

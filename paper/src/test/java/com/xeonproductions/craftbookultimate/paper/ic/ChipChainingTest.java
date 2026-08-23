@@ -54,7 +54,7 @@ class ChipChainingTest {
     }
 
     /** Where a chip's pin really sits, worked out from its own wiring rather than guessed at. */
-    private Block pin(Block sign, org.bukkit.block.BlockFace facing, PinLayout layout, boolean input) {
+    private Block pinOf(Block sign, org.bukkit.block.BlockFace facing, PinLayout layout, boolean input) {
         com.xeonproductions.craftbookultimate.core.math.BlockFace front =
                 Directions.toDomain(facing).orElseThrow();
         Vec3i at = layout.pinPosition(
@@ -115,12 +115,38 @@ class ChipChainingTest {
     }
 
     @Test
+    void runsTheChipItDrivesOnlyOnce() {
+        // Writing a lever applies physics, so redstone beside it recalculates and the server
+        // raises an event of its own partway through the write -- before this plugin says
+        // anything. A chip reading it would then run twice for the one change, and a chip that
+        // toggles on being run toggles twice and so does nothing at all.
+        //
+        // A test server runs no redstone, so the server's event is made here rather than waited
+        // for: triggerAt from inside the write is exactly what the listener would have done.
+        Block toggle = game.signAt(0, 64, 0, BlockFace.SOUTH, "", "[MC1017]", "", "");
+        game.manager().load(toggle);
+
+        Block inputPin = pinOf(toggle, BlockFace.SOUTH, PinLayout.SISO, true);
+        Block input = leverAt(inputPin.getX(), inputPin.getY(), inputPin.getZ());
+        Switch on = (Switch) input.getBlockData();
+        on.setPowered(true);
+        input.setBlockData(on);
+
+        Block outputPin = pinOf(toggle, BlockFace.SOUTH, PinLayout.SISO, false);
+        Block output = leverAt(outputPin.getX(), outputPin.getY(), outputPin.getZ());
+
+        game.manager().writeOutput(input, () -> game.manager().triggerAt(input));
+
+        assertThat(isOn(output)).as("the toggle flipped once, not twice").isTrue();
+    }
+
+    @Test
     void carriesAClockThroughATransmitterOntoItsBand() {
         // The reported build: a clock driving a transmitter, and a receiver following the band.
         Block transmitter = game.signAt(0, 64, 0, BlockFace.SOUTH, "", "[MC1110]", "testband", "");
         game.manager().load(transmitter);
 
-        Block input = pin(transmitter, BlockFace.SOUTH, PinLayout.SISO, true);
+        Block input = pinOf(transmitter, BlockFace.SOUTH, PinLayout.SISO, true);
         Block lever = leverAt(input.getX(), input.getY(), input.getZ());
 
         Switch on = (Switch) lever.getBlockData();
@@ -140,12 +166,61 @@ class ChipChainingTest {
         Block receiver = game.signAt(0, 64, 0, BlockFace.SOUTH, "", "[MC0111]", "testband", "");
         game.manager().load(receiver);
 
-        Block output = pin(receiver, BlockFace.SOUTH, PinLayout.SISO, false);
+        Block output = pinOf(receiver, BlockFace.SOUTH, PinLayout.SISO, false);
         Block lever = leverAt(output.getX(), output.getY(), output.getZ());
 
         game.manager().at(receiver).orElseThrow().tick();
 
         assertThat(isOn(lever)).isTrue();
+    }
+
+    @Test
+    void feedsEveryReceiverOnTheBand() {
+        // A band is one shared value, so any number of receivers may follow one transmitter.
+        game.services().radio().transmit(Band.parse("", "many").orElseThrow(), true);
+
+        Block first = game.signAt(0, 64, 0, BlockFace.SOUTH, "", "[MC0111]", "many", "");
+        Block second = game.signAt(0, 64, 20, BlockFace.SOUTH, "", "[MC0111]", "many", "");
+        game.manager().load(first);
+        game.manager().load(second);
+
+        Block firstPin = pinOf(first, BlockFace.SOUTH, PinLayout.SISO, false);
+        Block secondPin = pinOf(second, BlockFace.SOUTH, PinLayout.SISO, false);
+        Block firstLever = leverAt(firstPin.getX(), firstPin.getY(), firstPin.getZ());
+        Block secondLever = leverAt(secondPin.getX(), secondPin.getY(), secondPin.getZ());
+
+        game.manager().at(first).orElseThrow().tick();
+        game.manager().at(second).orElseThrow().tick();
+
+        assertThat(isOn(firstLever)).isTrue();
+        assertThat(isOn(secondLever)).isTrue();
+    }
+
+    @Test
+    void keepsBandsApartFromEachOther() {
+        game.services().radio().transmit(Band.parse("", "one").orElseThrow(), true);
+
+        Block listener = game.signAt(0, 64, 0, BlockFace.SOUTH, "", "[MC0111]", "two", "");
+        game.manager().load(listener);
+
+        Block pin = pinOf(listener, BlockFace.SOUTH, PinLayout.SISO, false);
+        Block lever = leverAt(pin.getX(), pin.getY(), pin.getZ());
+
+        game.manager().at(listener).orElseThrow().tick();
+
+        assertThat(isOn(lever)).isFalse();
+    }
+
+    @Test
+    void letsTheLastTransmitterOnABandDecideIt() {
+        // Two transmitters sharing a band is one value with two writers: whichever ran last wins,
+        // and a receiver follows that. Worth pinning because it is a builder's likeliest surprise.
+        Band shared = Band.parse("", "shared").orElseThrow();
+
+        game.services().radio().transmit(shared, true);
+        game.services().radio().transmit(shared, false);
+
+        assertThat(game.services().radio().isPowered(shared)).isFalse();
     }
 
     @Test

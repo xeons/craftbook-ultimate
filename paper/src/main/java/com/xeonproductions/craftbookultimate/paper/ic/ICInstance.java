@@ -16,7 +16,6 @@ import com.xeonproductions.craftbookultimate.core.math.Vec3i;
 import com.xeonproductions.craftbookultimate.core.platform.Scheduler;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.jspecify.annotations.NullMarked;
@@ -61,7 +60,7 @@ public final class ICInstance {
 
     private Scheduler.@Nullable Task tickTask;
     private @Nullable Scheduler scheduler;
-    private Consumer<Block> outputChanged = block -> {};
+    private BlockChipState.OutputWrite outputChanged = (block, write) -> write.run();
     private boolean running;
     private boolean unloaded;
 
@@ -177,10 +176,10 @@ public final class ICInstance {
      * Starts the chip.
      *
      * @param scheduler used to tick the chip if it is self-triggering
-     * @param outputChanged told whenever one of the chip's output levers really changes, so that a
-     *     chip reading that pin hears about it
+     * @param outputChanged writes an output lever that really changes and tells any chip reading
+     *     that pin, since the server raises no event of its own for it
      */
-    void load(Scheduler scheduler, Consumer<Block> outputChanged) {
+    void load(Scheduler scheduler, BlockChipState.OutputWrite outputChanged) {
         this.scheduler = scheduler;
         this.outputChanged = outputChanged;
         logic.load(newState(-1));

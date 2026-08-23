@@ -20,7 +20,6 @@ import com.xeonproductions.craftbookultimate.paper.adapter.Positions;
 import com.xeonproductions.craftbookultimate.paper.adapter.Signs;
 import org.bukkit.Material;
 import org.bukkit.World;
-import java.util.function.Consumer;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Powerable;
@@ -51,7 +50,7 @@ public final class BlockChipState implements ChipState {
     private final TimeSource time;
     private final ChipWorld chipWorld;
     private final ChipServices services;
-    private final Consumer<Block> outputChanged;
+    private final OutputWrite outputChanged;
     private @org.jspecify.annotations.Nullable Stockpile stockpile;
 
     private BlockChipState(Builder builder) {
@@ -66,6 +65,23 @@ public final class BlockChipState implements ChipState {
         this.chipWorld = new BukkitChipWorld(builder.world);
         this.services = builder.services;
         this.outputChanged = builder.outputChanged;
+    }
+
+    /**
+     * Writes one of a chip's output blocks and tells whatever reads it.
+     *
+     * <p>Two things in one because they have to be: writing applies physics, so the server may
+     * raise events of its own partway through, and those and the telling afterwards have to count
+     * as the same change.
+     */
+    @FunctionalInterface
+    public interface OutputWrite {
+
+        /**
+         * @param block the output block being changed
+         * @param write does the changing
+         */
+        void accept(Block block, Runnable write);
     }
 
     /** Reads the clocks a chip in a world cares about. */
@@ -174,12 +190,12 @@ public final class BlockChipState implements ChipState {
         }
 
         lever.setPowered(powered);
-        block.setBlockData(lever, true);
 
-        // The server raises no redstone event for a lever a plugin writes -- it raises one only
-        // for a lever a player clicks or an explosion hits -- so a chip reading this pin would
-        // never hear about it. Saying so directly is what lets one chip drive another.
-        outputChanged.accept(block);
+        // Handed over rather than written here, because the server raises no redstone event for a
+        // lever a plugin writes -- only for one a player clicks or an explosion hits -- so a chip
+        // reading this pin would never hear about it. Whoever takes it writes the block and says
+        // so, and does both as one thing so that no chip runs twice for the one change.
+        outputChanged.accept(block, () -> block.setBlockData(lever, true));
     }
 
     @Override
@@ -271,7 +287,7 @@ public final class BlockChipState implements ChipState {
         private int triggeredInput = -1;
         private Scheduler scheduler = RejectingScheduler.INSTANCE;
         private ChipServices services = ChipServices.create();
-        private Consumer<Block> outputChanged = block -> {};
+        private OutputWrite outputChanged = (block, write) -> write.run();
         private @org.jspecify.annotations.Nullable TimeSource time;
 
         private Builder(World world, Vec3i signPosition, BlockFace front, PinLayout layout) {
@@ -314,9 +330,10 @@ public final class BlockChipState implements ChipState {
         /**
          * What to tell when one of the chip's output levers really changes.
          *
-         * <p>Defaults to telling nobody, which is right for a state built only to be read.
+         * <p>Defaults to writing the block and telling nobody, which is right for a state built
+         * outside a running plugin.
          */
-        public Builder outputChanged(Consumer<Block> outputChanged) {
+        public Builder outputChanged(OutputWrite outputChanged) {
             this.outputChanged = outputChanged;
             return this;
         }

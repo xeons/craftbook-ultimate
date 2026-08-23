@@ -792,9 +792,9 @@ public final class ICCatalogue {
         registry.register(ICDefinition.builder("MC3030", "RS-NOR")
                 .name("RS-Nor Latch")
                 .description("A compact RS-Nor latch.")
-                .fourthLine(optional("where the chip keeps its state; it writes this itself"))
                 .inputs("set", "reset", "reset as well; either one wins over set")
                 .outputs("Q, the value being held")
+                .noLines()
                 .logic(Latches::rsNorLatch)
                 .build());
 
@@ -803,61 +803,61 @@ public final class ICCatalogue {
         registry.register(ICDefinition.builder("MC3033", "RS-NAND")
                 .name("RS-Nand Latch")
                 .description("A compact RS-Nand latch.")
-                .fourthLine(optional("where the chip keeps its state; it writes this itself"))
                 .inputs("the data, sampled on the clock", "the clock, which acts as it rises", "reset, which wins over everything")
                 .outputs("Q, the value sampled")
+                .noLines()
                 .logic(Latches::rsNandLatch)
                 .build());
 
         registry.register(ICDefinition.builder("MC3031", "INV RS-NAND")
                 .name("Inverse RS-Nand Latch")
                 .description("A compact inverse RS-Nand latch.")
-                .fourthLine(optional("where the chip keeps its state; it writes this itself"))
                 .inputs("set, which wins over reset", "reset", "not read")
                 .outputs("Q, the value being held")
+                .noLines()
                 .logic(Latches::rsNandLatch)
                 .build());
 
         registry.register(ICDefinition.builder("MC3032", "JK FLIP")
                 .name("JK Flip Flop")
                 .description("A compact JK flip flop.")
-                .fourthLine(optional("where the chip keeps its state; it writes this itself"))
                 .inputs("the clock, which acts as it falls", "J, which sets", "K, which resets")
                 .outputs("Q, which toggles when J and K are both high")
+                .noLines()
                 .logic(Latches::jkFlipFlop)
                 .build());
 
         registry.register(ICDefinition.builder("MC3034", "EDGE-D")
                 .name("Edge-Trigger D Flip Flop")
                 .description("A compact edge-triggered D flip flop.")
-                .fourthLine(optional("where the chip keeps its state; it writes this itself"))
                 .inputs("the clock; the data is followed while this is high", "the data", "reset, applied after the sample")
                 .outputs("Q, the value being followed")
+                .noLines()
                 .logic(Latches::edgeTriggeredDFlipFlop)
                 .build());
 
         registry.register(ICDefinition.builder("MC3036", "LEVEL-D")
                 .name("Level-Trigger D Flip Flop")
                 .description("A compact level-triggered D flip flop.")
-                .fourthLine(optional("where the chip keeps its state; it writes this itself"))
                 .inputs("the clock; the data is followed while this is high",
                         "the data",
                         "reset, applied after the sample")
                 .outputs("Q, the value being followed")
+                .noLines()
                 .logic(Latches::levelTriggeredDFlipFlop)
                 .build());
 
         registry.register(ICDefinition.builder("MC1017", "RE T FLIP")
                 .name("Toggle Flip Flop RE")
                 .description("Toggles output on high.")
-                .fourthLine(optional("where the chip keeps its state; it writes this itself"))
+                .noLines()
                 .logic(() -> Latches.toggleFlipFlop(true))
                 .build());
 
         registry.register(ICDefinition.builder("MC1018", "FE T FLIP")
                 .name("Toggle Flip Flop FE")
                 .description("Toggles output on low.")
-                .fourthLine(optional("where the chip keeps its state; it writes this itself"))
+                .noLines()
                 .logic(() -> Latches.toggleFlipFlop(false))
                 .build());
 
@@ -1164,7 +1164,6 @@ public final class ICCatalogue {
                 .description("Toggles its output every X ticks.")
                 .selfTriggeringModel("MC0420")
                 .thirdLine(optional("the period in ticks, from 3 to 1000, defaulting to 20"))
-                .fourthLine(optional("where the chip keeps its count; it writes this itself"))
                 .logic(TimeChips::clock)
                 .build());
 

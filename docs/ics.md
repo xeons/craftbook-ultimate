@@ -311,7 +311,7 @@ Toggles output on high.
 
 - **Write on the sign** — `[MC1017]`, or `=RE T FLIP`
 - **Line 3** — nothing
-- **Line 4** — where the chip keeps its state; it writes this itself
+- **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1017`
@@ -322,7 +322,7 @@ Toggles output on low.
 
 - **Write on the sign** — `[MC1018]`, or `=FE T FLIP`
 - **Line 3** — nothing
-- **Line 4** — where the chip keeps its state; it writes this itself
+- **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Inputs** — only input 1 is read; the others are wired to nothing
 - **Permission** — `craftbook.ic.safe.mc1018`
@@ -713,7 +713,7 @@ Toggles its output every X ticks.
 
 - **Write on the sign** — `[MC1420]`, or `=CLOCK`
 - **Line 3** — the period in ticks, from 3 to 1000, defaulting to 20
-- **Line 4** — where the chip keeps its count; it writes this itself
+- **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Inputs** — only input 1 is read; the others are wired to nothing
 - **Runs on its own as** — `[MC0420]`
@@ -917,7 +917,7 @@ A compact RS-Nor latch.
 
 - **Write on the sign** — `[MC3030]`, or `=RS-NOR`
 - **Line 3** — nothing
-- **Line 4** — where the chip keeps its state; it writes this itself
+- **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Input 1** — set
 - **Input 2** — reset
@@ -931,7 +931,7 @@ A compact inverse RS-Nand latch.
 
 - **Write on the sign** — `[MC3031]`, or `=INV RS-NAND`
 - **Line 3** — nothing
-- **Line 4** — where the chip keeps its state; it writes this itself
+- **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Input 1** — set, which wins over reset
 - **Input 2** — reset
@@ -945,7 +945,7 @@ A compact JK flip flop.
 
 - **Write on the sign** — `[MC3032]`, or `=JK FLIP`
 - **Line 3** — nothing
-- **Line 4** — where the chip keeps its state; it writes this itself
+- **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Input 1** — the clock, which acts as it falls
 - **Input 2** — J, which sets
@@ -959,7 +959,7 @@ A compact RS-Nand latch.
 
 - **Write on the sign** — `[MC3033]`, or `=RS-NAND`
 - **Line 3** — nothing
-- **Line 4** — where the chip keeps its state; it writes this itself
+- **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Input 1** — the data, sampled on the clock
 - **Input 2** — the clock, which acts as it rises
@@ -973,7 +973,7 @@ A compact edge-triggered D flip flop.
 
 - **Write on the sign** — `[MC3034]`, or `=EDGE-D`
 - **Line 3** — nothing
-- **Line 4** — where the chip keeps its state; it writes this itself
+- **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Input 1** — the clock; the data is followed while this is high
 - **Input 2** — the data
@@ -987,7 +987,7 @@ A compact level-triggered D flip flop.
 
 - **Write on the sign** — `[MC3036]`, or `=LEVEL-D`
 - **Line 3** — nothing
-- **Line 4** — where the chip keeps its state; it writes this itself
+- **Line 4** — nothing
 - **Wiring** — `3ISO`, 3 inputs, 1 output
 - **Input 1** — the clock; the data is followed while this is high
 - **Input 2** — the data

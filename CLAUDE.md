@@ -337,6 +337,11 @@ what was written and what the line takes; an optional one warns and the chip fal
 default, which is what it would have done silently anyway. `LineForms.free()` is a line that takes
 any text at all, which is most of them and is not the same as a line nobody has described.
 
+A form cannot lie, because it is the reader. The **meaning** beside it can: it is prose, and on a
+`free()` line there is nothing to check it against. Nine chips claimed to write their fourth line
+and none of them touched it — see finding 151 — so a description saying what a chip *does* rather
+than what the line *takes* is worth doubting until the chip's own source says the same.
+
 That gap mattered. Before forms existed a line that would not parse was completely silent: the
 sensor set its output low and returned, so `item:stone` on an item sensor built a chip that read to
 a builder as a wiring fault. There are 38 of those early returns; the lines that reach them are the

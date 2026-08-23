@@ -2509,3 +2509,46 @@ one operation, `ICManager#writeOutput`, holding the set of chips already run for
 A test server runs no redstone, so that half cannot be reproduced by waiting for the event: the
 test raises it the way the listener would, from inside the write. Worth saying plainly, because the
 first version of the chaining test passed whether or not the fix was there.
+
+### 151. Nine chips said they wrote a line they never touched
+
+`MC1420`'s catalogue entry described its fourth line as *"where the chip keeps its count; it writes
+this itself"*. `ClockLogic` keeps its count in a field:
+
+```java
+private int ticks;
+...
+private void advance(ChipState state) {
+    ticks++;
+    if (ticks >= period(state)) {
+```
+
+It never writes line 4 and never reads it. Eight latches and flip-flops — `MC3030`, `MC3031`,
+`MC3032`, `MC3033`, `MC3034`, `MC3036`, `MC1017` and `MC1018` — carried the same claim about
+*"where the chip keeps its state"*, and none of them touches a sign line either. Those eight had no
+third-line description at all, so the false fourth was the only thing said about them.
+
+Where it came from is visible upstream. Upstream's `MC1421` clock really does keep its count on the
+sign — `getLineHelp` returns `{"ticks required", "current ticks"}` and it calls
+`getSign().setLine(3, Short.toString(tick))`. But this catalogue's `MC1420` is the *extra fork's*
+clock, a different chip under a number the two forks disagree about, and the fork's own line help
+for it is `{"Ticks per cycle", ""}`. The description was written from the wrong codebase.
+
+The implementations are right and the descriptions were wrong, so the descriptions went. A latch
+keeps what it is holding in its own **output lever**, read back through `ChipState#mainOutput`.
+That is better than a sign line, not worse: the lever is a block, so the state survives a chunk
+unloading and the server stopping with nothing written down anywhere, and a builder can set a latch
+by hand by flipping it. Upstream writing state onto the sign costs a block update per change; the
+clock upstream does it on **every tick**.
+
+Two chips here do write their fourth line and say so truthfully: the counters, `MC3101` and
+`MC3102`, keep their running total there.
+
+`ICCatalogueTest` caught the second half of this by itself. Taking the false lines out left those
+eight chips saying nothing about either line, which is the one thing that test refuses — a chip
+nobody has documented must be distinguishable from one with nothing to document. They declare
+`noLines()` now, which is what they always should have said.
+
+What no test can catch is the first half: a `LineSpec` whose prose describes something the chip does
+not do. A `LineForm` is the chip's own reader and so cannot lie, but the *meaning* beside it is
+free text. These nine were `LineForms.free()`, where there is nothing to check against.

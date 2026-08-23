@@ -20,6 +20,14 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class Latches {
 
+    /*
+     * Where a latch keeps what it is holding: in its own output lever, read back through
+     * ChipState#mainOutput. The lever is a block, so the state survives a chunk unloading and the
+     * server stopping with nothing written down anywhere, and a builder can set a latch by hand by
+     * flipping it. Nothing is kept on the sign; the counters below are the only chips here that
+     * write one, and they write their running total. See finding 151.
+     */
+
     private Latches() {}
 
     /**

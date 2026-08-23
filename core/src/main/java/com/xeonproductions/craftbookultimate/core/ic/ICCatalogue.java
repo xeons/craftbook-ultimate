@@ -315,7 +315,7 @@ public final class ICCatalogue {
                 .description("Outputs high while a matching stack is lying within range.")
                 .restricted()
                 .selfTriggeringModel("MCZ138")
-                .thirdLine(required("one thing to check, or where the book is when reading from one",
+                .thirdLine(required("one item to look for, or where a book listing them is when the sign ends in B",
                         either(itemFilter(), offset())))
                 .fourthLine(optional("how far to reach, up to thirty blocks"))
                 .logic(Sensing::itemNear)
@@ -324,7 +324,7 @@ public final class ICCatalogue {
         registry.register(ICDefinition.builder("MC1265", "INV SNS ITM")
                 .name("Item Not Near")
                 .description("Outputs high while no matching stack is lying within range.")
-                .thirdLine(required("one thing to check, or where the book is when reading from one",
+                .thirdLine(required("one item to look for, or where a book listing them is when the sign ends in B",
                         either(itemFilter(), offset())))
                 .fourthLine(optional("how far to reach, up to thirty blocks"))
                 .logic(Sensing::itemNotNear)
@@ -335,7 +335,7 @@ public final class ICCatalogue {
                 .description("Outputs high while a player within range is holding a matching item.")
                 .restricted()
                 .selfTriggeringModel("MCZ139")
-                .thirdLine(required("one thing to check, or where the book is when reading from one",
+                .thirdLine(required("one item to look for, or where a book listing them is when the sign ends in B",
                         either(itemFilter(), offset())))
                 .fourthLine(optional("how far to reach, up to thirty blocks"))
                 .logic(Sensing::heldItemNear)
@@ -461,7 +461,8 @@ public final class ICCatalogue {
                 .name("Message Nearby")
                 .description("Says something to everybody standing within range.")
                 .restricted()
-                .thirdLine(required("what to say"))
+                .thirdLine(required("what to say, or where a book holding the message is when the "
+                        + "sign ends in B"))
                 .fourthLine(optional("the rest of what to say"))
                 .logic(Messages::messageNearby)
                 .build());
@@ -699,7 +700,8 @@ public final class ICCatalogue {
                 .layout(PinLayout.AISO)
                 .restricted()
                 .selfTriggeringModel("MCU146")
-                .thirdLine(required("effect:seconds:strength, such as SP:5:1; INF never wears off"))
+                .thirdLine(required("effect:seconds:strength, such as SP:5:1; INF never wears off, or "
+                        + "blank to read them from a book when the sign ends in B"))
                 .fourthLine(optional("range[:x:y:z][@filter]"))
                 .logic(Effects::potionArea)
                 .build());

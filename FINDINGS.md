@@ -2552,3 +2552,33 @@ nobody has documented must be distinguishable from one with nothing to document.
 What no test can catch is the first half: a `LineSpec` whose prose describes something the chip does
 not do. A `LineForm` is the chip's own reader and so cannot lie, but the *meaning* beside it is
 free text. These nine were `LineForms.free()`, where there is nothing to check against.
+
+### 152. A whole family of mode letters was never written down
+
+Several chips read a letter of their own after the model reference, and none of it reached the
+page a builder reads.
+
+The largest is `B`, which makes a chip take its settings out of a written book instead of off the
+sign. Six chips read it: the three item sensors `MCX138`, `MC1265` and `MCX139` match every item
+listed in the book; `MCX146` reads its potion effects from one; and `MCX512` reads a whole message
+from one, which may hold waits written `[DELAY:20]` and so play as a script. `MCX203` takes a
+letter naming which container it fills, and `MCX133` takes `-` to spare tamed creatures and the
+things people are using.
+
+All of it works and all of it is tested. The gap was that `docs/ics.md` lists the ten mode
+characters the framework itself knows and nothing else, so a builder had no way to find any of
+these — and the line-3 descriptions of the three item sensors mentioned "the book" without ever
+saying that a `B` is what asks for one. That is the worst of both: enough to know a feature exists,
+not enough to use it.
+
+These letters are deliberately not `ICMode.Behaviour` constants, and should not become them.
+`ChipState#modeText` says why: they overlap with the pin permutation letters, so only the chip that
+means something by a letter can safely read it. The fix is a section of the page for them, not a
+place in the framework's table.
+
+Two smaller things fell out of writing it down. `ICMode.Behaviour.HUMANS_ONLY_EXTRA('-')` is read
+by nothing — `MCX133` reads the character directly and means something narrower by it than the
+constant's description — so the framework table was describing a mode no chip implements. That row
+is gone. And the first draft of the new table put `-` on `MCX130`; it is `MCX133`, the sweeper.
+Worth recording, because it is the same mistake as finding 151: writing down what a chip does from
+somewhere other than the chip.

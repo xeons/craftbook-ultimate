@@ -149,7 +149,6 @@ public final class ICDocs {
                 | `=` | Skip the usual step up or down when acting on the world. |
                 | `r` | Run the chip's effect the other way about. |
                 | `t` | Read the weather as a thunderstorm rather than as rain. |
-                | `-` | Leave anything that is not a player alone. |
                 | `p` | Act as a teleport pad. |
                 | `P` | Act as a teleport pad that insists on a pressure plate. |
 
@@ -159,6 +158,23 @@ public final class ICDocs {
 
                 An `*` may appear on a sign you did not write it on. It marks a chip whose creation
                 was already checked, and the plugin puts it there.
+
+                ### Letters a chip keeps for itself
+
+                A few chips read a letter of their own there instead, meaning something only they
+                understand. They are not in the table above because they are not the plugin's
+                letters, and the same character means nothing at all on any other chip.
+
+                | Character | On | What it does |
+                | --- | --- | --- |
+                | `B` | `MCX138`, `MC1265`, `MCX139` | Line 3 points at a book, and every line in it is an item to match. |
+                | `B` | `MCX146` | The potion effects are read out of a book rather than off the sign. |
+                | `B` | `MCX512` | The message is read out of a book, which may hold waits and so run as a script. |
+                | `c` `t` `d` `r` `h` | `MCX203` | Which container the collector fills: chest, trapped chest, dispenser, dropper, hopper. |
+                | `-` | `MCX133` | Spare tamed creatures, and the things people are using — mounts, thrown items, fishing lines. |
+
+                Where a chip takes one of these, its line 3 says so. A book is read from the block
+                one above the one the sign hangs on unless line 3 names somewhere else as `x:y:z`.
 
                 ### Moving the pins about
 

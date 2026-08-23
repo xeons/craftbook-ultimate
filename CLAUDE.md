@@ -337,6 +337,12 @@ what was written and what the line takes; an optional one warns and the chip fal
 default, which is what it would have done silently anyway. `LineForms.free()` is a line that takes
 any text at all, which is most of them and is not the same as a line nobody has described.
 
+A chip may also read a **letter of its own** after the model reference — `B` to take its settings
+out of a book, the chest collector's letter for which container to fill. These are deliberately not
+`ICMode.Behaviour` constants, because they overlap with the pin permutation letters and only the
+chip that means something by one can read it safely. `docs/ics.md` lists them in a section of their
+own, apart from the framework's own modes. See finding 152.
+
 A form cannot lie, because it is the reader. The **meaning** beside it can: it is prose, and on a
 `free()` line there is nothing to check it against. Nine chips claimed to write their fourth line
 and none of them touched it — see finding 151 — so a description saying what a chip *does* rather
